@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  READER
+  EDITOR
+  ADMIN
+}
+
+enum VerificationStatus {
+  verified
+  investigation
+  hoax
+}
+
+enum FactCheckVerdict {
+  benar
+  salah
+  menyesatkan
+  tidak_dapat_diverifikasi
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  image         String?
+  role          Role      @default(READER)
+  interests     String    @default("[]")
+  regionSlug    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  savedArticles SavedArticle[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Author {
+  id        String    @id
+  name      String
+  title     String?
+  bio       String?
+  articles  Article[]
+}
+
+model Region {
+  slug     String    @id
+  name     String
+  province String
+  articles Article[]
+}
+
+model Topic {
+  slug        String         @id
+  name        String
+  description String
+  articles    ArticleTopic[]
+}
+
+model Article {
+  id                  String             @id
+  slug                String
+  category            String
+  title               String
+  dek                 String
+  body                String
+  summaryBullets      String
+  publishedAt         DateTime
+  updatedAt           DateTime?
+  correctionNote      String?
+  authorId            String
+  author              Author             @relation(fields: [authorId], references: [id])
+  regionSlug          String?
+  region              Region?            @relation(fields: [regionSlug], references: [slug])
+  imageUrl            String
+  imageCaption        String
+  imageCredit         String
+  verificationStatus  VerificationStatus @default(verified)
+  sources             String
+  featuredLevel       Int                @default(0)
+  isBreaking          Boolean            @default(false)
+  breakingExpiresAt   DateTime?
+  viewCount           Int                @default(0)
+  topics              ArticleTopic[]
+  savedBy             SavedArticle[]
+
+  @@unique([category, slug])
+  @@index([category, publishedAt])
+  @@index([regionSlug])
+}
+
+model ArticleTopic {
+  articleId String
+  topicSlug String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  topic     Topic   @relation(fields: [topicSlug], references: [slug], onDelete: Cascade)
+
+  @@id([articleId, topicSlug])
+}
+
+model FactCheck {
+  slug                  String           @id
+  claim                 String
+  verdict               FactCheckVerdict
+  explanation           String
+  sources               String
+  publishedAt           DateTime
+  relatedArticleSlugs   String           @default("[]")
+}
+
+model SavedArticle {
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+}
+
+model MarketCache {
+  id         Int      @id @default(1)
+  payload    String
+  fetchedAt  DateTime @default(now())
+}

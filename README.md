@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KabarDesk
 
-## Getting Started
+Portal berita Indonesia — **Berita Terkini, Terpercaya, Dekat Kamu**.
 
-First, run the development server:
+## Fitur
+
+- Beranda editorial (hero, terkini, terpopuler, topik, daerah, cek fakta)
+- Artikel dengan **Baca cepat**, **Dengarkan** (TTS browser), trust box, SEO JSON-LD
+- **Cek fakta**, liputan **daerah**, hub **topik**
+- **Auth** (NextAuth): simpan artikel, atur minat, rekomendasi "Untuk kamu"
+- **Admin CMS** (`/admin`): publikasi artikel cepat (ADMIN/EDITOR)
+- **SQLite + Prisma** (siap diganti PostgreSQL via `DATABASE_URL`)
+- Kurs USD/IDR live (ExchangeRate-API) + cuaca Jakarta (Open-Meteo)
+
+## Brand
+
+- **Nama:** KabarDesk
+- **Warna utama:** `#1D4ED8`
+
+## Setup
 
 ```bash
+cp .env.example .env
+npm install
+npm run setup
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Akun demo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Peran | Email | Password |
+|-------|-------|----------|
+| Admin | admin@kabardesk.id | admin123 |
+| Pembaca | pembaca@kabardesk.id | reader123 |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command | Kegunaan |
+|---------|----------|
+| `npm run dev` | Development |
+| `npm run setup` | `db push` + seed |
+| `npm run build` | Generate DB, seed, production build |
+| `npm run db:seed` | Isi ulang data demo |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## PostgreSQL (production)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Ubah `DATABASE_URL` di `.env`, misalnya:
 
-## Deploy on Vercel
+`DATABASE_URL="postgresql://user:pass@localhost:5432/kabardesk"`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Lalu `npm run setup`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Struktur
+
+- `src/lib/content/` — tipe, seed fallback, repository Prisma
+- `src/app/admin` — panel redaksi
+- `prisma/schema.prisma` — model artikel, fakta, user
