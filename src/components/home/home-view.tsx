@@ -169,7 +169,7 @@ export async function HomeView() {
           {regions.slice(0, 6).map((region) => (
             <Link
               key={region.slug}
-              href={`/daerah/${region.slug}`}
+              href={`/daerah/provinsi/${region.slug}`}
               className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary"
             >
               <p className="font-semibold">{region.name}</p>

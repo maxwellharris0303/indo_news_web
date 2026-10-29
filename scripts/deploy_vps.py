@@ -177,7 +177,11 @@ AUTH_SECURE_COOKIES=false
     if super_email and super_password:
         env_content += f'KABARDESK_SUPERADMIN_EMAIL="{super_email}"\n'
         env_content += f'KABARDESK_SUPERADMIN_PASSWORD="{super_password}"\n'
-    run(client, f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && tar xzf release.tgz && rm -f release.tgz")
+    run(
+        client,
+        f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
+        f"rm -rf src .next && tar xzf release.tgz && rm -f release.tgz",
+    )
     run(
         client,
         f"cat > {REMOTE_DIR}/.env << 'ENVEOF'\n{env_content}ENVEOF",

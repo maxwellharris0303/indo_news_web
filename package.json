@@ -12,6 +12,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "setup": "prisma db push && tsx prisma/seed.ts",
     "test:e2e": "node scripts/e2e_smoke.mjs",
+    "test:e2e:full": "node scripts/e2e-bootstrap.mjs && npm run test:e2e:seed && node scripts/e2e_full.mjs",
+    "test:e2e:seed": "tsx scripts/e2e-seed-article.mjs",
     "deploy:vps": "python scripts/deploy_vps.py"
   },
   "prisma": {

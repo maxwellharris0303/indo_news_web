@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/news-card";
-import { getArticles, getRegion } from "@/lib/content/repository";
+import { getArticles, getRegion, getRegions } from "@/lib/content/repository";
 
 type Props = { params: Promise<{ province: string }> };
+
+export async function generateStaticParams() {
+  const regions = await getRegions();
+  return regions.map((r) => ({ province: r.slug }));
+}
 
 export async function generateMetadata({ params }: Props) {
   const { province } = await params;

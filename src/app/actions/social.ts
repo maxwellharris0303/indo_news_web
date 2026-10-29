@@ -10,6 +10,10 @@ import {
   updateArticleStatus,
 } from "@/lib/content/repository";
 
+export async function postCommentFormAction(formData: FormData) {
+  await postCommentAction(formData);
+}
+
 export async function postCommentAction(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -43,6 +47,10 @@ export async function trackReadingAction(articleId: string) {
   const session = await auth();
   if (!session?.user?.id) return;
   await recordReadingHistory(session.user.id, articleId);
+}
+
+export async function updateArticleStatusFormAction(formData: FormData) {
+  await updateArticleStatusAction(formData);
 }
 
 export async function updateArticleStatusAction(formData: FormData) {

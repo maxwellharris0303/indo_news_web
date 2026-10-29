@@ -23,7 +23,7 @@ export default async function DaerahPage() {
         {regions.map((region) => (
           <Link
             key={region.slug}
-            href={`/daerah/${region.slug}`}
+            href={`/daerah/provinsi/${region.slug}`}
             className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary"
           >
             <p className="text-lg font-semibold">{region.name}</p>

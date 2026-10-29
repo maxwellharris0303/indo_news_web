@@ -10,7 +10,7 @@ const routes = [
   "/tekno",
   "/gaya-hidup",
   "/daerah",
-  "/daerah/dki-jakarta",
+  "/daerah/provinsi/dki-jakarta",
   "/topik/ihsg",
   "/cek-fakta",
   "/cek-fakta/hoaks-blt-umkm-2026",

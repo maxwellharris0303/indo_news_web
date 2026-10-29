@@ -32,6 +32,8 @@ import { categoryLabels, isCategorySlug, site } from "@/lib/site";
 
 type Props = { params: Promise<{ category: string; slug: string }> };
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   return getAllArticlePaths();
 }

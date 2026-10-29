@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { createArticleAction } from "@/app/actions/admin";
-import { updateArticleStatusAction } from "@/app/actions/social";
+import {
+  createArticleFormAction,
+} from "@/app/actions/admin";
+import { updateArticleStatusFormAction } from "@/app/actions/social";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { prisma } from "@/lib/db";
@@ -43,13 +45,7 @@ export default async function AdminPage() {
 
       <section className="mt-10 rounded-xl border border-border p-6">
         <h2 className="font-serif text-xl font-bold">Tulis artikel cepat</h2>
-        <form
-          action={async (formData) => {
-            "use server";
-            await createArticleAction(formData);
-          }}
-          className="mt-4 grid gap-4"
-        >
+        <form action={createArticleFormAction} className="mt-4 grid gap-4">
           <Input name="title" placeholder="Judul" required />
           <Input name="slug" placeholder="slug-url-artikel" required />
           <select
@@ -112,13 +108,7 @@ export default async function AdminPage() {
                   {a.locale.toUpperCase()} · {a.viewCount} views · {a.status}
                 </p>
               </div>
-              <form
-                action={async (formData) => {
-                  "use server";
-                  await updateArticleStatusAction(formData);
-                }}
-                className="flex items-center gap-2"
-              >
+              <form action={updateArticleStatusFormAction} className="flex items-center gap-2">
                 <input type="hidden" name="articleId" value={a.id} />
                 <select
                   name="status"

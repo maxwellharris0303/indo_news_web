@@ -37,6 +37,10 @@ async function requireStaff() {
   return session.user.id;
 }
 
+export async function createArticleFormAction(formData: FormData) {
+  await createArticleAction(formData);
+}
+
 export async function createArticleAction(formData: FormData) {
   await requireStaff();
 
@@ -60,11 +64,12 @@ export async function createArticleAction(formData: FormData) {
   }
   const id = `a-${data.slug.slice(0, 24)}`;
 
-  await prisma.article.create({
-    data: {
-      id,
-      slug: data.slug,
-      category: data.category,
+  try {
+    await prisma.article.create({
+      data: {
+        id,
+        slug: data.slug,
+        category: data.category,
       title: data.title,
       dek: data.dek,
       body: data.body,
@@ -75,7 +80,7 @@ export async function createArticleAction(formData: FormData) {
       ]),
       publishedAt: new Date(),
       authorId: data.authorId,
-      imageUrl: "https://picsum.photos/seed/kabardesk-new/1200/750",
+      imageUrl: `https://picsum.photos/seed/kabardesk-${data.slug.slice(0, 20)}/1200/750`,
       imageCaption: "Ilustrasi berita",
       imageCredit: "KabarDesk",
       sources: JSON.stringify(["Redaksi KabarDesk"]),
@@ -85,12 +90,17 @@ export async function createArticleAction(formData: FormData) {
       locale: "id",
       galleryImages: "[]",
       aiSummary: "Artikel baru dari redaksi KabarDesk.",
-    },
-  });
+      },
+    });
+  } catch {
+    return { ok: false as const, error: "Slug sudah dipakai atau gagal simpan" };
+  }
 
   revalidatePath("/");
   revalidatePath(`/${data.category}`);
+  revalidatePath(`/${data.category}/${data.slug}`);
   revalidatePath("/admin");
+  revalidatePath("/indeks");
 
-  return { ok: true as const, id };
+  return { ok: true as const, id, category: data.category, slug: data.slug };
 }
