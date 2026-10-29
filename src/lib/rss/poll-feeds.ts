@@ -2,6 +2,7 @@ import type { RssFeed } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { contentHash, normalizeArticleUrl } from "@/lib/rss/normalize-url";
 import { fetchAndParseFeed } from "@/lib/rss/parse-feed";
+import { normalizeImageUrl } from "@/lib/article-image";
 import { scrapeArticlePage } from "@/lib/rss/scrape-article";
 
 export type PollFeedResult = {
@@ -52,12 +53,14 @@ export async function pollSingleFeed(feed: RssFeed): Promise<PollFeedResult> {
       if (dupLink) continue;
 
       let extractedBody: string | undefined;
-      let imageUrl = item.imageUrl;
+      let imageUrl = normalizeImageUrl(item.imageUrl) ?? undefined;
       if (feed.scrapeMode === "FETCH_ARTICLE") {
         const scraped = await scrapeArticlePage(link);
         if (scraped.ok) {
           extractedBody = scraped.textContent;
-          if (scraped.imageUrl) imageUrl = scraped.imageUrl;
+          if (scraped.imageUrl) {
+            imageUrl = normalizeImageUrl(scraped.imageUrl) ?? imageUrl;
+          }
         }
       }
 

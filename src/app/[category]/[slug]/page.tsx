@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
+import { ArticleCoverImage } from "@/components/article/article-cover-image";
 import { notFound } from "next/navigation";
 import { ArticleGallery } from "@/components/article/article-gallery";
 import { ArticleToolbar } from "@/components/article/article-toolbar";
@@ -164,10 +164,10 @@ export default async function ArticlePage({ params }: Props) {
         )}
 
         <div className="relative mt-8 aspect-[16/10] overflow-hidden rounded-2xl">
-          <Image
+          <ArticleCoverImage
             src={article.imageUrl}
+            slug={article.slug}
             alt={article.imageCaption}
-            fill
             priority
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 720px"

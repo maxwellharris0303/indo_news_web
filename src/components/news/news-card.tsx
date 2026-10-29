@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ArticleCoverImage } from "@/components/article/article-cover-image";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeId } from "@/lib/format";
 import type { Article } from "@/lib/content/types";
@@ -24,10 +24,10 @@ export function NewsCard({
       <article className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <Link href={href} className="grid md:grid-cols-2">
           <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[320px]">
-            <Image
+            <ArticleCoverImage
               src={article.imageUrl}
+              slug={article.slug}
               alt={article.imageCaption}
-              fill
               priority={priority}
               className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -57,10 +57,10 @@ export function NewsCard({
           href={href}
           className="relative h-[4.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-32"
         >
-          <Image
+          <ArticleCoverImage
             src={article.imageUrl}
+            slug={article.slug}
             alt=""
-            fill
             className="object-cover transition-transform group-hover:scale-105"
             sizes="128px"
           />
@@ -89,10 +89,10 @@ export function NewsCard({
     <article className="group overflow-hidden rounded-xl border border-border bg-card">
       <Link href={href}>
         <div className="relative aspect-[16/10] overflow-hidden">
-          <Image
+          <ArticleCoverImage
             src={article.imageUrl}
+            slug={article.slug}
             alt=""
-            fill
             priority={priority}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, 33vw"

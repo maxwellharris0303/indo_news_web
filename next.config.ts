@@ -12,10 +12,19 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "picsum.photos",
-      },
+      { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "i.picsum.photos" },
+      { protocol: "https", hostname: "fastly.picsum.photos" },
+      { protocol: "https", hostname: "**.sindonews.net" },
+      { protocol: "https", hostname: "**.sindonews.com" },
+      { protocol: "https", hostname: "**.kompas.com" },
+      { protocol: "https", hostname: "**.kompas.tv" },
+      { protocol: "https", hostname: "**.liputan6.com" },
+      { protocol: "https", hostname: "**.antaranews.com" },
+      { protocol: "https", hostname: "**.inews.id" },
+      { protocol: "https", hostname: "**.suara.com" },
+      { protocol: "https", hostname: "**.inilah.com" },
+      { protocol: "https", hostname: "**.ddtc.co.id" },
     ],
   },
   cacheComponents: false,

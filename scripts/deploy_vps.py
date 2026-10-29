@@ -213,6 +213,11 @@ AUTH_SECURE_COOKIES=false
     run(client, f"curl -sI {site_url} | head -8", check=False)
     run(
         client,
+        f"cd {REMOTE_DIR} && npx tsx scripts/fix-article-image-urls.ts",
+        check=False,
+    )
+    run(
+        client,
         f"cd {REMOTE_DIR} && node scripts/e2e-seed-article.mjs",
         check=False,
     )
@@ -222,6 +227,13 @@ AUTH_SECURE_COOKIES=false
         f"E2E_EMAIL=admin@kabardesk.id E2E_PASSWORD=admin123 node scripts/e2e_full.mjs",
         check=False,
     )
+    if os.environ.get("OPENAI_API_KEY", "").strip():
+        print("\nRunning live RSS poll + OpenAI rewrite test on VPS…")
+        run(
+            client,
+            f"cd {REMOTE_DIR} && npx tsx scripts/test-rss-rewrite-live.ts",
+            check=False,
+        )
     client.close()
     print(f"\nDeployed (no conflict with port 80 sites): {site_url}")
     print("Admin: admin@kabardesk.id / admin123")

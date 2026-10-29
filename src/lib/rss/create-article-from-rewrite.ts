@@ -1,6 +1,7 @@
 import type { RewriteOutput } from "@/lib/ai/rewrite-schema";
 import { prisma } from "@/lib/db";
 import { slugify, uniqueArticleSlug } from "@/lib/slugify";
+import { resolveStoredArticleImageUrl } from "@/lib/article-image";
 import { isCategorySlug } from "@/lib/site";
 
 export async function createReviewArticleFromRewrite(input: {
@@ -25,6 +26,7 @@ export async function createReviewArticleFromRewrite(input: {
   ]);
 
   const id = `a-rss-${slug.slice(0, 20)}-${Date.now().toString(36)}`;
+  const imageUrl = resolveStoredArticleImageUrl(input.imageUrl, slug);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -42,9 +44,7 @@ export async function createReviewArticleFromRewrite(input: {
           aiSummary: input.output.dek,
           publishedAt: new Date(),
           authorId: input.authorId,
-          imageUrl:
-            input.imageUrl ??
-            `https://picsum.photos/seed/kabardesk-${slug.slice(0, 16)}/1200/750`,
+          imageUrl,
           imageCaption: "Ilustrasi berita",
           imageCredit: input.sourceName,
           sources,
