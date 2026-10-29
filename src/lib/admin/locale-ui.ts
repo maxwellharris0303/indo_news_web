@@ -42,6 +42,8 @@ export const adminRssCopy = {
     subtitle:
       "Ambil berita dari feed RSS, scrape opsional, rewrite dengan OpenAI atau Anthropic.",
     pollAll: "Poll semua feed",
+    pollAllRunning: "Memuat feed…",
+    pollAllHint: "Mengambil RSS semua sumber (~15–30 detik). Scrape artikel saat rewrite.",
     addFeed: "Tambah feed",
     feeds: "Feed",
     inbox: "Inbox",
@@ -107,6 +109,8 @@ export const adminRssCopy = {
     subtitle:
       "Ingest from RSS feeds, optional page scrape, rewrite with OpenAI or Anthropic.",
     pollAll: "Poll all feeds",
+    pollAllRunning: "Polling feeds…",
+    pollAllHint: "Fetching all RSS sources (~15–30s). Article scrape runs on rewrite.",
     addFeed: "Add feed",
     feeds: "Feeds",
     inbox: "Inbox",

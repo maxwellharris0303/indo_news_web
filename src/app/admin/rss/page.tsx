@@ -17,6 +17,8 @@ import type { RssItemStatus } from "@prisma/client";
 
 export const metadata = { title: "RSS & AI" };
 
+export const maxDuration = 120;
+
 type Props = {
   searchParams: Promise<{ inbox?: string; feed?: string }>;
 };
@@ -125,7 +127,11 @@ export default async function AdminRssPage({ searchParams }: Props) {
             </span>
           </div>
         </div>
-        <RssPollAllButton label={copy.pollAll} />
+        <RssPollAllButton
+          label={copy.pollAll}
+          pollingLabel={copy.pollAllRunning}
+          hint={copy.pollAllHint}
+        />
       </div>
 
       <section className="space-y-4">

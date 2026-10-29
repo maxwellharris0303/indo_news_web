@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 import { contentHash, normalizeArticleUrl } from "@/lib/rss/normalize-url";
 import { fetchAndParseFeed } from "@/lib/rss/parse-feed";
 import { normalizeImageUrl } from "@/lib/article-image";
-import { scrapeArticlePage } from "@/lib/rss/scrape-article";
+/** Max new rows ingested per poll (newest first). Avoids inbox floods. */
+const MAX_NEW_ITEMS_PER_POLL = 25;
 
 export type PollFeedResult = {
   feedId: string;
@@ -37,6 +38,8 @@ export async function pollSingleFeed(feed: RssFeed): Promise<PollFeedResult> {
 
     let newItems = 0;
     for (const item of parsed.items) {
+      if (newItems >= MAX_NEW_ITEMS_PER_POLL) break;
+
       const link = normalizeArticleUrl(item.link);
       const guid = item.guid.trim() || link;
       const hash = contentHash(item.title, link);
@@ -52,17 +55,8 @@ export async function pollSingleFeed(feed: RssFeed): Promise<PollFeedResult> {
       });
       if (dupLink) continue;
 
-      let extractedBody: string | undefined;
-      let imageUrl = normalizeImageUrl(item.imageUrl) ?? undefined;
-      if (feed.scrapeMode === "FETCH_ARTICLE") {
-        const scraped = await scrapeArticlePage(link);
-        if (scraped.ok) {
-          extractedBody = scraped.textContent;
-          if (scraped.imageUrl) {
-            imageUrl = normalizeImageUrl(scraped.imageUrl) ?? imageUrl;
-          }
-        }
-      }
+      const imageUrl = normalizeImageUrl(item.imageUrl) ?? undefined;
+      // Scrape runs on rewrite (ensureItemExtracted), not during poll — keeps poll-all fast.
 
       await prisma.rssItem.create({
         data: {
@@ -72,7 +66,6 @@ export async function pollSingleFeed(feed: RssFeed): Promise<PollFeedResult> {
           title: item.title,
           summaryRaw: item.summaryRaw,
           contentRaw: item.contentRaw,
-          extractedBody,
           pubDate: item.pubDate,
           imageUrl,
           contentHash: hash,
@@ -157,6 +150,7 @@ export async function ensureItemExtracted(
     };
   }
 
+  const { scrapeArticlePage } = await import("@/lib/rss/scrape-article");
   const scraped = await scrapeArticlePage(item.link);
   if (!scraped.ok) {
     return { ok: false, error: scraped.error };
