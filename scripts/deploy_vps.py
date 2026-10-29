@@ -106,7 +106,7 @@ def pick_internal_port(client: paramiko.SSHClient) -> int:
 
 def main() -> None:
     auth_secret = os.urandom(32).hex()
-    site_url = f"http://{HOST}:{INTERNAL_PORT}"
+    site_url = f"http://{HOST}:{PUBLIC_PORT}"
 
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -120,8 +120,17 @@ def main() -> None:
     )
     run(client, "command -v pm2 >/dev/null || npm install -g pm2", check=False)
 
+    # Free our previous listener so pick_internal_port can reuse INTERNAL_PORT.
+    run(client, f"pm2 delete {PM2_NAME} 2>/dev/null || true", check=False)
+    time.sleep(1)
+
     internal_port = pick_internal_port(client)
-    print(f"Using internal port {internal_port}, public {PUBLIC_PORT}")
+    if internal_port != PUBLIC_PORT:
+        print(
+            f"Warning: port {PUBLIC_PORT} busy; app on {internal_port} "
+            f"but URLs still target {PUBLIC_PORT}",
+        )
+    print(f"Using app port {internal_port} (public URL port {PUBLIC_PORT})")
 
     run(client, f"mkdir -p {REMOTE_DIR}")
     tarball = make_tarball()
@@ -131,12 +140,14 @@ def main() -> None:
         f.write(tarball)
     sftp.close()
 
+    app_url = f"http://{HOST}:{internal_port}"
     env_content = f"""DATABASE_URL="file:./prisma/dev.db"
 AUTH_SECRET="{auth_secret}"
-AUTH_URL="{site_url}"
-NEXTAUTH_URL="{site_url}"
+AUTH_URL="{app_url if internal_port == PUBLIC_PORT else site_url}"
+NEXTAUTH_URL="{app_url if internal_port == PUBLIC_PORT else site_url}"
 NEXT_PUBLIC_SITE_URL="{site_url}"
 PORT={internal_port}
+HOSTNAME=0.0.0.0
 NODE_ENV=production
 """
     run(client, f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && tar xzf release.tgz && rm -f release.tgz")
