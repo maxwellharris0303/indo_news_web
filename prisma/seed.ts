@@ -10,7 +10,78 @@ import {
 
 const prisma = new PrismaClient();
 
-async function main() {
+const DEMO_ADMIN_ID = "u-demo-admin";
+const DEMO_READER_ID = "u-demo-reader";
+
+async function upsertDemoUsers() {
+  const passwordHash = await bcrypt.hash("admin123", 10);
+  await prisma.user.upsert({
+    where: { email: "admin@kabardesk.id" },
+    create: {
+      id: DEMO_ADMIN_ID,
+      email: "admin@kabardesk.id",
+      name: "Admin KabarDesk",
+      passwordHash,
+      role: "ADMIN",
+    },
+    update: {
+      name: "Admin KabarDesk",
+      passwordHash,
+      role: "ADMIN",
+    },
+  });
+
+  const readerHash = await bcrypt.hash("reader123", 10);
+  await prisma.user.upsert({
+    where: { email: "pembaca@kabardesk.id" },
+    create: {
+      id: DEMO_READER_ID,
+      email: "pembaca@kabardesk.id",
+      name: "Pembaca Demo",
+      passwordHash: readerHash,
+      role: "READER",
+      plan: "PLUS",
+      interests: JSON.stringify(["nasional", "ekonomi"]),
+      regionSlug: "dki-jakarta",
+    },
+    update: {
+      name: "Pembaca Demo",
+      passwordHash: readerHash,
+      role: "READER",
+      plan: "PLUS",
+    },
+  });
+
+  const superEmail = process.env.KABARDESK_SUPERADMIN_EMAIL?.trim().toLowerCase();
+  const superPassword = process.env.KABARDESK_SUPERADMIN_PASSWORD;
+  if (superEmail && superPassword) {
+    const superHash = await bcrypt.hash(superPassword, 10);
+    await prisma.user.upsert({
+      where: { email: superEmail },
+      create: {
+        email: superEmail,
+        name: "Super Admin",
+        passwordHash: superHash,
+        role: "SUPERADMIN",
+        plan: "PLUS",
+      },
+      update: {
+        passwordHash: superHash,
+        role: "SUPERADMIN",
+      },
+    });
+    console.log(`Superadmin seed: ${superEmail}`);
+  }
+}
+
+async function seedProduction() {
+  await upsertDemoUsers();
+  const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
+  await seedDefaultRssFeeds();
+  console.log("Production seed: demo users + RSS feeds (data preserved)");
+}
+
+async function seedDevelopment() {
   await prisma.rewriteJob.deleteMany();
   await prisma.rssItem.deleteMany();
   await prisma.rssFeed.deleteMany();
@@ -90,55 +161,21 @@ async function main() {
     });
   }
 
-  const passwordHash = await bcrypt.hash("admin123", 10);
-  await prisma.user.create({
-    data: {
-      email: "admin@kabardesk.id",
-      name: "Admin KabarDesk",
-      passwordHash,
-      role: "ADMIN",
-    },
-  });
-
-  const readerHash = await bcrypt.hash("reader123", 10);
-  await prisma.user.create({
-    data: {
-      email: "pembaca@kabardesk.id",
-      name: "Pembaca Demo",
-      passwordHash: readerHash,
-      role: "READER",
-      plan: "PLUS",
-      interests: JSON.stringify(["nasional", "ekonomi"]),
-      regionSlug: "dki-jakarta",
-    },
-  });
-
-  const superEmail = process.env.KABARDESK_SUPERADMIN_EMAIL?.trim().toLowerCase();
-  const superPassword = process.env.KABARDESK_SUPERADMIN_PASSWORD;
-  if (superEmail && superPassword) {
-    const superHash = await bcrypt.hash(superPassword, 10);
-    await prisma.user.upsert({
-      where: { email: superEmail },
-      create: {
-        email: superEmail,
-        name: "Super Admin",
-        passwordHash: superHash,
-        role: "SUPERADMIN",
-        plan: "PLUS",
-      },
-      update: {
-        passwordHash: superHash,
-        role: "SUPERADMIN",
-      },
-    });
-    console.log(`Superadmin seed: ${superEmail}`);
-  }
+  await upsertDemoUsers();
 
   const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
   await seedDefaultRssFeeds();
   console.log("RSS feeds default: 8 sumber");
 
   console.log("Seed selesai: artikel + akun demo, admin@kabardesk.id / admin123");
+}
+
+async function main() {
+  if (process.env.NODE_ENV === "production") {
+    await seedProduction();
+    return;
+  }
+  await seedDevelopment();
 }
 
 main()

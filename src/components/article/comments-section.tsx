@@ -9,12 +9,14 @@ export function CommentsSection({
   comments,
   isLoggedIn,
   commentError,
+  sessionStale,
 }: {
   articleId: string;
   path: string;
   comments: CommentView[];
   isLoggedIn: boolean;
   commentError?: boolean;
+  sessionStale?: boolean;
 }) {
   return (
     <section
@@ -25,7 +27,18 @@ export function CommentsSection({
         Komentar ({comments.length})
       </h2>
 
-      {isLoggedIn ? (
+      {sessionStale ? (
+        <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+          Sesi login kedaluwarsa setelah pembaruan server.{" "}
+          <Link
+            href={`/login?callbackUrl=${encodeURIComponent(path)}`}
+            className="font-medium text-primary hover:underline"
+          >
+            Masuk lagi
+          </Link>{" "}
+          untuk berkomentar.
+        </p>
+      ) : isLoggedIn ? (
         <CommentForm
           articleId={articleId}
           path={path}

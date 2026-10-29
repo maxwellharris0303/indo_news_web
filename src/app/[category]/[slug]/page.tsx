@@ -32,7 +32,7 @@ import { categoryLabels, isCategorySlug, site } from "@/lib/site";
 
 type Props = {
   params: Promise<{ category: string; slug: string }>;
-  searchParams?: Promise<{ commentError?: string }>;
+  searchParams?: Promise<{ commentError?: string; reason?: string }>;
 };
 
 export const dynamicParams = true;
@@ -245,6 +245,16 @@ export default async function ArticlePage({ params, searchParams }: Props) {
             comments={comments}
             isLoggedIn={Boolean(session?.user?.id)}
             commentError={sp.commentError === "1"}
+            sessionStale={
+              sp.reason === "session" ||
+              Boolean(
+                session?.user?.id &&
+                  !(await prisma.user.findUnique({
+                    where: { id: session.user.id },
+                    select: { id: true },
+                  })),
+              )
+            }
           />
         </div>
 

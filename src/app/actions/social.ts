@@ -10,6 +10,7 @@ import {
   subscribeNewsletter,
   updateArticleStatus,
 } from "@/lib/content/repository";
+import { prisma } from "@/lib/db";
 
 export async function postCommentFormAction(formData: FormData) {
   const path = String(formData.get("path") ?? "/");
@@ -18,11 +19,33 @@ export async function postCommentFormAction(formData: FormData) {
     redirect(`/login?callbackUrl=${encodeURIComponent(path)}`);
   }
 
-  const articleId = String(formData.get("articleId") ?? "");
+  const articleId = String(formData.get("articleId") ?? "").trim();
   const body = String(formData.get("body") ?? "");
 
+  if (!articleId) {
+    redirect(`${path}?commentError=1#komentar`);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  });
+  if (!user) {
+    redirect(
+      `/login?reason=session&callbackUrl=${encodeURIComponent(path)}`,
+    );
+  }
+
+  const article = await prisma.article.findUnique({
+    where: { id: articleId },
+    select: { id: true },
+  });
+  if (!article) {
+    redirect(`${path}?commentError=1#komentar`);
+  }
+
   try {
-    await addComment(session.user.id, articleId, body);
+    await addComment(user.id, articleId, body);
     revalidatePath(path);
     redirect(`${path}#komentar`);
   } catch {
