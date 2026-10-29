@@ -110,6 +110,27 @@ async function main() {
     },
   });
 
+  const superEmail = process.env.KABARDESK_SUPERADMIN_EMAIL?.trim().toLowerCase();
+  const superPassword = process.env.KABARDESK_SUPERADMIN_PASSWORD;
+  if (superEmail && superPassword) {
+    const superHash = await bcrypt.hash(superPassword, 10);
+    await prisma.user.upsert({
+      where: { email: superEmail },
+      create: {
+        email: superEmail,
+        name: "Super Admin",
+        passwordHash: superHash,
+        role: "SUPERADMIN",
+        plan: "PLUS",
+      },
+      update: {
+        passwordHash: superHash,
+        role: "SUPERADMIN",
+      },
+    });
+    console.log(`Superadmin seed: ${superEmail}`);
+  }
+
   console.log("Seed selesai: artikel + akun demo, admin@kabardesk.id / admin123");
 }
 

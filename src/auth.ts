@@ -27,8 +27,14 @@ declare module "@auth/core/jwt" {
   }
 }
 
+const siteUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? "";
+const useSecureCookies =
+  process.env.AUTH_SECURE_COOKIES === "true" ||
+  siteUrl.startsWith("https://");
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  useSecureCookies,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [

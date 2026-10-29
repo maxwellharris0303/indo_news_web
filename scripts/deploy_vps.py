@@ -27,6 +27,8 @@ EXCLUDE = {
     "prisma/dev.db",
     "prisma/dev.db-journal",
     "scripts/.deploy-secret",
+    "scripts/.auth-secret",
+    "scripts/.superadmin-credentials",
     "scripts/deploy_ed25519",
 }
 
@@ -104,8 +106,28 @@ def pick_internal_port(client: paramiko.SSHClient) -> int:
     return port
 
 
+def load_superadmin() -> tuple[str, str]:
+    path = Path(__file__).with_name(".superadmin-credentials")
+    if not path.exists():
+        return "", ""
+    lines = path.read_text(encoding="utf-8").strip().splitlines()
+    if len(lines) < 2:
+        return "", ""
+    return lines[0].strip().lower(), lines[1].strip()
+
+
+def load_auth_secret() -> str:
+    path = Path(__file__).with_name(".auth-secret")
+    if path.exists():
+        return path.read_text(encoding="utf-8").strip()
+    secret = os.urandom(32).hex()
+    path.write_text(secret, encoding="utf-8")
+    return secret
+
+
 def main() -> None:
-    auth_secret = os.urandom(32).hex()
+    auth_secret = load_auth_secret()
+    super_email, super_password = load_superadmin()
     site_url = f"http://{HOST}:{PUBLIC_PORT}"
 
     client = paramiko.SSHClient()
@@ -150,7 +172,11 @@ NEXT_PUBLIC_SITE_URL="{site_url}"
 PORT={internal_port}
 HOSTNAME=0.0.0.0
 NODE_ENV=production
+AUTH_SECURE_COOKIES=false
 """
+    if super_email and super_password:
+        env_content += f'KABARDESK_SUPERADMIN_EMAIL="{super_email}"\n'
+        env_content += f'KABARDESK_SUPERADMIN_PASSWORD="{super_password}"\n'
     run(client, f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && tar xzf release.tgz && rm -f release.tgz")
     run(
         client,
@@ -162,15 +188,6 @@ NODE_ENV=production
         f"cd {REMOTE_DIR} && pm2 delete {PM2_NAME} 2>/dev/null; PORT={internal_port} pm2 start npm --name {PM2_NAME} -- start && pm2 save",
         check=False,
     )
-
-    super_email = os.environ.get("SUPERADMIN_EMAIL", "").strip().lower()
-    super_password = os.environ.get("SUPERADMIN_PASSWORD", "")
-    if super_email and super_password:
-        run(
-            client,
-            f"cd {REMOTE_DIR} && npx tsx scripts/upsert-superadmin.mjs {super_email!r} {super_password!r}",
-            check=False,
-        )
 
     # Server uses Caddy on 80/443 — do not touch Caddyfile. App listens on {internal_port} only.
     run(
