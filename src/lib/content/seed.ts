@@ -772,4 +772,6 @@ export const marketSnapshot: MarketSnapshot = {
   ihsg: 5282.31,
   ihsgChange: -0.88,
   goldBuy: 2425000,
+  goldChange: 0,
+  updatedAt: "1970-01-01T00:00:00.000Z",
 };

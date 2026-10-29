@@ -10,7 +10,7 @@ Portal berita Indonesia — **Berita Terkini, Terpercaya, Dekat Kamu**.
 - **Auth** (NextAuth): simpan artikel, atur minat, rekomendasi "Untuk kamu"
 - **Admin CMS** (`/admin`): publikasi artikel cepat (ADMIN/EDITOR)
 - **SQLite + Prisma** (siap diganti PostgreSQL via `DATABASE_URL`)
-- Kurs USD/IDR live (ExchangeRate-API) + cuaca Jakarta (Open-Meteo)
+- **Ticker pasar live:** USD/IDR & IHSG (Yahoo Finance), emas spot IDR/gr (COMEX + kurs), cuaca Jakarta (Open-Meteo); cache 5 menit, tanpa angka demo
 
 ## Brand
 

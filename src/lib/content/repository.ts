@@ -5,7 +5,6 @@ import {
   articles as seedArticles,
   authors as seedAuthors,
   factChecks as seedFactChecks,
-  marketSnapshot as seedMarket,
   regions as seedRegions,
   topics as seedTopics,
 } from "./seed";
@@ -366,8 +365,9 @@ export async function getFactCheck(slug: string) {
   return row ? mapFactCheck(row) : undefined;
 }
 
-export async function getMarketSnapshot(): Promise<MarketSnapshot> {
-  return seedMarket;
+export async function getMarketSnapshot(): Promise<MarketSnapshot | null> {
+  const { getLiveMarketSnapshot } = await import("@/lib/market-live");
+  return getLiveMarketSnapshot();
 }
 
 export async function getAllArticlePaths(): Promise<

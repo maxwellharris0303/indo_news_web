@@ -1,5 +1,6 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 import type { MarketSnapshot } from "@/lib/content/types";
+import { formatShortWIB } from "@/lib/format";
 import type { WeatherBrief } from "@/lib/weather";
 
 function Change({ value }: { value: number }) {
@@ -18,7 +19,7 @@ export function MarketTicker({
   data,
   weather,
 }: {
-  data: MarketSnapshot;
+  data: MarketSnapshot | null;
   weather?: WeatherBrief | null;
 }) {
   const items = [
@@ -30,27 +31,42 @@ export function MarketTicker({
         </span>
       </div>
     ) : null,
-    <div key="usd" className="shrink-0">
-      <span className="text-muted-foreground">USD/IDR </span>
-      <span className="font-semibold text-foreground">
-        {data.usdIdr.toLocaleString("id-ID")}
-      </span>{" "}
-      <Change value={data.usdIdrChange} />
-    </div>,
-    <div key="ihsg" className="shrink-0">
-      <span className="text-muted-foreground">IHSG </span>
-      <span className="font-semibold text-foreground">
-        {data.ihsg.toLocaleString("id-ID", { maximumFractionDigits: 2 })}
-      </span>{" "}
-      <Change value={data.ihsgChange} />
-    </div>,
-    <div key="gold" className="shrink-0">
-      <span className="text-muted-foreground">Emas </span>
-      <span className="font-semibold text-foreground">
-        Rp{data.goldBuy.toLocaleString("id-ID")}/gr
-      </span>
-    </div>,
+    data ? (
+      <div key="usd" className="shrink-0">
+        <span className="text-muted-foreground">USD/IDR </span>
+        <span className="font-semibold text-foreground">
+          {data.usdIdr.toLocaleString("id-ID")}
+        </span>{" "}
+        <Change value={data.usdIdrChange} />
+      </div>
+    ) : null,
+    data ? (
+      <div key="ihsg" className="shrink-0">
+        <span className="text-muted-foreground">IHSG </span>
+        <span className="font-semibold text-foreground">
+          {data.ihsg.toLocaleString("id-ID", { maximumFractionDigits: 2 })}
+        </span>{" "}
+        <Change value={data.ihsgChange} />
+      </div>
+    ) : null,
+    data ? (
+      <div key="gold" className="shrink-0">
+        <span className="text-muted-foreground">Emas spot </span>
+        <span className="font-semibold text-foreground">
+          Rp{data.goldBuy.toLocaleString("id-ID")}/gr
+        </span>{" "}
+        <Change value={data.goldChange} />
+      </div>
+    ) : null,
+    data ? (
+      <div key="updated" className="shrink-0 text-muted-foreground">
+        {data.isStale ? "Data terakhir · " : "Diperbarui · "}
+        <time dateTime={data.updatedAt}>{formatShortWIB(data.updatedAt)}</time>
+      </div>
+    ) : null,
   ].filter(Boolean);
+
+  if (items.length === 0) return null;
 
   return (
     <div className="border-b border-border bg-muted/40">

@@ -73,5 +73,11 @@ export interface MarketSnapshot {
   usdIdrChange: number;
   ihsg: number;
   ihsgChange: number;
+  /** Spot gold reference (COMEX) converted to IDR per gram */
   goldBuy: number;
+  goldChange: number;
+  /** ISO timestamp when quotes were fetched */
+  updatedAt: string;
+  /** Served from cache after upstream refresh failed */
+  isStale?: boolean;
 }

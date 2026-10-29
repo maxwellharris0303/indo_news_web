@@ -228,6 +228,12 @@ AUTH_SECURE_COOKIES=false
         f"E2E_EMAIL=admin@kabardesk.id E2E_PASSWORD=admin123 node scripts/e2e_full.mjs",
         check=False,
     )
+    print("\nRunning live market ticker test on VPS…")
+    run(
+        client,
+        f"cd {REMOTE_DIR} && npx tsx scripts/test-market-live.ts",
+        check=False,
+    )
     if os.environ.get("OPENAI_API_KEY", "").strip():
         print("\nRunning live RSS poll + OpenAI rewrite test on VPS…")
         run(

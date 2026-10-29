@@ -29,7 +29,9 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
         />
       )}
       <UtilityStrip />
-      <MarketTicker data={market} weather={weather} />
+      {(market || weather) && (
+        <MarketTicker data={market} weather={weather} />
+      )}
       <main className="flex-1">{children}</main>
       <SiteFooter />
     </>
