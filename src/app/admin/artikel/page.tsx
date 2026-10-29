@@ -181,7 +181,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                 <p className="text-sm tabular-nums md:w-24 md:text-right">
                   {formatCountAdmin(a.viewCount, locale)}
                 </p>
-                <div className="md:w-[min(100%,14rem)]">
+                <div className="md:min-w-[13rem] md:justify-self-end">
                   <ArticleRowActions
                     id={a.id}
                     title={a.title}

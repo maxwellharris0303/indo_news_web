@@ -280,6 +280,10 @@ export const adminArticlesCopy = {
 export const adminActionsCopy = {
   id: {
     view: "Lihat",
+    viewPreview: "Pratinjau",
+    viewPreviewHint:
+      "Buka pratinjau (hanya terlihat jika Anda login sebagai staff di tab yang sama)",
+    viewPublishedHint: "Buka artikel publik",
     delete: "Hapus",
     update: "Update",
     statusAria: "Status artikel",
@@ -289,6 +293,10 @@ export const adminActionsCopy = {
   },
   en: {
     view: "View",
+    viewPreview: "Preview",
+    viewPreviewHint:
+      "Staff preview (only visible when logged in as staff in that browser)",
+    viewPublishedHint: "Open public article",
     delete: "Delete",
     update: "Update",
     statusAria: "Article status",

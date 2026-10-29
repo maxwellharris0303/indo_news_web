@@ -15,6 +15,7 @@ import { auth } from "@/auth";
 import {
   getAllArticlePaths,
   getArticleBySlug,
+  getArticleBySlugStaffPreview,
   getAuthor,
   getRelatedArticles,
   getComments,
@@ -22,6 +23,7 @@ import {
   getTopic,
   incrementArticleViews,
 } from "@/lib/content/repository";
+import { isStaffRole } from "@/lib/admin/require-staff";
 import { prisma } from "@/lib/db";
 import {
   formatShortWIB,
@@ -68,12 +70,20 @@ export default async function ArticlePage({ params, searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   if (!isCategorySlug(category)) notFound();
 
-  const article = await getArticleBySlug(category, slug);
+  const session = await auth();
+  const staffPreview = isStaffRole(session?.user?.role);
+
+  let article = await getArticleBySlug(category, slug);
+  let isUnpublishedPreview = false;
+  if (!article && staffPreview) {
+    article = await getArticleBySlugStaffPreview(category, slug);
+    isUnpublishedPreview = !!article;
+  }
   if (!article) notFound();
 
-  await incrementArticleViews(article.id);
-
-  const session = await auth();
+  if (!isUnpublishedPreview) {
+    await incrementArticleViews(article.id);
+  }
   const savedIds = session?.user?.id
     ? await getSavedArticleIds(session.user.id)
     : [];
@@ -121,7 +131,22 @@ export default async function ArticlePage({ params, searchParams }: Props) {
 
   return (
     <article className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8">
-      {session?.user?.id && <TrackReading articleId={article.id} />}
+      {isUnpublishedPreview ? (
+        <div className="mb-6 rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm">
+          <p className="font-medium text-amber-900 dark:text-amber-200">
+            Pratinjau staff — artikel belum dipublikasikan ke publik.
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Pembaca tanpa akun admin akan melihat halaman 404.{" "}
+            <Link href="/admin/artikel" className="text-primary hover:underline">
+              Kelola di admin
+            </Link>
+          </p>
+        </div>
+      ) : null}
+      {session?.user?.id && !isUnpublishedPreview ? (
+        <TrackReading articleId={article.id} />
+      ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

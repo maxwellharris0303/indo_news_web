@@ -181,6 +181,22 @@ export async function getArticleBySlug(
   return mapArticle(row);
 }
 
+/** Staff-only: load article regardless of publish status (for admin preview). */
+export async function getArticleBySlugStaffPreview(
+  category: CategorySlug,
+  slug: string,
+): Promise<Article | undefined> {
+  if (!(await useDb())) {
+    return seedArticles.find((a) => a.category === category && a.slug === slug);
+  }
+
+  const row = await prisma.article.findUnique({
+    where: { category_slug: { category, slug } },
+    include: { topics: true, author: true },
+  });
+  return row ? mapArticle(row) : undefined;
+}
+
 export async function getArticleBySlugOnly(
   slug: string,
 ): Promise<Article | undefined> {

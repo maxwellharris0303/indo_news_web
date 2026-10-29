@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ARTICLE_STATUSES } from "@/lib/admin/constants";
 import { articlePublicHref } from "@/lib/admin/article-url";
 import { actionsText, adminStatusLabels } from "@/lib/admin/locale-ui";
+
+const PUBLIC_STATUSES = new Set(["PUBLISHED", "CORRECTED"]);
 import { getAdminLocale } from "@/lib/admin-locale";
 
 type Props = {
@@ -30,18 +32,19 @@ export async function ArticleRowActions({
   const copy = actionsText(locale);
   const statusLabels = adminStatusLabels[locale];
   const href = articlePublicHref(category, slug);
+  const isPreviewOnly = !PUBLIC_STATUSES.has(status);
 
   return (
     <div
       className={
         compact
-          ? "flex flex-wrap items-center gap-2"
+          ? "flex min-w-[11rem] flex-col gap-2"
           : "flex flex-col gap-2 sm:flex-row sm:items-center"
       }
     >
       <form
         action={updateArticleStatusFormAction}
-        className="flex items-center gap-2"
+        className="flex flex-wrap items-center gap-2"
       >
         <input type="hidden" name="articleId" value={id} />
         <select
@@ -70,9 +73,16 @@ export async function ArticleRowActions({
             confirmDetail={copy.deleteConfirmDetail}
           />
         </form>
-        <Button variant="link" asChild size="sm" className="px-2">
-          <Link href={href} target="_blank" rel="noopener noreferrer">
-            {copy.view}
+        <Button variant="link" asChild size="sm" className="h-8 px-2">
+          <Link
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={
+              isPreviewOnly ? copy.viewPreviewHint : copy.viewPublishedHint
+            }
+          >
+            {isPreviewOnly ? copy.viewPreview : copy.view}
           </Link>
         </Button>
       </div>
