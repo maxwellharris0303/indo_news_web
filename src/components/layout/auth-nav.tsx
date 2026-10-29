@@ -18,7 +18,7 @@ export function AuthNav() {
 
   return (
     <div className="flex items-center gap-2">
-      {(role === "ADMIN" || role === "EDITOR") && (
+      {(role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR") && (
         <Button variant="ghost" size="sm" asChild>
           <Link href="/admin">Admin</Link>
         </Button>

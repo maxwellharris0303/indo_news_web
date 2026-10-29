@@ -48,7 +48,10 @@ export async function trackReadingAction(articleId: string) {
 export async function updateArticleStatusAction(formData: FormData) {
   const session = await auth();
   const role = session?.user?.role;
-  if (!session?.user?.id || (role !== "ADMIN" && role !== "EDITOR")) {
+  if (
+    !session?.user?.id ||
+    (role !== "SUPERADMIN" && role !== "ADMIN" && role !== "EDITOR")
+  ) {
     return { ok: false as const, error: "Unauthorized" };
   }
 

@@ -11,6 +11,7 @@ enum Role {
   READER
   EDITOR
   ADMIN
+  SUPERADMIN
 }
 
 enum MembershipPlan {

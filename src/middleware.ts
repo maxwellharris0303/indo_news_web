@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const role = req.auth?.user?.role;
-  const isStaff = role === "ADMIN" || role === "EDITOR";
+  const isStaff =
+    role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR";
 
   if (req.nextUrl.pathname.startsWith("/admin") && !isStaff) {
     return NextResponse.redirect(new URL("/login", req.url));
