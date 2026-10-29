@@ -26,13 +26,118 @@ export const adminNavCopy = {
     overview: "Ringkasan",
     articles: "Artikel",
     compose: "Tulis baru",
+    rss: "RSS & AI",
   },
   en: {
     overview: "Overview",
     articles: "Articles",
     compose: "New article",
+    rss: "RSS & AI",
   },
 } as const;
+
+export const adminRssCopy = {
+  id: {
+    title: "RSS & rewrite AI",
+    subtitle:
+      "Ambil berita dari feed RSS, scrape opsional, rewrite dengan OpenAI atau Anthropic.",
+    pollAll: "Poll semua feed",
+    addFeed: "Tambah feed",
+    feeds: "Feed",
+    inbox: "Inbox",
+    enabled: "Aktif",
+    lastFetch: "Fetch terakhir",
+    error: "Error",
+    poll: "Poll",
+    edit: "Edit",
+    delete: "Hapus",
+    scrapeMode: "Mode konten",
+    scrapeRssOnly: "RSS saja",
+    scrapeFetch: "Scrape halaman artikel",
+    aiProvider: "Provider AI",
+    openai: "OpenAI",
+    anthropic: "Anthropic",
+    openaiKey: "OPENAI_API_KEY",
+    anthropicKey: "ANTHROPIC_API_KEY",
+    configured: "terkonfigurasi",
+    missing: "belum diset",
+    itemTitle: "Judul",
+    itemSource: "Sumber",
+    itemStatus: "Status",
+    itemDate: "Tanggal",
+    actions: "Aksi",
+    view: "Detail",
+    rewrite: "Rewrite → REVIEW",
+    ignore: "Abaikan",
+    emptyInbox: "Belum ada item. Poll feed untuk mengisi inbox.",
+    saveFeed: "Simpan feed",
+    cancel: "Batal",
+    rewriteOptions: "Opsi rewrite",
+    feedDefaults: "Default feed",
+    overrideHint: "Pilih provider AI dan mode scrape per aksi.",
+  },
+  en: {
+    title: "RSS & AI rewrite",
+    subtitle:
+      "Ingest from RSS feeds, optional page scrape, rewrite with OpenAI or Anthropic.",
+    pollAll: "Poll all feeds",
+    addFeed: "Add feed",
+    feeds: "Feeds",
+    inbox: "Inbox",
+    enabled: "Enabled",
+    lastFetch: "Last fetch",
+    error: "Error",
+    poll: "Poll",
+    edit: "Edit",
+    delete: "Delete",
+    scrapeMode: "Content mode",
+    scrapeRssOnly: "RSS only",
+    scrapeFetch: "Scrape article page",
+    aiProvider: "AI provider",
+    openai: "OpenAI",
+    anthropic: "Anthropic",
+    openaiKey: "OPENAI_API_KEY",
+    anthropicKey: "ANTHROPIC_API_KEY",
+    configured: "configured",
+    missing: "not set",
+    itemTitle: "Title",
+    itemSource: "Source",
+    itemStatus: "Status",
+    itemDate: "Date",
+    actions: "Actions",
+    view: "Detail",
+    rewrite: "Rewrite → REVIEW",
+    ignore: "Ignore",
+    emptyInbox: "No items yet. Poll feeds to fill the inbox.",
+    saveFeed: "Save feed",
+    cancel: "Cancel",
+    rewriteOptions: "Rewrite options",
+    feedDefaults: "Feed defaults",
+    overrideHint: "Choose AI provider and scrape mode per action.",
+  },
+} as const;
+
+export const rssItemStatusLabels: Record<
+  AdminLocale,
+  Record<string, string>
+> = {
+  id: {
+    NEW: "Baru",
+    IGNORED: "Diabaikan",
+    QUEUED: "Antrean",
+    REWRITING: "Rewriting",
+    DRAFT_CREATED: "Artikel REVIEW",
+    FAILED: "Gagal",
+  },
+  en: {
+    NEW: "New",
+    IGNORED: "Ignored",
+    QUEUED: "Queued",
+    REWRITING: "Rewriting",
+    DRAFT_CREATED: "Article REVIEW",
+    FAILED: "Failed",
+  },
+};
 
 export const adminDashboardCopy = {
   id: {
@@ -217,6 +322,10 @@ export function articlesText(locale: AdminLocale) {
 
 export function composeText(locale: AdminLocale) {
   return adminComposeCopy[locale];
+}
+
+export function rssText(locale: AdminLocale) {
+  return adminRssCopy[locale];
 }
 
 export function actionsText(locale: AdminLocale) {

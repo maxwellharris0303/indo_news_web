@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { requireStaff } from "@/lib/admin/require-staff";
 import { prisma } from "@/lib/db";
 import { isCategorySlug } from "@/lib/site";
 import { z } from "zod";
@@ -25,18 +25,6 @@ const articleSchema = z.object({
     ])
     .default("PUBLISHED"),
 });
-
-async function requireStaff() {
-  const session = await auth();
-  const role = session?.user?.role;
-  if (
-    !session?.user?.id ||
-    (role !== "SUPERADMIN" && role !== "ADMIN" && role !== "EDITOR")
-  ) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
 
 export async function createArticleFormAction(formData: FormData) {
   const result = await createArticleAction(formData);

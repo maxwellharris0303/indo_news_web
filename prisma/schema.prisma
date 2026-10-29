@@ -41,6 +41,32 @@ enum FactCheckVerdict {
   tidak_dapat_diverifikasi
 }
 
+enum RssScrapeMode {
+  RSS_ONLY
+  FETCH_ARTICLE
+}
+
+enum AiRewriteProvider {
+  OPENAI
+  ANTHROPIC
+}
+
+enum RssItemStatus {
+  NEW
+  IGNORED
+  QUEUED
+  REWRITING
+  DRAFT_CREATED
+  FAILED
+}
+
+enum RewriteJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 model User {
   id              String           @id @default(cuid())
   name            String?
@@ -151,6 +177,7 @@ model Article {
   savedBy            SavedArticle[]
   comments           Comment[]
   readingHistory     ReadingHistory[]
+  rssSourceItem      RssItem?
 
   @@unique([category, slug])
   @@index([category, publishedAt])
@@ -222,4 +249,69 @@ model MarketCache {
   id        Int      @id @default(1)
   payload   String
   fetchedAt DateTime @default(now())
+}
+
+model RssFeed {
+  id                  String         @id @default(cuid())
+  name                String
+  siteUrl             String
+  feedUrl             String         @unique
+  enabled             Boolean        @default(true)
+  scrapeMode          RssScrapeMode  @default(RSS_ONLY)
+  defaultCategory     String         @default("nasional")
+  defaultLocale       String         @default("id")
+  defaultAiProvider   AiRewriteProvider @default(OPENAI)
+  defaultAuthorId     String         @default("a1")
+  pollIntervalMinutes Int            @default(30)
+  lastFetchedAt       DateTime?
+  etag                String?
+  lastModified        String?
+  lastError           String?
+  errorCount          Int            @default(0)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  items               RssItem[]
+}
+
+model RssItem {
+  id             String         @id @default(cuid())
+  feedId         String
+  feed           RssFeed        @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  guid           String
+  link           String
+  title          String
+  summaryRaw     String?
+  contentRaw     String?
+  extractedBody  String?
+  pubDate        DateTime?
+  imageUrl       String?
+  contentHash    String?
+  status         RssItemStatus  @default(NEW)
+  articleId      String?        @unique
+  article        Article?       @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  lastError      String?
+  fetchedAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  rewriteJobs    RewriteJob[]
+
+  @@unique([feedId, guid])
+  @@index([status, pubDate])
+  @@index([link])
+}
+
+model RewriteJob {
+  id            String            @id @default(cuid())
+  rssItemId     String
+  rssItem       RssItem           @relation(fields: [rssItemId], references: [id], onDelete: Cascade)
+  aiProvider    AiRewriteProvider
+  scrapeMode    RssScrapeMode
+  model         String?
+  promptVersion String            @default("v1")
+  status        RewriteJobStatus  @default(PENDING)
+  outputJson    String?
+  error         String?
+  createdAt     DateTime          @default(now())
+  completedAt   DateTime?
+
+  @@index([rssItemId, createdAt])
 }

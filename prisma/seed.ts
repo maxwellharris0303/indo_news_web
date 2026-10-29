@@ -11,6 +11,9 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.rewriteJob.deleteMany();
+  await prisma.rssItem.deleteMany();
+  await prisma.rssFeed.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.readingHistory.deleteMany();
   await prisma.newsletterSubscriber.deleteMany();
@@ -130,6 +133,10 @@ async function main() {
     });
     console.log(`Superadmin seed: ${superEmail}`);
   }
+
+  const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
+  await seedDefaultRssFeeds();
+  console.log("RSS feeds default: 8 sumber");
 
   console.log("Seed selesai: artikel + akun demo, admin@kabardesk.id / admin123");
 }

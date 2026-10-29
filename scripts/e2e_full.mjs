@@ -173,6 +173,7 @@ const sessionCookie = await login();
 if (sessionCookie) {
   await checkPage("/akun", sessionCookie);
   await checkPage("/admin", sessionCookie);
+  await checkPage("/admin/rss", sessionCookie);
   for (const path of dynamicPaths.slice(0, 5)) {
     await checkPage(path, sessionCookie);
   }
