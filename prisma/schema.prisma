@@ -251,6 +251,12 @@ model MarketCache {
   fetchedAt DateTime @default(now())
 }
 
+model UtilityCache {
+  id        Int      @id @default(1)
+  payload   String
+  fetchedAt DateTime @default(now())
+}
+
 model RssFeed {
   id                  String         @id @default(cuid())
   name                String

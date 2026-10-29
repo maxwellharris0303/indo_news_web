@@ -6,16 +6,18 @@ import {
 } from "@/lib/content/repository";
 import { getSiteLocale } from "@/lib/locale";
 import { getLiveMarketSnapshot } from "@/lib/market-live";
+import { getLiveUtilitySnapshot } from "@/lib/utilities-live";
 import { getJakartaWeather } from "@/lib/weather";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
 export async function SiteShell({ children }: { children: React.ReactNode }) {
   const locale = await getSiteLocale();
-  const [breaking, market, weather] = await Promise.all([
+  const [breaking, market, weather, utilities] = await Promise.all([
     getBreakingArticle(locale),
     getLiveMarketSnapshot(),
     getJakartaWeather(),
+    getLiveUtilitySnapshot(),
   ]);
 
   return (
@@ -28,7 +30,7 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
           slug={breaking.slug}
         />
       )}
-      <UtilityStrip />
+      <UtilityStrip data={utilities} />
       {(market || weather) && (
         <MarketTicker data={market} weather={weather} />
       )}

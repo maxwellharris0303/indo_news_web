@@ -234,6 +234,12 @@ AUTH_SECURE_COOKIES=false
         f"cd {REMOTE_DIR} && npx tsx scripts/test-market-live.ts",
         check=False,
     )
+    print("\nRunning live utilities test on VPS…")
+    run(
+        client,
+        f"cd {REMOTE_DIR} && npx tsx scripts/test-utilities-live.ts",
+        check=False,
+    )
     if os.environ.get("OPENAI_API_KEY", "").strip():
         print("\nRunning live RSS poll + OpenAI rewrite test on VPS…")
         run(

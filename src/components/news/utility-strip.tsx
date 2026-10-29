@@ -1,8 +1,13 @@
-import { getJakartaAirQuality, getJakartaPrayerBrief } from "@/lib/utilities";
+import { formatShortWIB } from "@/lib/format";
+import type { UtilitySnapshot } from "@/lib/utilities/types";
 
-export function UtilityStrip() {
-  const prayer = getJakartaPrayerBrief();
-  const air = getJakartaAirQuality();
+export function UtilityStrip({ data }: { data: UtilitySnapshot | null }) {
+  if (!data) return null;
+
+  const { prayer, air, updatedAt, isStale } = data;
+  const nextLabel = prayer.next.isTomorrow
+    ? `${prayer.next.name} (besok)`
+    : prayer.next.name;
 
   return (
     <div className="border-b border-border bg-background">
@@ -12,8 +17,12 @@ export function UtilityStrip() {
             <span className="font-medium text-foreground">
               Sholat {prayer.city}
             </span>
+            <span className="hidden sm:inline text-muted-foreground/80">
+              {" "}
+              · {prayer.method}
+            </span>
             {" · "}
-            Berikutnya {prayer.next.name}{" "}
+            Berikutnya {nextLabel}{" "}
             <span className="font-semibold text-foreground">
               {prayer.next.time}
             </span>
@@ -22,8 +31,14 @@ export function UtilityStrip() {
             <span className="font-medium text-foreground">Kualitas udara</span>
             {" · "}
             <span className="line-clamp-2 sm:line-clamp-none">
-              AQI {air.aqi} ({air.label}) — {air.recommendation}
+              AQI {air.aqi} ({air.label}
+              {air.pm25 != null ? ` · PM2.5 ${air.pm25} µg/m³` : ""}) —{" "}
+              {air.recommendation}
             </span>
+          </p>
+          <p className="min-w-0 shrink-0 text-muted-foreground/90">
+            {isStale ? "Data terakhir · " : "Diperbarui · "}
+            <time dateTime={updatedAt}>{formatShortWIB(updatedAt)}</time>
           </p>
         </div>
       </div>
