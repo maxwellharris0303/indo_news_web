@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import {
@@ -7,6 +9,36 @@ import {
   regions,
   topics,
 } from "../src/lib/content/seed";
+
+/** tsx does not load `.env`; without this, VPS deploy can run the dev wipe. */
+function loadDotEnv() {
+  const envPath = path.join(process.cwd(), ".env");
+  if (!fs.existsSync(envPath)) return;
+  for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    if (process.env[key] !== undefined) continue;
+    let val = trimmed.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    process.env[key] = val;
+  }
+}
+
+function shouldPreserveExistingData(): boolean {
+  if (process.env.KABARDESK_PRESERVE_DATA === "1") return true;
+  if (process.env.NODE_ENV === "production") return true;
+  const db = process.env.DATABASE_URL ?? "";
+  if (db.includes("/var/www/kabardesk")) return true;
+  return false;
+}
 
 const prisma = new PrismaClient();
 
@@ -174,7 +206,8 @@ async function seedDevelopment() {
 }
 
 async function main() {
-  if (process.env.NODE_ENV === "production") {
+  loadDotEnv();
+  if (shouldPreserveExistingData()) {
     await seedProduction();
     return;
   }

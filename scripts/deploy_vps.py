@@ -172,6 +172,7 @@ NEXT_PUBLIC_SITE_URL="{site_url}"
 PORT={internal_port}
 HOSTNAME=0.0.0.0
 NODE_ENV=production
+KABARDESK_PRESERVE_DATA=1
 AUTH_SECURE_COOKIES=false
 """
     if super_email and super_password:
