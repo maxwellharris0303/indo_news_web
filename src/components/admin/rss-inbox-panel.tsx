@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  batchRewriteRssItemsAction,
   bulkIgnoreRssItemsAction,
+  getRssBatchProgressAction,
   ignoreNewRssExceptLatestAction,
-  rewriteRssItemAction,
 } from "@/app/actions/admin-rss";
+import {
+  clearRssBatchJob,
+  loadRssBatchJob,
+  saveRssBatchJob,
+  type RssBatchJob,
+} from "@/lib/rss/batch-job-client";
 import { RssFeedBrandMark } from "@/components/admin/rss-feed-brand";
 import { Button } from "@/components/ui/button";
 
@@ -39,6 +46,9 @@ type Copy = {
   rewriteSelected: string;
   rewritingBatch: string;
   batchDone: string;
+  batchRunning: string;
+  batchBackgroundHint: string;
+  batchProgressDone: string;
   selected: string;
 };
 
@@ -62,6 +72,64 @@ export function RssInboxPanel({
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [batchProgress, setBatchProgress] = useState<string | null>(null);
+
+  const syncBatchFromServer = useCallback(
+    async (job: RssBatchJob, refreshPage: boolean) => {
+      const prog = await getRssBatchProgressAction(job.itemIds);
+      if (!prog.ok) return;
+      const doneCount = prog.completed + prog.failed;
+      const progressText = `${copy.batchRunning}: ${doneCount}/${prog.total} ${copy.batchProgressDone}${prog.rewriting > 0 ? ` (${prog.rewriting} aktif)` : ""}`;
+
+      if (doneCount >= prog.total) {
+        const ok = prog.completed;
+        const fail = prog.failed;
+        const message = `${copy.batchDone}: ${ok} OK${fail ? `, ${fail} gagal` : ""}.`;
+        const finished: RssBatchJob = {
+          ...job,
+          status: "done",
+          ok,
+          fail,
+          message,
+        };
+        saveRssBatchJob(finished);
+        setBatchProgress(null);
+        setMessage(message);
+        setBusy(null);
+        if (refreshPage) router.refresh();
+        return;
+      }
+
+      saveRssBatchJob({
+        ...job,
+        status: "running",
+        ok: prog.completed,
+        fail: prog.failed,
+        message: progressText,
+      });
+      setBatchProgress(progressText);
+      setBusy("rewrite");
+    },
+    [copy.batchDone, copy.batchProgressDone, copy.batchRunning, router],
+  );
+
+  useEffect(() => {
+    const job = loadRssBatchJob();
+    if (!job) return;
+    if (job.status === "done") {
+      setMessage(job.message);
+      return;
+    }
+    void syncBatchFromServer(job, false);
+    const interval = window.setInterval(() => {
+      const current = loadRssBatchJob();
+      if (!current || current.status === "done") {
+        window.clearInterval(interval);
+        return;
+      }
+      void syncBatchFromServer(current, true);
+    }, 4000);
+    return () => window.clearInterval(interval);
+  }, [syncBatchFromServer]);
 
   const selectableIds = useMemo(
     () => items.filter((i) => i.canIgnore).map((i) => i.id),
@@ -134,21 +202,57 @@ export function RssInboxPanel({
   }
 
   async function runBatchRewrite(ids: string[]) {
-    if (ids.length === 0) return;
+    const batchIds = ids.slice(0, 5);
+    if (batchIds.length === 0) return;
+
+    const job: RssBatchJob = {
+      itemIds: batchIds,
+      startedAt: Date.now(),
+      status: "running",
+      ok: 0,
+      fail: 0,
+      message: `${copy.batchRunning}: 0/${batchIds.length}…`,
+    };
+    saveRssBatchJob(job);
     setBusy("rewrite");
     setMessage(null);
-    let ok = 0;
-    let fail = 0;
-    for (let i = 0; i < ids.length; i++) {
-      setBatchProgress(`${copy.rewritingBatch} ${i + 1}/${ids.length}…`);
-      const res = await rewriteRssItemAction({ itemId: ids[i]! });
-      if (res.ok) ok += 1;
-      else fail += 1;
+    setBatchProgress(`${copy.batchRunning}: 0/${batchIds.length}… · ${copy.batchBackgroundHint}`);
+
+    try {
+      const res = await batchRewriteRssItemsAction(batchIds);
+      if (!res.ok) {
+        setMessage(res.error);
+        clearRssBatchJob();
+        return;
+      }
+      const ok = res.results.filter((r) => r.ok).length;
+      const fail = res.results.length - ok;
+      const message = `${copy.batchDone}: ${ok} OK${fail ? `, ${fail} gagal` : ""}.`;
+      saveRssBatchJob({
+        ...job,
+        status: "done",
+        ok,
+        fail,
+        message,
+      });
+      setBatchProgress(null);
+      setMessage(message);
+      setBusy(null);
+      router.refresh();
+    } catch {
+      const current = loadRssBatchJob();
+      if (current) {
+        setBatchProgress(
+          `${copy.batchRunning}… · ${copy.batchBackgroundHint}`,
+        );
+        void syncBatchFromServer(current, true);
+      } else {
+        setMessage("Batch terputus — refresh halaman untuk cek status.");
+      }
+    } finally {
+      const finished = loadRssBatchJob();
+      if (finished?.status === "done") setBusy(null);
     }
-    setBatchProgress(null);
-    setBusy(null);
-    setMessage(`${copy.batchDone}: ${ok} OK${fail ? `, ${fail} gagal` : ""}.`);
-    router.refresh();
   }
 
   const selectedArr = [...selected];
@@ -221,9 +325,23 @@ export function RssInboxPanel({
       </div>
 
       {message || batchProgress ? (
-        <p className="text-sm text-muted-foreground">
-          {batchProgress ?? message}
-        </p>
+        <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-foreground">
+          <p>{batchProgress ?? message}</p>
+          {busy === "rewrite" && batchProgress ? (
+            <button
+              type="button"
+              className="mt-1 text-xs text-muted-foreground underline"
+              onClick={() => {
+                clearRssBatchJob();
+                setBatchProgress(null);
+                setBusy(null);
+                setMessage(null);
+              }}
+            >
+              Sembunyikan status
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="overflow-x-auto rounded-xl border border-border bg-card">

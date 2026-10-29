@@ -17,7 +17,7 @@ import type { RssItemStatus } from "@prisma/client";
 
 export const metadata = { title: "RSS & AI" };
 
-export const maxDuration = 120;
+export const maxDuration = 600;
 
 type Props = {
   searchParams: Promise<{ inbox?: string; feed?: string }>;

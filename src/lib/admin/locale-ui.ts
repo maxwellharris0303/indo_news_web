@@ -96,6 +96,10 @@ export const adminRssCopy = {
     rewriteSelected: "Rewrite terpilih (max 5)",
     rewritingBatch: "Batch rewrite",
     batchDone: "Batch selesai",
+    batchRunning: "Batch rewrite",
+    batchBackgroundHint:
+      "Proses jalan di server — boleh pindah tab; progress tersimpan di halaman ini.",
+    batchProgressDone: "selesai",
     selected: "terpilih",
     emptyInbox: "Belum ada item. Poll feed untuk mengisi inbox.",
     saveFeed: "Simpan feed",
@@ -163,6 +167,10 @@ export const adminRssCopy = {
     rewriteSelected: "Rewrite selected (max 5)",
     rewritingBatch: "Batch rewrite",
     batchDone: "Batch done",
+    batchRunning: "Batch rewrite",
+    batchBackgroundHint:
+      "Runs on the server — you can switch tabs; progress is restored on this page.",
+    batchProgressDone: "done",
     selected: "selected",
     emptyInbox: "No items yet. Poll feeds to fill the inbox.",
     saveFeed: "Save feed",

@@ -341,6 +341,71 @@ export async function rewriteRssItemAction(input: {
   }
 }
 
+export async function batchRewriteRssItemsAction(itemIds: string[]) {
+  await requireStaff();
+  const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))].slice(
+    0,
+    5,
+  );
+  if (ids.length === 0) {
+    return { ok: false as const, error: "Tidak ada item dipilih" };
+  }
+  const results: {
+    itemId: string;
+    ok: boolean;
+    error?: string;
+    slug?: string;
+  }[] = [];
+  for (const itemId of ids) {
+    const res = await rewriteRssItemAction({ itemId });
+    results.push({
+      itemId,
+      ok: res.ok,
+      error: res.ok ? undefined : res.error,
+      slug: res.ok ? res.slug : undefined,
+    });
+  }
+  revalidateRss();
+  revalidatePath("/admin/artikel");
+  return { ok: true as const, results };
+}
+
+export async function getRssBatchProgressAction(itemIds: string[]) {
+  await requireStaff();
+  const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))].slice(
+    0,
+    10,
+  );
+  if (ids.length === 0) {
+    return {
+      ok: true as const,
+      total: 0,
+      completed: 0,
+      failed: 0,
+      rewriting: 0,
+    };
+  }
+  const rows = await prisma.rssItem.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, status: true, articleId: true },
+  });
+  let completed = 0;
+  let failed = 0;
+  let rewriting = 0;
+  for (const row of rows) {
+    if (row.articleId || row.status === "DRAFT_CREATED") completed += 1;
+    else if (row.status === "FAILED") failed += 1;
+    else if (row.status === "REWRITING") rewriting += 1;
+  }
+  return {
+    ok: true as const,
+    total: ids.length,
+    completed,
+    failed,
+    rewriting,
+  };
+}
+
 export async function rewriteRssItemFormAction(formData: FormData) {
   const itemId = String(formData.get("itemId") ?? "");
   const aiProvider = String(formData.get("aiProvider") ?? "") as AiRewriteProvider;
