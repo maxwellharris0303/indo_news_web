@@ -18,3 +18,17 @@ cpSync(staticSrc, staticDest, { recursive: true });
 if (existsSync(publicSrc)) {
   cpSync(publicSrc, publicDest, { recursive: true });
 }
+
+const envSrc = path.join(root, ".env");
+const envDest = path.join(standalone, ".env");
+if (existsSync(envSrc)) {
+  cpSync(envSrc, envDest);
+}
+
+const dbSrc = path.join(root, "prisma", "dev.db");
+const dbDestDir = path.join(standalone, "prisma");
+const dbDest = path.join(dbDestDir, "dev.db");
+if (existsSync(dbSrc)) {
+  mkdirSync(dbDestDir, { recursive: true });
+  cpSync(dbSrc, dbDest);
+}

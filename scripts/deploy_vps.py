@@ -141,7 +141,8 @@ def main() -> None:
     sftp.close()
 
     app_url = f"http://{HOST}:{internal_port}"
-    env_content = f"""DATABASE_URL="file:./dev.db"
+    db_path = f"{REMOTE_DIR}/prisma/dev.db"
+    env_content = f"""DATABASE_URL="file:{db_path}"
 AUTH_SECRET="{auth_secret}"
 AUTH_URL="{app_url if internal_port == PUBLIC_PORT else site_url}"
 NEXTAUTH_URL="{app_url if internal_port == PUBLIC_PORT else site_url}"
