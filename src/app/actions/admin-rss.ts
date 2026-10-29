@@ -141,6 +141,7 @@ export async function rewriteRssItemAction(input: {
   scrapeMode?: RssScrapeMode;
 }) {
   await requireStaff();
+  try {
   const item = await prisma.rssItem.findUnique({
     where: { id: input.itemId },
     include: { feed: true },
@@ -162,6 +163,21 @@ export async function rewriteRssItemAction(input: {
           ? "OPENAI_API_KEY belum diset di server"
           : "ANTHROPIC_API_KEY belum diset di server",
     };
+  }
+
+  if (item.status === "REWRITING") {
+    const staleMs = Date.now() - item.updatedAt.getTime();
+    if (staleMs < 120_000) {
+      return {
+        ok: false as const,
+        error:
+          "Rewrite masih berjalan. Tunggu ~1 menit atau refresh jika macet.",
+      };
+    }
+    await prisma.rssItem.update({
+      where: { id: item.id },
+      data: { status: "NEW", lastError: null },
+    });
   }
 
   const job = await prisma.rewriteJob.create({
@@ -260,6 +276,17 @@ export async function rewriteRssItemAction(input: {
     category: created.category,
     slug: created.slug,
   };
+  } catch (e) {
+    const message =
+      e instanceof Error ? e.message : "Rewrite gagal (server error)";
+    await prisma.rssItem
+      .update({
+        where: { id: input.itemId },
+        data: { status: "FAILED", lastError: message },
+      })
+      .catch(() => undefined);
+    return { ok: false as const, error: message };
+  }
 }
 
 export async function rewriteRssItemFormAction(formData: FormData) {

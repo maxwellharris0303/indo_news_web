@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  rewriteRssItemFormAction,
-  ignoreRssItemFormAction,
-} from "@/app/actions/admin-rss";
+import { ignoreRssItemFormAction } from "@/app/actions/admin-rss";
+import { RssItemRewritePanel } from "@/components/admin/rss-item-rewrite-panel";
 import { Button } from "@/components/ui/button";
 import { aiProviderConfigured } from "@/lib/ai/rewrite-article";
-import { selectClassName } from "@/lib/admin/constants";
 import { rssText, rssItemStatusLabels } from "@/lib/admin/locale-ui";
 import { getAdminLocale } from "@/lib/admin-locale";
 import { prisma } from "@/lib/db";
@@ -17,6 +14,8 @@ type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 };
+
+export const maxDuration = 180;
 
 export default async function AdminRssItemPage({ params, searchParams }: Props) {
   const { id } = await params;
@@ -119,39 +118,21 @@ export default async function AdminRssItemPage({ params, searchParams }: Props) 
               ? copy.anthropic
               : copy.openai}
           </p>
-          {!item.articleId && item.status !== "REWRITING" ? (
-            <form action={rewriteRssItemFormAction} className="mt-4 space-y-3">
-              <input type="hidden" name="itemId" value={item.id} />
-              <label className="block text-sm">
-                <span className="font-medium">{copy.scrapeMode}</span>
-                <select
-                  name="scrapeMode"
-                  defaultValue={item.feed.scrapeMode}
-                  className={`mt-1 ${selectClassName}`}
-                >
-                  <option value="RSS_ONLY">{copy.scrapeRssOnly}</option>
-                  <option value="FETCH_ARTICLE">{copy.scrapeFetch}</option>
-                </select>
-              </label>
-              <label className="block text-sm">
-                <span className="font-medium">{copy.aiProvider}</span>
-                <select
-                  name="aiProvider"
-                  defaultValue={item.feed.defaultAiProvider}
-                  className={`mt-1 ${selectClassName}`}
-                >
-                  <option value="OPENAI" disabled={!openaiOk}>
-                    {copy.openai}
-                    {!openaiOk ? ` (${copy.missing})` : ""}
-                  </option>
-                  <option value="ANTHROPIC" disabled={!anthropicOk}>
-                    {copy.anthropic}
-                    {!anthropicOk ? ` (${copy.missing})` : ""}
-                  </option>
-                </select>
-              </label>
-              <Button type="submit">{copy.rewrite}</Button>
-            </form>
+          {!item.articleId ? (
+            <RssItemRewritePanel
+              itemId={item.id}
+              defaultScrapeMode={item.feed.scrapeMode}
+              defaultAiProvider={item.feed.defaultAiProvider}
+              openaiOk={openaiOk}
+              anthropicOk={anthropicOk}
+              copy={copy}
+            />
+          ) : null}
+          {item.status === "REWRITING" && !item.articleId ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Status: rewriting — jika macet &gt;2 menit, refresh halaman lalu
+              klik Rewrite lagi.
+            </p>
           ) : null}
           {!item.articleId ? (
             <form

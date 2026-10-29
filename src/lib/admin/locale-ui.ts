@@ -78,6 +78,9 @@ export const adminRssCopy = {
     actions: "Aksi",
     view: "Detail",
     rewrite: "Rewrite → REVIEW",
+    rewriting: "Sedang rewrite…",
+    rewriteHint:
+      "Scrape + OpenAI biasanya 30–90 detik. Jangan tutup tab ini.",
     ignore: "Abaikan",
     emptyInbox: "Belum ada item. Poll feed untuk mengisi inbox.",
     saveFeed: "Simpan feed",
@@ -127,6 +130,9 @@ export const adminRssCopy = {
     actions: "Actions",
     view: "Detail",
     rewrite: "Rewrite → REVIEW",
+    rewriting: "Rewriting…",
+    rewriteHint:
+      "Scrape + OpenAI usually takes 30–90 seconds. Keep this tab open.",
     ignore: "Ignore",
     emptyInbox: "No items yet. Poll feeds to fill the inbox.",
     saveFeed: "Save feed",
