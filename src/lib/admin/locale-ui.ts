@@ -291,6 +291,12 @@ export const adminArticlesCopy = {
     colStatus: "Status",
     colViews: "Views",
     colActions: "Aksi",
+    selectAll: "Pilih semua",
+    bulkPublishSelected: "Terbitkan terpilih",
+    bulkPublishReviewPage: "Terbitkan semua Review di halaman",
+    bulkArchiveSelected: "Arsipkan terpilih",
+    selected: "terpilih",
+    bulkDone: "Bulk selesai",
   },
   en: {
     title: "Article list",
@@ -312,6 +318,12 @@ export const adminArticlesCopy = {
     colStatus: "Status",
     colViews: "Views",
     colActions: "Actions",
+    selectAll: "Select all",
+    bulkPublishSelected: "Publish selected",
+    bulkPublishReviewPage: "Publish all Review on page",
+    bulkArchiveSelected: "Archive selected",
+    selected: "selected",
+    bulkDone: "Bulk done",
   },
 } as const;
 

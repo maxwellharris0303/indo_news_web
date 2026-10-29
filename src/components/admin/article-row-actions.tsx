@@ -6,10 +6,10 @@ import { DeleteArticleButton } from "@/components/admin/delete-article-button";
 import { Button } from "@/components/ui/button";
 import { ARTICLE_STATUSES } from "@/lib/admin/constants";
 import { articlePublicHref } from "@/lib/admin/article-url";
-import { actionsText, adminStatusLabels } from "@/lib/admin/locale-ui";
+import type { actionsText, adminStatusLabels } from "@/lib/admin/locale-ui";
+import type { AdminLocale } from "@/lib/admin-locale";
 
 const PUBLIC_STATUSES = new Set(["PUBLISHED", "CORRECTED"]);
-import { getAdminLocale } from "@/lib/admin-locale";
 
 type Props = {
   id: string;
@@ -18,19 +18,20 @@ type Props = {
   slug: string;
   status: ArticleStatus;
   compact?: boolean;
+  copy: ReturnType<typeof actionsText>;
+  statusLabels: (typeof adminStatusLabels)[AdminLocale];
 };
 
-export async function ArticleRowActions({
+export function ArticleRowActions({
   id,
   title,
   category,
   slug,
   status,
   compact,
+  copy,
+  statusLabels,
 }: Props) {
-  const locale = await getAdminLocale();
-  const copy = actionsText(locale);
-  const statusLabels = adminStatusLabels[locale];
   const href = articlePublicHref(category, slug);
   const isPreviewOnly = !PUBLIC_STATUSES.has(status);
 

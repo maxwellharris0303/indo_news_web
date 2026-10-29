@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ArticleStatus } from "@prisma/client";
-import { ArticleRowActions } from "@/components/admin/article-row-actions";
-import { StatusBadge } from "@/components/admin/status-badge";
+import { ArticleListPanel } from "@/components/admin/article-list-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,6 +9,7 @@ import {
 } from "@/lib/admin/constants";
 import { listAdminArticles } from "@/lib/admin/dashboard";
 import {
+  actionsText,
   adminCategoryLabel,
   adminStatusLabels,
   articlesText,
@@ -35,6 +35,7 @@ export const metadata = { title: "Kelola Artikel" };
 export default async function AdminArticlesPage({ searchParams }: Props) {
   const locale = await getAdminLocale();
   const copy = articlesText(locale);
+  const actionCopy = actionsText(locale);
   const statusLabels = adminStatusLabels[locale];
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
@@ -149,53 +150,21 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid">
-          <span>{copy.colTitle}</span>
-          <span className="w-28 text-center">{copy.colStatus}</span>
-          <span className="w-24 text-right">{copy.colViews}</span>
-          <span className="w-[min(100%,14rem)]">{copy.colActions}</span>
-        </div>
-        <ul className="divide-y divide-border">
-          {items.length === 0 ? (
-            <li className="px-4 py-12 text-center text-muted-foreground">
-              {copy.empty}
-            </li>
-          ) : (
-            items.map((a) => (
-              <li
-                key={a.id}
-                className="grid gap-3 px-4 py-4 md:grid-cols-[1fr_auto_auto_auto] md:items-center md:gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium leading-snug">{a.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {adminCategoryLabel(a.category, locale)} ·{" "}
-                    {a.locale.toUpperCase()} ·{" "}
-                    {formatShortAdmin(a.publishedAt, locale)}
-                  </p>
-                </div>
-                <div className="md:w-28 md:text-center">
-                  <StatusBadge status={a.status} locale={locale} />
-                </div>
-                <p className="text-sm tabular-nums md:w-24 md:text-right">
-                  {formatCountAdmin(a.viewCount, locale)}
-                </p>
-                <div className="md:min-w-[13rem] md:justify-self-end">
-                  <ArticleRowActions
-                    id={a.id}
-                    title={a.title}
-                    category={a.category}
-                    slug={a.slug}
-                    status={a.status}
-                    compact
-                  />
-                </div>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
+      <ArticleListPanel
+        items={items.map((a) => ({
+          id: a.id,
+          title: a.title,
+          meta: `${adminCategoryLabel(a.category, locale)} · ${a.locale.toUpperCase()} · ${formatShortAdmin(a.publishedAt, locale)}`,
+          status: a.status,
+          viewCountLabel: formatCountAdmin(a.viewCount, locale),
+          category: a.category,
+          slug: a.slug,
+        }))}
+        copy={copy}
+        actionCopy={actionCopy}
+        statusLabels={statusLabels}
+        locale={locale}
+      />
 
       {totalPages > 1 ? (
         <div className="flex flex-wrap items-center justify-center gap-2">

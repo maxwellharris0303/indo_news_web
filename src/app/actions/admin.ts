@@ -2,10 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { ArticleStatus } from "@prisma/client";
 import { requireStaff } from "@/lib/admin/require-staff";
 import { prisma } from "@/lib/db";
 import { isCategorySlug } from "@/lib/site";
 import { z } from "zod";
+
+const BULK_STATUS_ALLOWED: ArticleStatus[] = [
+  "REVIEW",
+  "PUBLISHED",
+  "CORRECTED",
+  "ARCHIVED",
+  "DRAFT",
+  "SCHEDULED",
+];
 
 const articleSchema = z.object({
   title: z.string().min(10),
@@ -142,4 +152,34 @@ export async function deleteArticleAction(formData: FormData) {
   }
 
   return { ok: true as const };
+}
+
+export async function bulkUpdateArticleStatusAction(
+  articleIds: string[],
+  status: ArticleStatus,
+) {
+  await requireStaff();
+  if (!BULK_STATUS_ALLOWED.includes(status)) {
+    return { ok: false as const, error: "Status tidak valid" };
+  }
+  const ids = [...new Set(articleIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) {
+    return { ok: false as const, error: "Tidak ada artikel dipilih" };
+  }
+  if (ids.length > 100) {
+    return { ok: false as const, error: "Maksimal 100 artikel per aksi" };
+  }
+
+  const result = await prisma.article.updateMany({
+    where: { id: { in: ids } },
+    data: { status },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/artikel");
+  revalidatePath("/indeks");
+  revalidatePath("/api/articles");
+
+  return { ok: true as const, count: result.count };
 }

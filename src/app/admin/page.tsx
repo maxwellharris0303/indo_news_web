@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { articlePublicHref } from "@/lib/admin/article-url";
 import { getAdminDashboardStats } from "@/lib/admin/dashboard";
 import {
+  actionsText,
   adminCategoryLabel,
+  adminStatusLabels,
   dashboardText,
   formatCountAdmin,
 } from "@/lib/admin/locale-ui";
@@ -18,6 +20,8 @@ import { formatShortAdmin } from "@/lib/format";
 export default async function AdminDashboardPage() {
   const locale = await getAdminLocale();
   const copy = dashboardText(locale);
+  const actionCopy = actionsText(locale);
+  const statusLabels = adminStatusLabels[locale];
   const stats = await getAdminDashboardStats();
   const publishedCount =
     stats.byStatus.PUBLISHED + stats.byStatus.CORRECTED;
@@ -137,6 +141,8 @@ export default async function AdminDashboardPage() {
                     slug={a.slug}
                     status={a.status}
                     compact
+                    copy={actionCopy}
+                    statusLabels={statusLabels}
                   />
                 </div>
               </li>
