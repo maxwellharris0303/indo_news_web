@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { RssFeedForm } from "@/components/admin/rss-feed-form";
+import {
+  RssFeedCard,
+  RssFeedCreateForm,
+} from "@/components/admin/rss-feed-card";
+import { RssFeedBrandMark } from "@/components/admin/rss-feed-brand";
 import { RssPollAllButton } from "@/components/admin/rss-poll-all-button";
 import { Button } from "@/components/ui/button";
 import { aiProviderConfigured } from "@/lib/ai/rewrite-article";
@@ -18,11 +22,20 @@ export default async function AdminRssPage() {
   const statusLabels = rssItemStatusLabels[locale];
   const authors = await getAuthors();
   const feeds = await prisma.rssFeed.findMany({ orderBy: { name: "asc" } });
+  const newCounts = await prisma.rssItem.groupBy({
+    by: ["feedId"],
+    where: { status: "NEW" },
+    _count: { _all: true },
+  });
+  const newByFeed = new Map(
+    newCounts.map((r) => [r.feedId, r._count._all]),
+  );
+
   const items = await prisma.rssItem.findMany({
     where: { status: { not: "IGNORED" } },
     orderBy: { pubDate: "desc" },
     take: 50,
-    include: { feed: { select: { name: true } } },
+    include: { feed: { select: { name: true, siteUrl: true } } },
   });
 
   const openaiOk = aiProviderConfigured("OPENAI");
@@ -35,48 +48,60 @@ export default async function AdminRssPage() {
           <h2 className="font-serif text-xl font-bold sm:text-2xl">
             {copy.title}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">{copy.subtitle}</p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {copy.openaiKey}:{" "}
-            {openaiOk ? copy.configured : copy.missing} · {copy.anthropicKey}:{" "}
-            {anthropicOk ? copy.configured : copy.missing}
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            {copy.subtitle}
           </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            <span
+              className={`rounded-full px-2.5 py-1 ${
+                openaiOk
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {copy.openaiKey}: {openaiOk ? copy.configured : copy.missing}
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 ${
+                anthropicOk
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {copy.anthropicKey}:{" "}
+              {anthropicOk ? copy.configured : copy.missing}
+            </span>
+          </div>
         </div>
         <RssPollAllButton label={copy.pollAll} />
       </div>
 
       <section className="space-y-4">
-        <h3 className="font-serif text-lg font-bold">{copy.feeds}</h3>
-        <div className="space-y-4">
+        <div>
+          <h3 className="font-serif text-lg font-bold">{copy.feeds}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{copy.feedsHint}</p>
+        </div>
+        <div className="grid gap-5 xl:grid-cols-2">
           {feeds.map((feed) => (
-            <div key={feed.id}>
-              <p className="mb-1 text-xs text-muted-foreground">
+            <div key={feed.id} className="space-y-1">
+              <p className="px-1 text-xs text-muted-foreground">
                 {copy.lastFetch}:{" "}
                 {feed.lastFetchedAt
                   ? formatShortAdmin(feed.lastFetchedAt, locale)
                   : "—"}
-                {feed.lastError ? (
-                  <>
-                    {" "}
-                    · {copy.error}: {feed.lastError}
-                  </>
-                ) : null}
               </p>
-              <RssFeedForm
+              <RssFeedCard
                 feed={feed}
                 authors={authors}
                 copy={copy}
+                locale={locale}
+                newItemCount={newByFeed.get(feed.id) ?? 0}
                 showDelete
               />
             </div>
           ))}
         </div>
-        <details className="rounded-lg border border-border bg-card p-4">
-          <summary className="cursor-pointer font-medium">{copy.addFeed}</summary>
-          <div className="mt-4">
-            <RssFeedForm authors={authors} copy={copy} />
-          </div>
-        </details>
+        <RssFeedCreateForm authors={authors} copy={copy} locale={locale} />
       </section>
 
       <section className="space-y-4">
@@ -108,8 +133,15 @@ export default async function AdminRssPage() {
                     <td className="max-w-xs px-4 py-3 font-medium">
                       {item.title}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {item.feed.name}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <RssFeedBrandMark
+                          name={item.feed.name}
+                          siteUrl={item.feed.siteUrl}
+                          size="sm"
+                        />
+                        <span>{item.feed.name}</span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       {statusLabels[item.status] ?? item.status}
