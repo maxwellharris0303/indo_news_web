@@ -171,6 +171,7 @@ async function seedDevelopment() {
         sources: JSON.stringify(article.sources),
         featuredLevel: article.featuredLevel,
         isBreaking: article.isBreaking,
+        isDeveloping: article.isDeveloping,
         breakingExpiresAt: article.breakingExpiresAt
           ? new Date(article.breakingExpiresAt)
           : null,

@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ArticleStatus } from "@prisma/client";
 import { requireStaff } from "@/lib/admin/require-staff";
+import {
+  applyArticleUrgency,
+  BREAKING_HOUR_OPTIONS,
+  DEFAULT_BREAKING_HOURS,
+  type UrgencyMode,
+} from "@/lib/content/urgency";
 import { prisma } from "@/lib/db";
 import { isCategorySlug } from "@/lib/site";
 import { z } from "zod";
@@ -105,6 +111,12 @@ export async function createArticleAction(formData: FormData) {
     return { ok: false as const, error: "Slug sudah dipakai atau gagal simpan" };
   }
 
+  const urgency = parseUrgencyFromForm(formData);
+  if (urgency !== "none") {
+    const hours = parseBreakingHours(formData);
+    await applyArticleUrgency(id, urgency, hours);
+  }
+
   revalidatePath("/");
   revalidatePath(`/${data.category}`);
   revalidatePath(`/${data.category}/${data.slug}`);
@@ -170,9 +182,19 @@ export async function bulkUpdateArticleStatusAction(
     return { ok: false as const, error: "Maksimal 100 artikel per aksi" };
   }
 
+  const clearUrgency = !["PUBLISHED", "CORRECTED"].includes(status);
   const result = await prisma.article.updateMany({
     where: { id: { in: ids } },
-    data: { status },
+    data: {
+      status,
+      ...(clearUrgency
+        ? {
+            isBreaking: false,
+            isDeveloping: false,
+            breakingExpiresAt: null,
+          }
+        : {}),
+    },
   });
 
   revalidatePath("/");
@@ -182,4 +204,59 @@ export async function bulkUpdateArticleStatusAction(
   revalidatePath("/api/articles");
 
   return { ok: true as const, count: result.count };
+}
+
+function parseUrgencyFromForm(formData: FormData): UrgencyMode {
+  if (formData.get("markDeveloping") === "on") return "developing";
+  if (formData.get("markBreaking") === "on") return "breaking";
+  const raw = String(formData.get("urgency") ?? "").trim();
+  if (raw === "breaking" || raw === "developing" || raw === "none") return raw;
+  return "none";
+}
+
+function parseBreakingHours(formData: FormData): number {
+  const raw = Number(formData.get("breakingHours"));
+  if (BREAKING_HOUR_OPTIONS.includes(raw as (typeof BREAKING_HOUR_OPTIONS)[number])) {
+    return raw;
+  }
+  return DEFAULT_BREAKING_HOURS;
+}
+
+export async function setArticleUrgencyAction(
+  articleId: string,
+  mode: UrgencyMode,
+  breakingHours = DEFAULT_BREAKING_HOURS,
+) {
+  await requireStaff();
+  const id = articleId.trim();
+  if (!id) {
+    return { ok: false as const, error: "Artikel tidak ditemukan" };
+  }
+  if (mode !== "none" && mode !== "breaking" && mode !== "developing") {
+    return { ok: false as const, error: "Mode tidak valid" };
+  }
+
+  const result = await applyArticleUrgency(id, mode, breakingHours);
+  if (!result.ok) return result;
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/artikel");
+  revalidatePath("/indeks");
+
+  return { ok: true as const };
+}
+
+export async function setArticleUrgencyFormAction(formData: FormData) {
+  await requireStaff();
+  const articleId = String(formData.get("articleId") ?? "").trim();
+  const mode = parseUrgencyFromForm(formData);
+  const hours = parseBreakingHours(formData);
+  const returnTo = String(formData.get("returnTo") ?? "/admin/artikel").trim();
+
+  const result = await setArticleUrgencyAction(articleId, mode, hours);
+  if (!result.ok) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}urgencyError=1`);
+  }
+  redirect(returnTo);
 }

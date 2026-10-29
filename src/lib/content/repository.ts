@@ -221,24 +221,78 @@ export async function getHeroLead(
   return items.find((a) => a.featuredLevel === 3) ?? items[0];
 }
 
-export async function getBreakingArticle(
+export type UrgentBannerKind = "breaking" | "developing";
+
+export type UrgentBanner = {
+  kind: UrgentBannerKind;
+  article: Article;
+};
+
+function seedUrgentActive(a: Article): boolean {
+  if (!isPublishedSeed(a)) return false;
+  if (a.isBreaking) {
+    if (a.breakingExpiresAt && new Date(a.breakingExpiresAt).getTime() <= Date.now()) {
+      return false;
+    }
+    return true;
+  }
+  return a.isDeveloping;
+}
+
+export async function getUrgentBanner(
   locale: "id" | "en" = "id",
-): Promise<Article | undefined> {
+): Promise<UrgentBanner | undefined> {
   if (!(await useDb())) {
-    return seedArticles.find(
+    const candidates = seedArticles.filter(
       (a) =>
-        a.isBreaking &&
-        isPublishedSeed(a) &&
+        seedUrgentActive(a) &&
         (a.locale === locale || locale === "id"),
     );
+    const breaking = candidates.find((a) => a.isBreaking);
+    if (breaking) return { kind: "breaking", article: breaking };
+    const developing = candidates.find((a) => a.isDeveloping);
+    if (developing) return { kind: "developing", article: developing };
+    return undefined;
   }
 
-  const row = await prisma.article.findFirst({
-    where: { isBreaking: true, locale, ...publishedWhere() },
+  const { expireStaleBreakingFlags } = await import("@/lib/content/urgency");
+  await expireStaleBreakingFlags();
+
+  const published = publishedWhere();
+  const now = new Date();
+
+  const breakingRow = await prisma.article.findFirst({
+    where: {
+      locale,
+      isBreaking: true,
+      ...published,
+      OR: [{ breakingExpiresAt: null }, { breakingExpiresAt: { gt: now } }],
+    },
     include: { topics: true, author: true },
     orderBy: { publishedAt: "desc" },
   });
-  return row ? mapArticle(row) : undefined;
+  if (breakingRow) {
+    return { kind: "breaking", article: mapArticle(breakingRow) };
+  }
+
+  const developingRow = await prisma.article.findFirst({
+    where: { locale, isDeveloping: true, ...published },
+    include: { topics: true, author: true },
+    orderBy: { publishedAt: "desc" },
+  });
+  if (developingRow) {
+    return { kind: "developing", article: mapArticle(developingRow) };
+  }
+
+  return undefined;
+}
+
+/** @deprecated Use getUrgentBanner */
+export async function getBreakingArticle(
+  locale: "id" | "en" = "id",
+): Promise<Article | undefined> {
+  const banner = await getUrgentBanner(locale);
+  return banner?.article;
 }
 
 export async function getPopularArticles(
@@ -549,8 +603,18 @@ export async function updateArticleStatus(
   articleId: string,
   status: ArticleStatus,
 ) {
+  const clearUrgency = !["PUBLISHED", "CORRECTED"].includes(status);
   return prisma.article.update({
     where: { id: articleId },
-    data: { status },
+    data: {
+      status,
+      ...(clearUrgency
+        ? {
+            isBreaking: false,
+            isDeveloping: false,
+            breakingExpiresAt: null,
+          }
+        : {}),
+    },
   });
 }

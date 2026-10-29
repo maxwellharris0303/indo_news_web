@@ -143,6 +143,7 @@ export default async function AdminDashboardPage() {
                     compact
                     copy={actionCopy}
                     statusLabels={statusLabels}
+                    returnTo="/admin"
                   />
                 </div>
               </li>

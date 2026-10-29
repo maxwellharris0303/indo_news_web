@@ -97,8 +97,8 @@ const rawArticles = [
     verificationStatus: "verified",
     sources: ["Keterangan resmi Sekretariat Kabinet", "Liputan redaksi KabarDesk"],
     featuredLevel: 3,
-    isBreaking: true,
-    breakingExpiresAt: "2026-10-29T12:00:00+07:00",
+    isBreaking: false,
+    isDeveloping: false,
     viewCount: 48200,
   },
   {
@@ -127,6 +127,7 @@ const rawArticles = [
     sources: ["Data bursa", "Wawancara analis pasar modal"],
     featuredLevel: 2,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 35100,
   },
   {
@@ -155,6 +156,7 @@ const rawArticles = [
     sources: ["Keterangan Kementerian Luar Negeri", "AP"],
     featuredLevel: 2,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 28900,
   },
   {
@@ -184,6 +186,7 @@ const rawArticles = [
     sources: ["Humas Polresta Bandung"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 12400,
   },
   {
@@ -213,6 +216,7 @@ const rawArticles = [
     sources: ["Statistik pertandingan resmi"],
     featuredLevel: 1,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 55600,
   },
   {
@@ -241,6 +245,7 @@ const rawArticles = [
     sources: ["Reuters", "Data harga emas domestik"],
     featuredLevel: 1,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 19800,
   },
   {
@@ -269,6 +274,7 @@ const rawArticles = [
     sources: ["Keterangan KPK", "Liputan redaksi"],
     featuredLevel: 1,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 41200,
   },
   {
@@ -297,6 +303,7 @@ const rawArticles = [
     sources: ["Demo produk startup", "Wawancara pengamat teknologi"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 8700,
   },
   {
@@ -325,6 +332,7 @@ const rawArticles = [
     sources: ["Wawancara dr. Sp.KK"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 22100,
   },
   {
@@ -354,6 +362,7 @@ const rawArticles = [
     sources: ["BMKG", "BPBD setempat"],
     featuredLevel: 1,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 30500,
   },
   {
@@ -382,6 +391,7 @@ const rawArticles = [
     sources: ["Analisis redaksi opini"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 9800,
   },
   {
@@ -410,6 +420,7 @@ const rawArticles = [
     sources: ["Liputan multimedia KabarDesk"],
     featuredLevel: 1,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 16700,
     videoUrl: "https://www.youtube.com/embed/ScMzIvxBSi4",
     galleryImages: [
@@ -453,6 +464,7 @@ const rawArticles = [
     sources: ["Reuters", "Keterangan BI"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 24400,
   },
   {
@@ -482,6 +494,7 @@ const rawArticles = [
     sources: ["Polda DIY", "Liputan redaksi"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 18900,
   },
   {
@@ -511,6 +524,7 @@ const rawArticles = [
     sources: ["Pemprov Bali", "Pertamina"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 27300,
   },
   {
@@ -539,6 +553,7 @@ const rawArticles = [
     sources: ["Bloomberg", "Rilis perusahaan"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 11200,
   },
   {
@@ -567,6 +582,7 @@ const rawArticles = [
     sources: ["Kementerian Pertanian"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 33400,
   },
   {
@@ -595,6 +611,7 @@ const rawArticles = [
     sources: ["PA Media"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 40100,
   },
   {
@@ -624,6 +641,7 @@ const rawArticles = [
     sources: ["Sekretariat Presiden"],
     featuredLevel: 1,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 45200,
   },
   {
@@ -653,6 +671,7 @@ const rawArticles = [
     sources: ["Humas Polresta Bekasi"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 15600,
   },
   {
@@ -682,6 +701,7 @@ const rawArticles = [
     sources: ["ASEAN Secretariat press note"],
     featuredLevel: 1,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 4200,
   },
   {
@@ -711,6 +731,7 @@ const rawArticles = [
     sources: ["IDX trading summary"],
     featuredLevel: 0,
     isBreaking: false,
+    isDeveloping: false,
     viewCount: 3100,
   },
 ];

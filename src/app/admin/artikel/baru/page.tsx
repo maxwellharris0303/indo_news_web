@@ -25,7 +25,7 @@ export default async function AdminNewArticlePage({ searchParams }: Props) {
       </div>
 
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <ArticleComposeForm authors={authors} error={sp.error} />
+        <ArticleComposeForm authors={authors} error={sp.error} copy={copy} />
       </div>
     </div>
   );

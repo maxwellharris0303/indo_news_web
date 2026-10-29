@@ -12,6 +12,7 @@ Portal berita Indonesia — **Berita Terkini, Terpercaya, Dekat Kamu**.
 - **SQLite + Prisma** (siap diganti PostgreSQL via `DATABASE_URL`)
 - **Ticker pasar live:** USD/IDR & IHSG (Yahoo Finance), emas spot IDR/gr (COMEX + kurs), cuaca Jakarta (Open-Meteo); cache 5 menit, tanpa angka demo
 - **Utilitas Jakarta:** jadwal sholat (Aladhan · metode Kemenag) + kualitas udara US AQI/PM2.5 (Open-Meteo); cache 30 menit
+- **Breaking / Berlangsung:** headline bar dari CMS (satu Breaking per locale, durasi 3–24 jam, auto-expire)
 
 ## Brand
 

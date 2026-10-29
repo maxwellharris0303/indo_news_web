@@ -171,6 +171,7 @@ model Article {
   sources            String
   featuredLevel      Int                @default(0)
   isBreaking         Boolean            @default(false)
+  isDeveloping       Boolean            @default(false)
   breakingExpiresAt  DateTime?
   viewCount          Int                @default(0)
   topics             ArticleTopic[]

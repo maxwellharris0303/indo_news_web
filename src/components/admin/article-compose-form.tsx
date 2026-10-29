@@ -8,6 +8,8 @@ import {
   STATUS_LABELS,
   textareaClassName,
 } from "@/lib/admin/constants";
+import { BREAKING_HOUR_OPTIONS } from "@/lib/content/urgency";
+import type { composeText } from "@/lib/admin/locale-ui";
 import { categoryLabels, categorySlugs } from "@/lib/site";
 
 type Author = { id: string; name: string };
@@ -15,9 +17,10 @@ type Author = { id: string; name: string };
 type Props = {
   authors: Author[];
   error?: string;
+  copy: ReturnType<typeof composeText>;
 };
 
-export function ArticleComposeForm({ authors, error }: Props) {
+export function ArticleComposeForm({ authors, error, copy }: Props) {
   return (
     <form action={createArticleFormAction} className="space-y-6">
       {error ? (
@@ -72,6 +75,39 @@ export function ArticleComposeForm({ authors, error }: Props) {
           </label>
         </div>
       </div>
+
+      <fieldset className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
+        <legend className="px-1 text-sm font-medium">{copy.urgencyTitle}</legend>
+        <p className="text-xs text-muted-foreground">{copy.urgencyHint}</p>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="markBreaking" className="size-4 rounded border-border" />
+            {copy.markBreaking}
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">{copy.breakingHours}</span>
+            <select
+              name="breakingHours"
+              className={`h-9 ${selectClassName}`}
+              defaultValue="6"
+            >
+              {BREAKING_HOUR_OPTIONS.map((h) => (
+                <option key={h} value={h}>
+                  {h} jam
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="markDeveloping"
+              className="size-4 rounded border-border"
+            />
+            {copy.markDeveloping}
+          </label>
+        </div>
+      </fieldset>
 
       <label className="block text-sm">
         <span className="font-medium">Lead / dek</span>

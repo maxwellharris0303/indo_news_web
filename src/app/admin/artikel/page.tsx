@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ArticleStatus } from "@prisma/client";
+import { AdminUrgentPanel } from "@/components/admin/admin-urgent-panel";
 import { ArticleListPanel } from "@/components/admin/article-list-panel";
+import { getAdminUrgentSummary } from "@/lib/admin/urgent-summary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,12 +48,16 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
   const category =
     sp.category && isCategorySlug(sp.category) ? sp.category : undefined;
 
-  const { items, total, totalPages, pageSize } = await listAdminArticles({
-    q: sp.q,
-    status,
-    category,
-    page,
-  });
+  const [{ items, total, totalPages, pageSize }, urgentSummary] =
+    await Promise.all([
+      listAdminArticles({
+        q: sp.q,
+        status,
+        category,
+        page,
+      }),
+      getAdminUrgentSummary("id"),
+    ]);
 
   function pageHref(nextPage: number) {
     const params = new URLSearchParams();
@@ -61,6 +67,18 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
     if (nextPage > 1) params.set("page", String(nextPage));
     const qs = params.toString();
     return qs ? `/admin/artikel?${qs}` : "/admin/artikel";
+  }
+
+  const returnTo = pageHref(page);
+  const now = Date.now();
+
+  function rowBreakingActive(
+    isBreaking: boolean,
+    breakingExpiresAt: Date | null,
+  ) {
+    if (!isBreaking) return false;
+    if (!breakingExpiresAt) return true;
+    return breakingExpiresAt.getTime() > now;
   }
 
   return (
@@ -150,6 +168,14 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         </div>
       </form>
 
+      <AdminUrgentPanel
+        breaking={urgentSummary.breaking}
+        developing={urgentSummary.developing}
+        locale={locale}
+        copy={copy.urgentPanel}
+        returnTo={returnTo}
+      />
+
       <ArticleListPanel
         items={items.map((a) => ({
           id: a.id,
@@ -159,11 +185,14 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           viewCountLabel: formatCountAdmin(a.viewCount, locale),
           category: a.category,
           slug: a.slug,
+          isBreaking: rowBreakingActive(a.isBreaking, a.breakingExpiresAt),
+          isDeveloping: a.isDeveloping,
         }))}
         copy={copy}
         actionCopy={actionCopy}
         statusLabels={statusLabels}
         locale={locale}
+        returnTo={returnTo}
       />
 
       {totalPages > 1 ? (

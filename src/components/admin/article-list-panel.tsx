@@ -18,6 +18,8 @@ export type ArticleListRow = {
   viewCountLabel: string;
   category: string;
   slug: string;
+  isBreaking?: boolean;
+  isDeveloping?: boolean;
 };
 
 type Copy = {
@@ -43,12 +45,14 @@ export function ArticleListPanel({
   actionCopy,
   statusLabels,
   locale,
+  returnTo,
 }: {
   items: ArticleListRow[];
   copy: Copy;
   actionCopy: ActionCopy;
   statusLabels: StatusLabels;
   locale: AdminLocale;
+  returnTo: string;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -180,7 +184,19 @@ export function ArticleListPanel({
                   />
                 </div>
                 <div className="min-w-0 md:col-start-2">
-                  <p className="font-medium leading-snug">{a.title}</p>
+                  <p className="font-medium leading-snug">
+                    {a.isBreaking ? (
+                      <span className="mr-2 inline-block rounded bg-breaking px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+                        Breaking
+                      </span>
+                    ) : null}
+                    {a.isDeveloping ? (
+                      <span className="mr-2 inline-block rounded bg-amber-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+                        Berlangsung
+                      </span>
+                    ) : null}
+                    {a.title}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">{a.meta}</p>
                 </div>
                 <div className="md:w-28 md:text-center">
@@ -199,6 +215,9 @@ export function ArticleListPanel({
                     compact
                     copy={actionCopy}
                     statusLabels={statusLabels}
+                    returnTo={returnTo}
+                    isBreaking={a.isBreaking}
+                    isDeveloping={a.isDeveloping}
                   />
                 </div>
               </li>

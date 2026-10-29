@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { ArticleStatus } from "@prisma/client";
-import { deleteArticleFormAction } from "@/app/actions/admin";
+import {
+  deleteArticleFormAction,
+  setArticleUrgencyFormAction,
+} from "@/app/actions/admin";
 import { updateArticleStatusFormAction } from "@/app/actions/social";
 import { DeleteArticleButton } from "@/components/admin/delete-article-button";
 import { Button } from "@/components/ui/button";
@@ -20,6 +23,9 @@ type Props = {
   compact?: boolean;
   copy: ReturnType<typeof actionsText>;
   statusLabels: (typeof adminStatusLabels)[AdminLocale];
+  returnTo: string;
+  isBreaking?: boolean;
+  isDeveloping?: boolean;
 };
 
 export function ArticleRowActions({
@@ -31,9 +37,13 @@ export function ArticleRowActions({
   compact,
   copy,
   statusLabels,
+  returnTo,
+  isBreaking,
+  isDeveloping,
 }: Props) {
   const href = articlePublicHref(category, slug);
   const isPreviewOnly = !PUBLIC_STATUSES.has(status);
+  const canUrgent = PUBLIC_STATUSES.has(status);
 
   return (
     <div
@@ -43,6 +53,55 @@ export function ArticleRowActions({
           : "flex flex-col gap-2 sm:flex-row sm:items-center"
       }
     >
+      {canUrgent ? (
+        <div className="flex flex-wrap gap-1">
+          <form action={setArticleUrgencyFormAction}>
+            <input type="hidden" name="articleId" value={id} />
+            <input type="hidden" name="urgency" value="breaking" />
+            <input type="hidden" name="breakingHours" value="6" />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <Button
+              type="submit"
+              size="sm"
+              variant={isBreaking ? "default" : "outline"}
+              className="h-8 px-2 text-xs"
+              aria-label={copy.urgencyBreakingAria}
+            >
+              {copy.urgencyBreaking}
+            </Button>
+          </form>
+          <form action={setArticleUrgencyFormAction}>
+            <input type="hidden" name="articleId" value={id} />
+            <input type="hidden" name="urgency" value="developing" />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <Button
+              type="submit"
+              size="sm"
+              variant={isDeveloping ? "secondary" : "outline"}
+              className="h-8 px-2 text-xs"
+              aria-label={copy.urgencyDevelopingAria}
+            >
+              {copy.urgencyDeveloping}
+            </Button>
+          </form>
+          {isBreaking || isDeveloping ? (
+            <form action={setArticleUrgencyFormAction}>
+              <input type="hidden" name="articleId" value={id} />
+              <input type="hidden" name="urgency" value="none" />
+              <input type="hidden" name="returnTo" value={returnTo} />
+              <Button
+                type="submit"
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-xs"
+                aria-label={copy.urgencyClearAria}
+              >
+                {copy.urgencyClear}
+              </Button>
+            </form>
+          ) : null}
+        </div>
+      ) : null}
       <form
         action={updateArticleStatusFormAction}
         className="flex flex-wrap items-center gap-2"

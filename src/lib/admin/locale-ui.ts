@@ -297,6 +297,15 @@ export const adminArticlesCopy = {
     bulkArchiveSelected: "Arsipkan terpilih",
     selected: "terpilih",
     bulkDone: "Bulk selesai",
+    urgentPanel: {
+      title: "Headline bar situs (Breaking / Berlangsung)",
+      none: "Tidak ada headline urgent aktif. Set dari aksi artikel di bawah (maks. satu Breaking dan satu Berlangsung per locale).",
+      breaking: "Breaking",
+      developing: "Berlangsung",
+      expires: "Berakhir",
+      clear: "Hapus",
+      hint: "Breaking otomatis hilang setelah durasi. Hanya artikel terbit yang tampil di situs.",
+    },
   },
   en: {
     title: "Article list",
@@ -324,6 +333,15 @@ export const adminArticlesCopy = {
     bulkArchiveSelected: "Archive selected",
     selected: "selected",
     bulkDone: "Bulk done",
+    urgentPanel: {
+      title: "Site headline bar (Breaking / Developing)",
+      none: "No active urgent headline. Set it from article actions below (one Breaking and one Developing per locale at most).",
+      breaking: "Breaking",
+      developing: "Developing",
+      expires: "Ends",
+      clear: "Clear",
+      hint: "Breaking expires automatically. Only published articles appear on the site.",
+    },
   },
 } as const;
 
@@ -340,6 +358,12 @@ export const adminActionsCopy = {
     deleteConfirmIntro: "Hapus artikel",
     deleteConfirmDetail:
       "Tindakan ini permanen (komentar & simpanan terkait ikut terhapus).",
+    urgencyBreaking: "Breaking 6j",
+    urgencyDeveloping: "Berlangsung",
+    urgencyClear: "Hapus bar",
+    urgencyBreakingAria: "Tampilkan sebagai Breaking selama 6 jam",
+    urgencyDevelopingAria: "Tampilkan sebagai Berlangsung",
+    urgencyClearAria: "Hapus dari headline bar",
   },
   en: {
     view: "View",
@@ -353,6 +377,12 @@ export const adminActionsCopy = {
     deleteConfirmIntro: "Delete article",
     deleteConfirmDetail:
       "This is permanent (related comments and saves will be removed).",
+    urgencyBreaking: "Breaking 6h",
+    urgencyDeveloping: "Developing",
+    urgencyClear: "Clear bar",
+    urgencyBreakingAria: "Show as Breaking for 6 hours",
+    urgencyDevelopingAria: "Show as Developing",
+    urgencyClearAria: "Remove from headline bar",
   },
 } as const;
 
@@ -380,11 +410,23 @@ export const adminComposeCopy = {
     title: "Tulis artikel baru",
     subtitle:
       "Judul, slug, kanal, dan status publikasi. Gambar hero otomatis dari seed slug.",
+    urgencyTitle: "Headline situs (opsional)",
+    markBreaking: "Breaking",
+    markDeveloping: "Berlangsung",
+    breakingHours: "Durasi Breaking",
+    urgencyHint:
+      "Hanya untuk artikel terbit. Satu Breaking aktif per locale; Breaking lama diganti otomatis.",
   },
   en: {
     title: "Write new article",
     subtitle:
       "Title, slug, channel, and publish status. Hero image is auto-seeded from the slug.",
+    urgencyTitle: "Site headline (optional)",
+    markBreaking: "Breaking",
+    markDeveloping: "Developing",
+    breakingHours: "Breaking duration",
+    urgencyHint:
+      "Published articles only. One active Breaking per locale; previous Breaking is replaced.",
   },
 } as const;
 

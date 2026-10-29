@@ -1,9 +1,7 @@
 import { BreakingBar } from "@/components/news/breaking-bar";
 import { MarketTicker } from "@/components/news/market-ticker";
 import { UtilityStrip } from "@/components/news/utility-strip";
-import {
-  getBreakingArticle,
-} from "@/lib/content/repository";
+import { getUrgentBanner } from "@/lib/content/repository";
 import { getSiteLocale } from "@/lib/locale";
 import { getLiveMarketSnapshot } from "@/lib/market-live";
 import { getLiveUtilitySnapshot } from "@/lib/utilities-live";
@@ -13,8 +11,8 @@ import { SiteHeader } from "./site-header";
 
 export async function SiteShell({ children }: { children: React.ReactNode }) {
   const locale = await getSiteLocale();
-  const [breaking, market, weather, utilities] = await Promise.all([
-    getBreakingArticle(locale),
+  const [urgent, market, weather, utilities] = await Promise.all([
+    getUrgentBanner(locale),
     getLiveMarketSnapshot(),
     getJakartaWeather(),
     getLiveUtilitySnapshot(),
@@ -23,11 +21,12 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <SiteHeader />
-      {breaking && (
+      {urgent && (
         <BreakingBar
-          title={breaking.title}
-          category={breaking.category}
-          slug={breaking.slug}
+          kind={urgent.kind}
+          title={urgent.article.title}
+          category={urgent.article.category}
+          slug={urgent.article.slug}
         />
       )}
       <UtilityStrip data={utilities} />

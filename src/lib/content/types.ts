@@ -54,6 +54,7 @@ export interface Article {
   sources: string[];
   featuredLevel: 0 | 1 | 2 | 3;
   isBreaking: boolean;
+  isDeveloping: boolean;
   breakingExpiresAt?: string;
   viewCount: number;
 }

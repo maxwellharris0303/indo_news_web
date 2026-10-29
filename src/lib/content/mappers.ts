@@ -67,6 +67,7 @@ export function mapArticle(row: ArticleWithRelations): Article {
     sources: JSON.parse(row.sources) as string[],
     featuredLevel: row.featuredLevel as 0 | 1 | 2 | 3,
     isBreaking: row.isBreaking,
+    isDeveloping: row.isDeveloping,
     breakingExpiresAt: row.breakingExpiresAt?.toISOString(),
     viewCount: row.viewCount,
   };
