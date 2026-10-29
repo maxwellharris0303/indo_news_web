@@ -135,6 +135,58 @@ export async function ignoreRssItemFormAction(itemId: string) {
   redirect("/admin/rss");
 }
 
+export async function bulkIgnoreRssItemsAction(itemIds: string[]) {
+  await requireStaff();
+  const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) {
+    return { ok: false as const, error: "Tidak ada item dipilih" };
+  }
+  if (ids.length > 500) {
+    return { ok: false as const, error: "Maksimal 500 item per aksi" };
+  }
+  const result = await prisma.rssItem.updateMany({
+    where: {
+      id: { in: ids },
+      status: { notIn: ["DRAFT_CREATED", "IGNORED"] },
+    },
+    data: { status: "IGNORED" },
+  });
+  revalidateRss();
+  return { ok: true as const, count: result.count };
+}
+
+/** Mark all NEW items ignored except the newest `keepCount` (optionally per feed). */
+export async function ignoreNewRssExceptLatestAction(input: {
+  keepCount: number;
+  feedId?: string | null;
+}) {
+  await requireStaff();
+  const keepCount = Math.min(Math.max(input.keepCount, 0), 50);
+  const feedId = input.feedId?.trim() || undefined;
+
+  const keep = await prisma.rssItem.findMany({
+    where: {
+      status: "NEW",
+      ...(feedId ? { feedId } : {}),
+    },
+    orderBy: [{ pubDate: "desc" }, { fetchedAt: "desc" }],
+    take: keepCount,
+    select: { id: true },
+  });
+  const keepIds = keep.map((k) => k.id);
+
+  const result = await prisma.rssItem.updateMany({
+    where: {
+      status: "NEW",
+      ...(feedId ? { feedId } : {}),
+      ...(keepIds.length > 0 ? { id: { notIn: keepIds } } : {}),
+    },
+    data: { status: "IGNORED" },
+  });
+  revalidateRss();
+  return { ok: true as const, ignored: result.count, kept: keepIds.length };
+}
+
 export async function rewriteRssItemAction(input: {
   itemId: string;
   aiProvider?: AiRewriteProvider;
