@@ -202,6 +202,17 @@ AUTH_SECURE_COOKIES=false
 
     time.sleep(3)
     run(client, f"curl -sI {site_url} | head -8", check=False)
+    run(
+        client,
+        f"cd {REMOTE_DIR} && node scripts/e2e-seed-article.mjs",
+        check=False,
+    )
+    run(
+        client,
+        f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
+        f"E2E_EMAIL=admin@kabardesk.id E2E_PASSWORD=admin123 node scripts/e2e_full.mjs",
+        check=False,
+    )
     client.close()
     print(f"\nDeployed (no conflict with port 80 sites): {site_url}")
     print("Admin: admin@kabardesk.id / admin123")

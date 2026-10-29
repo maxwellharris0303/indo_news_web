@@ -1,7 +1,9 @@
 import Link from "next/link";
 import {
   createArticleFormAction,
+  deleteArticleFormAction,
 } from "@/app/actions/admin";
+import { DeleteArticleButton } from "@/components/admin/delete-article-button";
 import { updateArticleStatusFormAction } from "@/app/actions/social";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,8 +127,20 @@ export default async function AdminPage() {
                   Update
                 </Button>
               </form>
+              <form action={deleteArticleFormAction}>
+                <input type="hidden" name="articleId" value={a.id} />
+                <DeleteArticleButton title={a.title} />
+              </form>
               <Button variant="link" asChild size="sm">
-                <Link href={`/${a.category}/${a.slug}`}>Lihat</Link>
+                <Link
+                  href={
+                    a.category === "daerah"
+                      ? `/daerah/${a.slug}`
+                      : `/${a.category}/${a.slug}`
+                  }
+                >
+                  Lihat
+                </Link>
               </Button>
             </li>
           ))}

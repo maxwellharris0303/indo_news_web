@@ -104,3 +104,38 @@ export async function createArticleAction(formData: FormData) {
 
   return { ok: true as const, id, category: data.category, slug: data.slug };
 }
+
+export async function deleteArticleFormAction(formData: FormData) {
+  await deleteArticleAction(formData);
+}
+
+export async function deleteArticleAction(formData: FormData) {
+  await requireStaff();
+
+  const articleId = String(formData.get("articleId") ?? "").trim();
+  if (!articleId) {
+    return { ok: false as const, error: "Artikel tidak ditemukan" };
+  }
+
+  const article = await prisma.article.findUnique({
+    where: { id: articleId },
+    select: { category: true, slug: true },
+  });
+  if (!article) {
+    return { ok: false as const, error: "Artikel tidak ditemukan" };
+  }
+
+  await prisma.article.delete({ where: { id: articleId } });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/indeks");
+  revalidatePath(`/${article.category}`);
+  if (article.category === "daerah") {
+    revalidatePath(`/daerah/${article.slug}`);
+  } else {
+    revalidatePath(`/${article.category}/${article.slug}`);
+  }
+
+  return { ok: true as const };
+}
