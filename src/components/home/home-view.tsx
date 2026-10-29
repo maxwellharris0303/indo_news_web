@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { InfiniteLatest } from "@/components/home/infinite-latest";
+import { AdSlot } from "@/components/news/ad-slot";
 import { NewsCard } from "@/components/news/news-card";
 import { TopicChips } from "@/components/news/topic-chips";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ export async function HomeView() {
     (a) => a.id !== hero?.id,
   );
   const latest = await getArticles({ limit: 8 });
+  const moreLatest = await getArticles({ limit: 8, offset: 8 });
   const popular = await getPopularArticles(24);
   const editorPicks = await getEditorPicks();
   const topics = await getTopics();
@@ -105,9 +108,13 @@ export async function HomeView() {
               <NewsCard key={article.id} article={article} variant="horizontal" />
             ))}
           </div>
+          <div className="mt-8">
+            <InfiniteLatest initial={moreLatest} startOffset={16} />
+          </div>
         </section>
 
         <aside className="space-y-8">
+          <AdSlot compact />
           <section className="rounded-xl border border-border bg-card p-5">
             <h2 className="font-serif text-xl font-bold">Terpopuler</h2>
             <ol className="mt-4 space-y-4">

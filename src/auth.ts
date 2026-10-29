@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 declare module "next-auth" {
   interface User {
     role?: string;
+    plan?: string;
   }
   interface Session {
     user: {
@@ -13,6 +14,7 @@ declare module "next-auth" {
       email?: string | null;
       name?: string | null;
       role?: string;
+      plan?: string;
     };
   }
 }
@@ -21,6 +23,7 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     role?: string;
+    plan?: string;
   }
 }
 
@@ -51,6 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          plan: user.plan,
         };
       },
     }),
@@ -60,6 +64,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.plan = user.plan;
       }
       return token;
     },
@@ -67,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.plan = token.plan as string;
       }
       return session;
     },

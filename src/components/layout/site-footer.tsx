@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NewsletterForm } from "@/components/news/newsletter-form";
 import { site } from "@/lib/site";
 
 const footerLinks = [
@@ -33,11 +34,11 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <p className="text-sm font-semibold">Kepercayaan Pembaca</p>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Setiap artikel memuat status verifikasi, sumber, dan jalur koreksi
-            terbuka sesuai pedoman media siber.
+          <p className="text-sm font-semibold">Newsletter KabarDesk</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Ringkasan berita penting setiap minggu, gratis.
           </p>
+          <NewsletterForm compact />
         </div>
       </div>
     </footer>

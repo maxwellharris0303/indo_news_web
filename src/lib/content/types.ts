@@ -23,14 +23,23 @@ export interface Topic {
   description: string;
 }
 
+export interface GalleryImage {
+  url: string;
+  caption: string;
+}
+
 export interface Article {
   id: string;
   slug: string;
   category: CategorySlug;
+  locale: "id" | "en";
   title: string;
   dek: string;
   body: string;
+  aiSummary?: string;
   summaryBullets: string[];
+  videoUrl?: string;
+  galleryImages: GalleryImage[];
   publishedAt: string;
   updatedAt?: string;
   correctionNote?: string;

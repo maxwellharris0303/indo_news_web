@@ -1,5 +1,6 @@
 import { BreakingBar } from "@/components/news/breaking-bar";
 import { MarketTicker } from "@/components/news/market-ticker";
+import { UtilityStrip } from "@/components/news/utility-strip";
 import {
   getBreakingArticle,
 } from "@/lib/content/repository";
@@ -25,6 +26,7 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
           slug={breaking.slug}
         />
       )}
+      <UtilityStrip />
       <MarketTicker data={market} weather={weather} />
       <main className="flex-1">{children}</main>
       <SiteFooter />

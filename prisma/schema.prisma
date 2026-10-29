@@ -13,6 +13,20 @@ enum Role {
   ADMIN
 }
 
+enum MembershipPlan {
+  FREE
+  PLUS
+}
+
+enum ArticleStatus {
+  DRAFT
+  REVIEW
+  SCHEDULED
+  PUBLISHED
+  CORRECTED
+  ARCHIVED
+}
+
 enum VerificationStatus {
   verified
   investigation
@@ -27,20 +41,23 @@ enum FactCheckVerdict {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  passwordHash  String?
-  image         String?
-  role          Role      @default(READER)
-  interests     String    @default("[]")
-  regionSlug    String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  savedArticles SavedArticle[]
+  id              String           @id @default(cuid())
+  name            String?
+  email           String           @unique
+  emailVerified   DateTime?
+  passwordHash    String?
+  image           String?
+  role            Role             @default(READER)
+  plan            MembershipPlan   @default(FREE)
+  interests       String           @default("[]")
+  regionSlug      String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  accounts        Account[]
+  sessions        Session[]
+  savedArticles   SavedArticle[]
+  comments        Comment[]
+  readingHistory  ReadingHistory[]
 }
 
 model Account {
@@ -78,11 +95,11 @@ model VerificationToken {
 }
 
 model Author {
-  id        String    @id
-  name      String
-  title     String?
-  bio       String?
-  articles  Article[]
+  id       String    @id
+  name     String
+  title    String?
+  bio      String?
+  articles Article[]
 }
 
 model Region {
@@ -100,35 +117,44 @@ model Topic {
 }
 
 model Article {
-  id                  String             @id
-  slug                String
-  category            String
-  title               String
-  dek                 String
-  body                String
-  summaryBullets      String
-  publishedAt         DateTime
-  updatedAt           DateTime?
-  correctionNote      String?
-  authorId            String
-  author              Author             @relation(fields: [authorId], references: [id])
-  regionSlug          String?
-  region              Region?            @relation(fields: [regionSlug], references: [slug])
-  imageUrl            String
-  imageCaption        String
-  imageCredit         String
-  verificationStatus  VerificationStatus @default(verified)
-  sources             String
-  featuredLevel       Int                @default(0)
-  isBreaking          Boolean            @default(false)
-  breakingExpiresAt   DateTime?
-  viewCount           Int                @default(0)
-  topics              ArticleTopic[]
-  savedBy             SavedArticle[]
+  id                 String             @id
+  slug               String
+  category           String
+  locale             String             @default("id")
+  status             ArticleStatus      @default(PUBLISHED)
+  scheduledAt        DateTime?
+  title              String
+  dek                String
+  body               String
+  aiSummary          String?
+  summaryBullets     String
+  publishedAt        DateTime
+  updatedAt          DateTime?
+  correctionNote     String?
+  authorId           String
+  author             Author             @relation(fields: [authorId], references: [id])
+  regionSlug         String?
+  region             Region?            @relation(fields: [regionSlug], references: [slug])
+  imageUrl           String
+  imageCaption       String
+  imageCredit        String
+  galleryImages      String             @default("[]")
+  videoUrl           String?
+  verificationStatus VerificationStatus @default(verified)
+  sources            String
+  featuredLevel      Int                @default(0)
+  isBreaking         Boolean            @default(false)
+  breakingExpiresAt  DateTime?
+  viewCount          Int                @default(0)
+  topics             ArticleTopic[]
+  savedBy            SavedArticle[]
+  comments           Comment[]
+  readingHistory     ReadingHistory[]
 
   @@unique([category, slug])
   @@index([category, publishedAt])
   @@index([regionSlug])
+  @@index([status, locale])
 }
 
 model ArticleTopic {
@@ -141,13 +167,26 @@ model ArticleTopic {
 }
 
 model FactCheck {
-  slug                  String           @id
-  claim                 String
-  verdict               FactCheckVerdict
-  explanation           String
-  sources               String
-  publishedAt           DateTime
-  relatedArticleSlugs   String           @default("[]")
+  slug                String           @id
+  claim               String
+  verdict             FactCheckVerdict
+  explanation         String
+  sources             String
+  publishedAt         DateTime
+  relatedArticleSlugs String           @default("[]")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  articleId  String
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body       String
+  approved   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([articleId, createdAt])
 }
 
 model SavedArticle {
@@ -160,8 +199,26 @@ model SavedArticle {
   @@id([userId, articleId])
 }
 
+model ReadingHistory {
+  userId    String
+  articleId String
+  viewedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  topics    String   @default("[]")
+  regionSlug String?
+  createdAt DateTime @default(now())
+}
+
 model MarketCache {
-  id         Int      @id @default(1)
-  payload    String
-  fetchedAt  DateTime @default(now())
+  id        Int      @id @default(1)
+  payload   String
+  fetchedAt DateTime @default(now())
 }

@@ -13,6 +13,16 @@ const articleSchema = z.object({
   dek: z.string().min(10),
   body: z.string().min(50),
   authorId: z.string(),
+  status: z
+    .enum([
+      "DRAFT",
+      "REVIEW",
+      "SCHEDULED",
+      "PUBLISHED",
+      "CORRECTED",
+      "ARCHIVED",
+    ])
+    .default("PUBLISHED"),
 });
 
 async function requireStaff() {
@@ -34,6 +44,7 @@ export async function createArticleAction(formData: FormData) {
     dek: formData.get("dek"),
     body: formData.get("body"),
     authorId: formData.get("authorId"),
+    status: formData.get("status") ?? "PUBLISHED",
   });
 
   if (!parsed.success) {
@@ -67,6 +78,10 @@ export async function createArticleAction(formData: FormData) {
       sources: JSON.stringify(["Redaksi KabarDesk"]),
       featuredLevel: 0,
       viewCount: 0,
+      status: data.status,
+      locale: "id",
+      galleryImages: "[]",
+      aiSummary: "Artikel baru dari redaksi KabarDesk.",
     },
   });
 

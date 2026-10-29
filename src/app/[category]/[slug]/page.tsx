@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArticleGallery } from "@/components/article/article-gallery";
 import { ArticleToolbar } from "@/components/article/article-toolbar";
+import { ArticleVideo } from "@/components/article/article-video";
+import { CommentsSection } from "@/components/article/comments-section";
+import { TrackReading } from "@/components/article/track-reading";
+import { AdSlot } from "@/components/news/ad-slot";
 import { NewsCard } from "@/components/news/news-card";
 import { TrustBox } from "@/components/news/trust-box";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +17,12 @@ import {
   getArticleBySlug,
   getAuthor,
   getRelatedArticles,
+  getComments,
   getSavedArticleIds,
   getTopic,
   incrementArticleViews,
 } from "@/lib/content/repository";
+import { prisma } from "@/lib/db";
 import {
   formatShortWIB,
   formatWIB,
@@ -61,6 +68,16 @@ export default async function ArticlePage({ params }: Props) {
     ? await getSavedArticleIds(session.user.id)
     : [];
   const initiallySaved = savedIds.includes(article.id);
+  const comments = await getComments(article.id);
+  let showAds = true;
+  if (session?.user?.id) {
+    const u = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true },
+    });
+    showAds = u?.plan !== "PLUS";
+  }
+  const articlePath = `/${category}/${slug}`;
 
   const author = await getAuthor(article.authorId);
   const related = await getRelatedArticles(article);
@@ -94,6 +111,7 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      {session?.user?.id && <TrackReading articleId={article.id} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -169,11 +187,32 @@ export default async function ArticlePage({ params }: Props) {
             </ul>
           </section>
 
+          {article.aiSummary && (
+            <section className="mb-8 rounded-xl border border-primary/20 bg-primary/5 p-5">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-primary">
+                Ringkasan AI
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed">{article.aiSummary}</p>
+            </section>
+          )}
+
+          {article.videoUrl && (
+            <ArticleVideo url={article.videoUrl} title={article.title} />
+          )}
+
           <div className="prose-article max-w-3xl text-foreground">
             {paragraphs.map((p) => (
               <p key={p.slice(0, 40)}>{p}</p>
             ))}
           </div>
+
+          <ArticleGallery items={article.galleryImages} />
+
+          {showAds && (
+            <div className="my-8">
+              <AdSlot />
+            </div>
+          )}
 
           {topicEntries.length > 0 && (
             <div className="mt-8 flex flex-wrap gap-2">
@@ -204,6 +243,13 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         </aside>
       </div>
+
+      <CommentsSection
+        articleId={article.id}
+        path={articlePath}
+        comments={comments}
+        isLoggedIn={Boolean(session?.user?.id)}
+      />
 
       {related.length > 0 && (
         <section className="mx-auto mt-16 max-w-7xl border-t border-border pt-10">

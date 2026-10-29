@@ -1,6 +1,12 @@
-import type { Article as PrismaArticle, Author as PrismaAuthor, FactCheck as PrismaFactCheck, Region as PrismaRegion, Topic as PrismaTopic } from "@prisma/client";
+import type {
+  Article as PrismaArticle,
+  Author as PrismaAuthor,
+  FactCheck as PrismaFactCheck,
+  Region as PrismaRegion,
+  Topic as PrismaTopic,
+} from "@prisma/client";
 import type { CategorySlug } from "@/lib/site";
-import type { Article, Author, FactCheck, Region, Topic } from "./types";
+import type { Article, Author, FactCheck, GalleryImage, Region, Topic } from "./types";
 
 type ArticleWithRelations = PrismaArticle & {
   topics?: { topicSlug: string }[];
@@ -24,18 +30,26 @@ export function mapTopic(row: PrismaTopic): Topic {
   return { slug: row.slug, name: row.name, description: row.description };
 }
 
+function parseGallery(raw: string): GalleryImage[] {
+  try {
+    return JSON.parse(raw) as GalleryImage[];
+  } catch {
+    return [];
+  }
+}
+
 export function mapArticle(row: ArticleWithRelations): Article {
-  const topicSlugs =
-    row.topics?.map((t) => t.topicSlug) ??
-    [];
+  const topicSlugs = row.topics?.map((t) => t.topicSlug) ?? [];
 
   return {
     id: row.id,
     slug: row.slug,
     category: row.category as CategorySlug,
+    locale: (row.locale === "en" ? "en" : "id") as "id" | "en",
     title: row.title,
     dek: row.dek,
     body: row.body,
+    aiSummary: row.aiSummary ?? undefined,
     summaryBullets: JSON.parse(row.summaryBullets) as string[],
     publishedAt: row.publishedAt.toISOString(),
     updatedAt: row.updatedAt?.toISOString(),
@@ -47,6 +61,8 @@ export function mapArticle(row: ArticleWithRelations): Article {
     imageUrl: row.imageUrl,
     imageCaption: row.imageCaption,
     imageCredit: row.imageCredit,
+    galleryImages: parseGallery(row.galleryImages),
+    videoUrl: row.videoUrl ?? undefined,
     verificationStatus: row.verificationStatus,
     sources: JSON.parse(row.sources) as string[],
     featuredLevel: row.featuredLevel as 0 | 1 | 2 | 3,

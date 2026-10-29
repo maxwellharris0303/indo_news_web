@@ -1,7 +1,9 @@
+import type { CategorySlug } from "@/lib/site";
 import type {
   Article,
   Author,
   FactCheck,
+  GalleryImage,
   MarketSnapshot,
   Region,
   Topic,
@@ -68,7 +70,7 @@ export const topics: Topic[] = [
 
 const body = (paragraphs: string[]) => paragraphs.join("\n\n");
 
-export const articles: Article[] = [
+const rawArticles = [
   {
     id: "1",
     slug: "pemerintah-tegaskan-komitmen-tangani-isu-publik-pasca-demo",
@@ -406,9 +408,24 @@ export const articles: Article[] = [
     imageCredit: "KabarDesk Video",
     verificationStatus: "verified",
     sources: ["Liputan multimedia KabarDesk"],
-    featuredLevel: 0,
+    featuredLevel: 1,
     isBreaking: false,
     viewCount: 16700,
+    videoUrl: "https://www.youtube.com/embed/ScMzIvxBSi4",
+    galleryImages: [
+      {
+        url: coverImage("12-g1"),
+        caption: "Titik api terpantau dari ketinggian rendah.",
+      },
+      {
+        url: coverImage("12-g2"),
+        caption: "Tim ground crew memantau arah angin.",
+      },
+      {
+        url: coverImage("12-g3"),
+        caption: "Helikopter water bombing di udara.",
+      },
+    ] satisfies GalleryImage[],
   },
   {
     id: "13",
@@ -638,7 +655,83 @@ export const articles: Article[] = [
     isBreaking: false,
     viewCount: 15600,
   },
+  {
+    id: "21",
+    slug: "indonesia-hosts-asean-climate-dialogue",
+    category: "internasional",
+    locale: "en",
+    title: "Indonesia Hosts ASEAN Climate Dialogue in Jakarta",
+    dek: "Ministers agree on a joint roadmap for peatland fire prevention and cross-border haze monitoring.",
+    body: body([
+      "Jakarta — Senior officials from ASEAN member states opened a two-day climate dialogue focused on transboundary haze and peatland restoration.",
+      "Indonesia proposed a shared early-warning dashboard that integrates satellite hotspots with ground reports from local fire brigades.",
+      "Delegates said financing mechanisms for smallholder farmers will be discussed at the next summit in November.",
+    ]),
+    summaryBullets: [
+      "ASEAN ministers meet in Jakarta on haze prevention.",
+      "Indonesia pitches a regional hotspot dashboard.",
+      "Financing for farmers on the November agenda.",
+    ],
+    publishedAt: "2026-10-28T14:00:00+07:00",
+    authorId: "a3",
+    topicSlugs: ["karhutla"],
+    imageUrl: coverImage("21"),
+    imageCaption: "Delegates at the ASEAN climate session.",
+    imageCredit: "KabarDesk / Photo",
+    verificationStatus: "verified",
+    sources: ["ASEAN Secretariat press note"],
+    featuredLevel: 1,
+    isBreaking: false,
+    viewCount: 4200,
+  },
+  {
+    id: "22",
+    slug: "idx-composite-rebounds-on-foreign-inflows",
+    category: "ekonomi",
+    locale: "en",
+    title: "IDX Composite Rebounds as Foreign Investors Return to Blue Chips",
+    dek: "Banking and consumer stocks led the session after BI signaled readiness to stabilize rupiah volatility.",
+    body: body([
+      "Jakarta — The IDX Composite closed higher as foreign funds added exposure to large-cap banks and telcos.",
+      "Analysts said the move followed clearer communication from Bank Indonesia on spot-market intervention.",
+      "Traders warned that global rate expectations could still cap gains through year-end.",
+    ]),
+    summaryBullets: [
+      "Foreign flows return to Indonesian blue chips.",
+      "BI communication supports rupiah stability narrative.",
+      "Global rates remain a risk for the rally.",
+    ],
+    publishedAt: "2026-10-27T22:00:00+07:00",
+    authorId: "a2",
+    topicSlugs: ["ihsg"],
+    imageUrl: coverImage("22"),
+    imageCaption: "Trading floor activity in Jakarta.",
+    imageCredit: "KabarDesk / Photo",
+    verificationStatus: "verified",
+    sources: ["IDX trading summary"],
+    featuredLevel: 0,
+    isBreaking: false,
+    viewCount: 3100,
+  },
 ];
+
+export const articles: Article[] = rawArticles.map((a) => {
+  const locale =
+    "locale" in a && (a as { locale?: string }).locale === "en" ? "en" : "id";
+  const galleryImages =
+    "galleryImages" in a && (a as { galleryImages?: GalleryImage[] }).galleryImages
+      ? [...(a as { galleryImages: GalleryImage[] }).galleryImages]
+      : [];
+  return {
+    ...a,
+    category: a.category as CategorySlug,
+    locale: locale as "id" | "en",
+    galleryImages,
+    aiSummary: a.summaryBullets.join(" "),
+    verificationStatus: a.verificationStatus as Article["verificationStatus"],
+    featuredLevel: a.featuredLevel as Article["featuredLevel"],
+  };
+}) as Article[];
 
 export const factChecks: FactCheck[] = [
   {

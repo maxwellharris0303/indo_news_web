@@ -20,6 +20,12 @@ const routes = [
   "/login",
   "/redaksi",
   "/nasional/pemerintah-tegaskan-komitmen-tangani-isu-publik-pasca-demo",
+  "/multimedia",
+  "/multimedia/video-drone-karhutla-kalimantan",
+  "/foto",
+  "/en",
+  "/plus",
+  "/api/articles?offset=0&limit=4",
 ];
 
 let failed = 0;

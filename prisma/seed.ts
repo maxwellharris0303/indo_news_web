@@ -11,6 +11,9 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.comment.deleteMany();
+  await prisma.readingHistory.deleteMany();
+  await prisma.newsletterSubscriber.deleteMany();
   await prisma.savedArticle.deleteMany();
   await prisma.articleTopic.deleteMany();
   await prisma.article.deleteMany();
@@ -42,6 +45,11 @@ async function main() {
         dek: article.dek,
         body: article.body,
         summaryBullets: JSON.stringify(article.summaryBullets),
+        aiSummary: article.aiSummary ?? article.summaryBullets.join(" "),
+        locale: article.locale,
+        status: "PUBLISHED",
+        galleryImages: JSON.stringify(article.galleryImages),
+        videoUrl: article.videoUrl ?? null,
         publishedAt: new Date(article.publishedAt),
         updatedAt: article.updatedAt ? new Date(article.updatedAt) : null,
         correctionNote: article.correctionNote,
@@ -96,12 +104,13 @@ async function main() {
       name: "Pembaca Demo",
       passwordHash: readerHash,
       role: "READER",
+      plan: "PLUS",
       interests: JSON.stringify(["nasional", "ekonomi"]),
       regionSlug: "dki-jakarta",
     },
   });
 
-  console.log("Seed selesai: 20 artikel, admin@kabardesk.id / admin123");
+  console.log("Seed selesai: artikel + akun demo, admin@kabardesk.id / admin123");
 }
 
 main()
