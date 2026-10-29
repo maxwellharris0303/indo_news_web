@@ -11,7 +11,8 @@ export function DeleteArticleButton({ title }: Props) {
     <Button
       type="submit"
       size="sm"
-      variant="destructive"
+      variant="outline"
+      className="border-destructive/50 text-destructive hover:bg-destructive/10"
       onClick={(e) => {
         const label = title.length > 60 ? `${title.slice(0, 60)}…` : title;
         if (
