@@ -32,7 +32,11 @@ import { categoryLabels, isCategorySlug, site } from "@/lib/site";
 
 type Props = {
   params: Promise<{ category: string; slug: string }>;
-  searchParams?: Promise<{ commentError?: string; reason?: string }>;
+  searchParams?: Promise<{
+    commentError?: string;
+    commentOk?: string;
+    reason?: string;
+  }>;
 };
 
 export const dynamicParams = true;
@@ -245,6 +249,7 @@ export default async function ArticlePage({ params, searchParams }: Props) {
             comments={comments}
             isLoggedIn={Boolean(session?.user?.id)}
             commentError={sp.commentError === "1"}
+            commentOk={sp.commentOk === "1"}
             sessionStale={
               sp.reason === "session" ||
               Boolean(

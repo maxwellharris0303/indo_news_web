@@ -1,13 +1,16 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+  const sessionHint = searchParams.get("reason") === "session";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +29,19 @@ export function LoginForm() {
       setError("Email atau password salah.");
       return;
     }
-    router.push("/akun");
+    const dest =
+      callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/akun";
+    router.push(dest);
     router.refresh();
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      {sessionHint ? (
+        <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
+          Sesi sebelumnya kedaluwarsa. Masuk lagi untuk melanjutkan.
+        </p>
+      ) : null}
       <div>
         <label className="text-sm font-medium" htmlFor="email">
           Email

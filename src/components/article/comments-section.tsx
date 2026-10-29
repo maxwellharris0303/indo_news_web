@@ -9,6 +9,7 @@ export function CommentsSection({
   comments,
   isLoggedIn,
   commentError,
+  commentOk,
   sessionStale,
 }: {
   articleId: string;
@@ -16,6 +17,7 @@ export function CommentsSection({
   comments: CommentView[];
   isLoggedIn: boolean;
   commentError?: boolean;
+  commentOk?: boolean;
   sessionStale?: boolean;
 }) {
   return (
@@ -26,6 +28,12 @@ export function CommentsSection({
       <h2 className="font-serif text-2xl font-bold">
         Komentar ({comments.length})
       </h2>
+
+      {commentOk ? (
+        <p className="mt-3 text-sm text-trust" role="status">
+          Komentar terkirim.
+        </p>
+      ) : null}
 
       {sessionStale ? (
         <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">

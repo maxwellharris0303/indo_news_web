@@ -12,6 +12,7 @@ const prisma = new PrismaClient();
 
 const DEMO_ADMIN_ID = "u-demo-admin";
 const DEMO_READER_ID = "u-demo-reader";
+const SUPERADMIN_ID = "u-superadmin";
 
 async function upsertDemoUsers() {
   const passwordHash = await bcrypt.hash("admin123", 10);
@@ -59,6 +60,7 @@ async function upsertDemoUsers() {
     await prisma.user.upsert({
       where: { email: superEmail },
       create: {
+        id: SUPERADMIN_ID,
         email: superEmail,
         name: "Super Admin",
         passwordHash: superHash,
@@ -68,6 +70,7 @@ async function upsertDemoUsers() {
       update: {
         passwordHash: superHash,
         role: "SUPERADMIN",
+        plan: "PLUS",
       },
     });
     console.log(`Superadmin seed: ${superEmail}`);

@@ -47,10 +47,10 @@ export async function postCommentFormAction(formData: FormData) {
   try {
     await addComment(user.id, articleId, body);
     revalidatePath(path);
-    redirect(`${path}#komentar`);
   } catch {
     redirect(`${path}?commentError=1#komentar`);
   }
+  redirect(`${path}?commentOk=1#komentar`);
 }
 
 export async function postCommentAction(formData: FormData) {
