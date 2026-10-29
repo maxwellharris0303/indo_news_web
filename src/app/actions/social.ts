@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { ArticleStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import {
@@ -11,7 +12,22 @@ import {
 } from "@/lib/content/repository";
 
 export async function postCommentFormAction(formData: FormData) {
-  await postCommentAction(formData);
+  const path = String(formData.get("path") ?? "/");
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect(`/login?callbackUrl=${encodeURIComponent(path)}`);
+  }
+
+  const articleId = String(formData.get("articleId") ?? "");
+  const body = String(formData.get("body") ?? "");
+
+  try {
+    await addComment(session.user.id, articleId, body);
+    revalidatePath(path);
+    redirect(`${path}#komentar`);
+  } catch {
+    redirect(`${path}?commentError=1#komentar`);
+  }
 }
 
 export async function postCommentAction(formData: FormData) {

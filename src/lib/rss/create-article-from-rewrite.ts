@@ -20,9 +20,11 @@ export async function createReviewArticleFromRewrite(input: {
   const slug = await uniqueArticleSlug(category, baseSlug);
 
   const sources = JSON.stringify([
-    input.output.attributionLine,
-    input.sourceName,
-    input.sourceUrl,
+    JSON.stringify({
+      label: input.sourceName,
+      href: input.sourceUrl,
+      note: input.output.attributionLine,
+    }),
   ]);
 
   const id = `a-rss-${slug.slice(0, 20)}-${Date.now().toString(36)}`;

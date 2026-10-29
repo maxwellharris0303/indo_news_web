@@ -8,20 +8,29 @@ export function CommentsSection({
   path,
   comments,
   isLoggedIn,
+  commentError,
 }: {
   articleId: string;
   path: string;
   comments: CommentView[];
   isLoggedIn: boolean;
+  commentError?: boolean;
 }) {
   return (
-    <section className="mx-auto mt-16 max-w-3xl border-t border-border pt-10">
+    <section
+      id="komentar"
+      className="scroll-mt-24 border-t border-border pt-10"
+    >
       <h2 className="font-serif text-2xl font-bold">
         Komentar ({comments.length})
       </h2>
 
       {isLoggedIn ? (
-        <CommentForm articleId={articleId} path={path} />
+        <CommentForm
+          articleId={articleId}
+          path={path}
+          error={commentError}
+        />
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">
           <Link href="/login" className="font-medium text-primary hover:underline">

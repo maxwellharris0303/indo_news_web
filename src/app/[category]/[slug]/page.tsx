@@ -30,7 +30,10 @@ import {
 } from "@/lib/format";
 import { categoryLabels, isCategorySlug, site } from "@/lib/site";
 
-type Props = { params: Promise<{ category: string; slug: string }> };
+type Props = {
+  params: Promise<{ category: string; slug: string }>;
+  searchParams?: Promise<{ commentError?: string }>;
+};
 
 export const dynamicParams = true;
 
@@ -56,8 +59,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ArticlePage({ params }: Props) {
+export default async function ArticlePage({ params, searchParams }: Props) {
   const { category, slug } = await params;
+  const sp = (await searchParams) ?? {};
   if (!isCategorySlug(category)) notFound();
 
   const article = await getArticleBySlug(category, slug);
@@ -178,8 +182,8 @@ export default async function ArticlePage({ params }: Props) {
         </p>
       </div>
 
-      <div className="mx-auto mt-8 grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div>
+      <div className="mx-auto mt-8 grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(240px,280px)]">
+        <div className="min-w-0">
           <section className="mb-8 rounded-xl border border-border bg-muted/20 p-5">
             <h2 className="text-sm font-bold uppercase tracking-wide text-primary">
               Baca cepat
@@ -234,26 +238,27 @@ export default async function ArticlePage({ params }: Props) {
               })}
             </div>
           )}
+
+          <CommentsSection
+            articleId={article.id}
+            path={articlePath}
+            comments={comments}
+            isLoggedIn={Boolean(session?.user?.id)}
+            commentError={sp.commentError === "1"}
+          />
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4 lg:self-start">
           <TrustBox status={article.verificationStatus} sources={article.sources} />
           <div className="rounded-xl border border-border p-4 text-xs text-muted-foreground">
             <p className="font-semibold text-foreground">Transparansi</p>
-            <p className="mt-2">
+            <p className="mt-2 leading-relaxed break-words">
               Artikel dipublikasikan {formatWIB(article.publishedAt)}. Status
               verifikasi ditinjau redaksi KabarDesk.
             </p>
           </div>
         </aside>
       </div>
-
-      <CommentsSection
-        articleId={article.id}
-        path={articlePath}
-        comments={comments}
-        isLoggedIn={Boolean(session?.user?.id)}
-      />
 
       {related.length > 0 && (
         <section className="mx-auto mt-16 max-w-7xl border-t border-border pt-10">
