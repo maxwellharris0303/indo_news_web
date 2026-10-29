@@ -5,6 +5,7 @@ import { Menu, Search, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthNav } from "@/components/layout/auth-nav";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { MobileAuthLinks } from "@/components/layout/mobile-auth-links";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -85,12 +86,6 @@ export function SiteHeader() {
             </Link>
           ))}
           <Link
-            href="/en"
-            className="rounded-md px-2.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            EN
-          </Link>
-          <Link
             href="/indeks"
             className="rounded-md px-2.5 py-2 text-sm font-medium text-primary"
           >
@@ -98,10 +93,11 @@ export function SiteHeader() {
           </Link>
         </nav>
 
-        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           <div className="hidden md:block">
             <AuthNav />
           </div>
+          <LanguageSwitcher />
           <Button
             variant="ghost"
             size="icon"
@@ -152,16 +148,18 @@ export function SiteHeader() {
                 </Link>
               </li>
             ))}
-            <li className="mt-1 border-t border-border pt-2">
-              <Link
-                href="/en"
-                className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium hover:bg-muted"
-                onClick={() => setOpen(false)}
-              >
-                English (EN)
-              </Link>
+            <li className="mt-2 border-t border-border pt-3">
+              <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Bahasa
+              </p>
+              <div className="px-3">
+                <LanguageSwitcher
+                  className="w-full justify-center"
+                  onNavigate={() => setOpen(false)}
+                />
+              </div>
             </li>
-            <li>
+            <li className="mt-2">
               <Link
                 href="/indeks"
                 className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-primary hover:bg-muted"
