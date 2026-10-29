@@ -177,6 +177,15 @@ AUTH_SECURE_COOKIES=false
     if super_email and super_password:
         env_content += f'KABARDESK_SUPERADMIN_EMAIL="{super_email}"\n'
         env_content += f'KABARDESK_SUPERADMIN_PASSWORD="{super_password}"\n'
+    for key in (
+        "OPENAI_API_KEY",
+        "OPENAI_REWRITE_MODEL",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_REWRITE_MODEL",
+    ):
+        val = os.environ.get(key, "").strip()
+        if val:
+            env_content += f'{key}="{val.replace(chr(34), "")}"\n'
     run(
         client,
         f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
