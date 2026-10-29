@@ -6,6 +6,8 @@ import { DeleteArticleButton } from "@/components/admin/delete-article-button";
 import { Button } from "@/components/ui/button";
 import { ARTICLE_STATUSES } from "@/lib/admin/constants";
 import { articlePublicHref } from "@/lib/admin/article-url";
+import { actionsText, adminStatusLabels } from "@/lib/admin/locale-ui";
+import { getAdminLocale } from "@/lib/admin-locale";
 
 type Props = {
   id: string;
@@ -16,7 +18,7 @@ type Props = {
   compact?: boolean;
 };
 
-export function ArticleRowActions({
+export async function ArticleRowActions({
   id,
   title,
   category,
@@ -24,6 +26,9 @@ export function ArticleRowActions({
   status,
   compact,
 }: Props) {
+  const locale = await getAdminLocale();
+  const copy = actionsText(locale);
+  const statusLabels = adminStatusLabels[locale];
   const href = articlePublicHref(category, slug);
 
   return (
@@ -43,26 +48,31 @@ export function ArticleRowActions({
           name="status"
           defaultValue={status}
           className="h-9 max-w-[8.5rem] rounded-md border border-border bg-background px-2 text-xs"
-          aria-label="Status artikel"
+          aria-label={copy.statusAria}
         >
           {ARTICLE_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {statusLabels[s]}
             </option>
           ))}
         </select>
         <Button type="submit" size="sm" variant="secondary">
-          Update
+          {copy.update}
         </Button>
       </form>
       <div className="flex items-center gap-2">
         <form action={deleteArticleFormAction}>
           <input type="hidden" name="articleId" value={id} />
-          <DeleteArticleButton title={title} />
+          <DeleteArticleButton
+            title={title}
+            deleteLabel={copy.delete}
+            confirmIntro={copy.deleteConfirmIntro}
+            confirmDetail={copy.deleteConfirmDetail}
+          />
         </form>
         <Button variant="link" asChild size="sm" className="px-2">
           <Link href={href} target="_blank" rel="noopener noreferrer">
-            Lihat
+            {copy.view}
           </Link>
         </Button>
       </div>

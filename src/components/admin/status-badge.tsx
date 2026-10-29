@@ -1,6 +1,7 @@
 import type { ArticleStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_LABELS } from "@/lib/admin/constants";
+import type { AdminLocale } from "@/lib/admin-locale";
+import { adminStatusLabels } from "@/lib/admin/locale-ui";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<ArticleStatus, string> = {
@@ -12,13 +13,19 @@ const statusStyles: Record<ArticleStatus, string> = {
   ARCHIVED: "bg-muted/80 text-muted-foreground border-border",
 };
 
-export function StatusBadge({ status }: { status: ArticleStatus }) {
+export function StatusBadge({
+  status,
+  locale,
+}: {
+  status: ArticleStatus;
+  locale: AdminLocale;
+}) {
   return (
     <Badge
       variant="outline"
       className={cn("font-medium", statusStyles[status])}
     >
-      {STATUS_LABELS[status]}
+      {adminStatusLabels[locale][status]}
     </Badge>
   );
 }

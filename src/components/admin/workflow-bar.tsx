@@ -1,7 +1,7 @@
 import type { ArticleStatus } from "@prisma/client";
 import { ARTICLE_STATUSES } from "@/lib/admin/constants";
 import type { AdminLocale } from "@/lib/admin-locale";
-import { adminStatusLabels } from "@/lib/admin/locale-ui";
+import { adminStatusLabels, formatCountAdmin } from "@/lib/admin/locale-ui";
 
 type Props = {
   byStatus: Record<ArticleStatus, number>;
@@ -62,7 +62,7 @@ export function WorkflowBar({
               {statusLabels[status]}
             </span>
             <span className="font-semibold tabular-nums">
-              {byStatus[status].toLocaleString("id-ID")}
+              {formatCountAdmin(byStatus[status], locale)}
             </span>
           </li>
         ))}

@@ -1,5 +1,7 @@
 import { format, formatDistanceToNow } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
 import { id as localeId } from "date-fns/locale";
+import type { AdminLocale } from "@/lib/admin-locale";
 
 const TZ = "Asia/Jakarta";
 
@@ -23,6 +25,15 @@ export function formatWIB(date: Date | string): string {
 export function formatShortWIB(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return format(d, "dd MMM yyyy, HH:mm", { locale: localeId }) + " WIB";
+}
+
+export function formatShortAdmin(
+  date: Date | string,
+  locale: AdminLocale,
+): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const dfLocale = locale === "en" ? enUS : localeId;
+  return format(d, "dd MMM yyyy, HH:mm", { locale: dfLocale }) + " WIB";
 }
 
 export function formatRelativeId(date: Date | string): string {

@@ -9,10 +9,15 @@ import {
   selectClassName,
 } from "@/lib/admin/constants";
 import { listAdminArticles } from "@/lib/admin/dashboard";
-import { adminStatusLabels, articlesText } from "@/lib/admin/locale-ui";
+import {
+  adminCategoryLabel,
+  adminStatusLabels,
+  articlesText,
+  formatCountAdmin,
+} from "@/lib/admin/locale-ui";
 import { getAdminLocale } from "@/lib/admin-locale";
-import { formatShortWIB } from "@/lib/format";
-import { categoryLabels, categorySlugs, isCategorySlug } from "@/lib/site";
+import { formatShortAdmin } from "@/lib/format";
+import { categorySlugs, isCategorySlug } from "@/lib/site";
 
 type Props = {
   searchParams: Promise<{
@@ -129,7 +134,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
             <option value="">{copy.allChannels}</option>
             {categorySlugs.map((c) => (
               <option key={c} value={c}>
-                {categoryLabels[c]}
+                {adminCategoryLabel(c, locale)}
               </option>
             ))}
           </select>
@@ -165,15 +170,16 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
                 <div className="min-w-0">
                   <p className="font-medium leading-snug">{a.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {categoryLabels[a.category as keyof typeof categoryLabels]} ·{" "}
-                    {a.locale.toUpperCase()} · {formatShortWIB(a.publishedAt)}
+                    {adminCategoryLabel(a.category, locale)} ·{" "}
+                    {a.locale.toUpperCase()} ·{" "}
+                    {formatShortAdmin(a.publishedAt, locale)}
                   </p>
                 </div>
                 <div className="md:w-28 md:text-center">
-                  <StatusBadge status={a.status} />
+                  <StatusBadge status={a.status} locale={locale} />
                 </div>
                 <p className="text-sm tabular-nums md:w-24 md:text-right">
-                  {a.viewCount.toLocaleString("id-ID")}
+                  {formatCountAdmin(a.viewCount, locale)}
                 </p>
                 <div className="md:w-[min(100%,14rem)]">
                   <ArticleRowActions

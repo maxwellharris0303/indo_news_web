@@ -4,9 +4,17 @@ import { Button } from "@/components/ui/button";
 
 type Props = {
   title: string;
+  deleteLabel: string;
+  confirmIntro: string;
+  confirmDetail: string;
 };
 
-export function DeleteArticleButton({ title }: Props) {
+export function DeleteArticleButton({
+  title,
+  deleteLabel,
+  confirmIntro,
+  confirmDetail,
+}: Props) {
   return (
     <Button
       type="submit"
@@ -16,15 +24,13 @@ export function DeleteArticleButton({ title }: Props) {
       onClick={(e) => {
         const label = title.length > 60 ? `${title.slice(0, 60)}…` : title;
         if (
-          !confirm(
-            `Hapus artikel "${label}"?\n\nTindakan ini permanen (komentar & simpanan terkait ikut terhapus).`,
-          )
+          !confirm(`${confirmIntro} "${label}"?\n\n${confirmDetail}`)
         ) {
           e.preventDefault();
         }
       }}
     >
-      Hapus
+      {deleteLabel}
     </Button>
   );
 }

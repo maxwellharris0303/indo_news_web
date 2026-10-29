@@ -1,4 +1,8 @@
 import type { AdminLocale } from "@/lib/admin-locale";
+import {
+  categoryLabels,
+  type CategorySlug,
+} from "@/lib/site";
 
 export const adminShellCopy = {
   id: {
@@ -142,6 +146,46 @@ export const adminArticlesCopy = {
   },
 } as const;
 
+export const adminActionsCopy = {
+  id: {
+    view: "Lihat",
+    delete: "Hapus",
+    update: "Update",
+    statusAria: "Status artikel",
+    deleteConfirmIntro: "Hapus artikel",
+    deleteConfirmDetail:
+      "Tindakan ini permanen (komentar & simpanan terkait ikut terhapus).",
+  },
+  en: {
+    view: "View",
+    delete: "Delete",
+    update: "Update",
+    statusAria: "Article status",
+    deleteConfirmIntro: "Delete article",
+    deleteConfirmDetail:
+      "This is permanent (related comments and saves will be removed).",
+  },
+} as const;
+
+export const adminCategoryLabels: Record<
+  AdminLocale,
+  Record<CategorySlug, string>
+> = {
+  id: categoryLabels,
+  en: {
+    nasional: "National",
+    internasional: "International",
+    ekonomi: "Economy",
+    "politik-hukum": "Politics & Law",
+    olahraga: "Sports",
+    tekno: "Tech",
+    "gaya-hidup": "Lifestyle",
+    daerah: "Regions",
+    opini: "Opinion",
+    multimedia: "Multimedia",
+  },
+};
+
 export const adminComposeCopy = {
   id: {
     title: "Tulis artikel baru",
@@ -173,4 +217,22 @@ export function articlesText(locale: AdminLocale) {
 
 export function composeText(locale: AdminLocale) {
   return adminComposeCopy[locale];
+}
+
+export function actionsText(locale: AdminLocale) {
+  return adminActionsCopy[locale];
+}
+
+export function adminCategoryLabel(
+  slug: string,
+  locale: AdminLocale,
+): string {
+  if (slug in adminCategoryLabels[locale]) {
+    return adminCategoryLabels[locale][slug as CategorySlug];
+  }
+  return slug;
+}
+
+export function formatCountAdmin(n: number, locale: AdminLocale): string {
+  return n.toLocaleString(locale === "en" ? "en-US" : "id-ID");
 }

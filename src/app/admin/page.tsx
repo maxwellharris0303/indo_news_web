@@ -7,10 +7,13 @@ import { WorkflowBar } from "@/components/admin/workflow-bar";
 import { Button } from "@/components/ui/button";
 import { articlePublicHref } from "@/lib/admin/article-url";
 import { getAdminDashboardStats } from "@/lib/admin/dashboard";
-import { dashboardText } from "@/lib/admin/locale-ui";
+import {
+  adminCategoryLabel,
+  dashboardText,
+  formatCountAdmin,
+} from "@/lib/admin/locale-ui";
 import { getAdminLocale } from "@/lib/admin-locale";
-import { categoryLabels } from "@/lib/site";
-import { formatShortWIB } from "@/lib/format";
+import { formatShortAdmin } from "@/lib/format";
 
 export default async function AdminDashboardPage() {
   const locale = await getAdminLocale();
@@ -90,11 +93,11 @@ export default async function AdminDashboardPage() {
                     {a.title}
                   </Link>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {a.viewCount.toLocaleString("id-ID")} views ·{" "}
-                    {categoryLabels[a.category as keyof typeof categoryLabels]}
+                    {formatCountAdmin(a.viewCount, locale)} views ·{" "}
+                    {adminCategoryLabel(a.category, locale)}
                   </p>
                 </div>
-                <StatusBadge status={a.status} />
+                <StatusBadge status={a.status} locale={locale} />
               </li>
             ))}
           </ul>
@@ -117,10 +120,14 @@ export default async function AdminDashboardPage() {
                   <div className="min-w-0">
                     <p className="font-medium leading-snug">{a.title}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {formatShortWIB(a.publishedAt)} · {a.viewCount} views
+                      {formatShortAdmin(a.publishedAt, locale)} ·{" "}
+                      {formatCountAdmin(a.viewCount, locale)} views
                     </p>
                   </div>
-                  <StatusBadge status={a.status as ArticleStatus} />
+                  <StatusBadge
+                    status={a.status as ArticleStatus}
+                    locale={locale}
+                  />
                 </div>
                 <div className="mt-2">
                   <ArticleRowActions
