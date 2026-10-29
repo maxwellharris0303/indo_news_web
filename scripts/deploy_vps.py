@@ -163,6 +163,15 @@ NODE_ENV=production
         check=False,
     )
 
+    super_email = os.environ.get("SUPERADMIN_EMAIL", "").strip().lower()
+    super_password = os.environ.get("SUPERADMIN_PASSWORD", "")
+    if super_email and super_password:
+        run(
+            client,
+            f"cd {REMOTE_DIR} && npx tsx scripts/upsert-superadmin.mjs {super_email!r} {super_password!r}",
+            check=False,
+        )
+
     # Server uses Caddy on 80/443 — do not touch Caddyfile. App listens on {internal_port} only.
     run(
         client,
