@@ -1,8 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { Globe } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { setSiteLocaleAction } from "@/app/actions/locale";
+import { useSiteLocale } from "@/components/locale/locale-provider";
+import type { SiteLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -11,28 +14,40 @@ type Props = {
 };
 
 export function LanguageSwitcher({ className, onNavigate }: Props) {
-  const pathname = usePathname();
-  const isEnglish = pathname === "/en" || pathname.startsWith("/en/");
+  const { locale, setLocale } = useSiteLocale();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
 
-  const href = isEnglish ? "/" : "/en";
-  const label = isEnglish ? "ID" : "EN";
-  const ariaLabel = isEnglish
-    ? "Ganti ke Bahasa Indonesia"
-    : "Switch to English edition";
+  const target: SiteLocale = locale === "en" ? "id" : "en";
+  const label = locale === "en" ? "ID" : "EN";
+  const ariaLabel =
+    locale === "en"
+      ? "Ganti ke Bahasa Indonesia"
+      : "Switch to English";
+
+  function switchLocale() {
+    startTransition(async () => {
+      setLocale(target);
+      await setSiteLocaleAction(target);
+      router.refresh();
+      onNavigate?.();
+    });
+  }
 
   return (
-    <Link
-      href={href}
-      onClick={onNavigate}
+    <button
+      type="button"
+      disabled={pending}
+      onClick={switchLocale}
       className={cn(
-        "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-border bg-muted/70 px-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted active:bg-muted/90",
+        "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-border bg-muted/70 px-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted active:bg-muted/90 disabled:opacity-60",
         className,
       )}
       aria-label={ariaLabel}
-      hrefLang={isEnglish ? "id" : "en"}
+      aria-busy={pending}
     >
       <Globe className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
       <span>{label}</span>
-    </Link>
+    </button>
   );
 }

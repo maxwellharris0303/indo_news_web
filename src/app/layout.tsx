@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteShell } from "@/components/layout/site-shell";
+import { getSiteLocale } from "@/lib/locale";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -32,11 +33,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const locale = await getSiteLocale();
+
   return (
-    <html lang="id" className={`${jakarta.variable} ${sourceSerif.variable} h-full`} suppressHydrationWarning>
+    <html
+      lang={locale === "en" ? "en" : "id"}
+      className={`${jakarta.variable} ${sourceSerif.variable} h-full`}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-full flex-col antialiased">
-        <Providers>
+        <Providers locale={locale}>
           <ThemeProvider>
             <SiteShell>{children}</SiteShell>
           </ThemeProvider>

@@ -195,18 +195,31 @@ export async function getArticleBySlugOnly(
   return row ? mapArticle(row) : undefined;
 }
 
-export async function getHeroLead(): Promise<Article | undefined> {
-  const items = await getArticles({ sort: "latest", limit: 20, locale: "id" });
+export async function getHeroLead(
+  locale: "id" | "en" = "id",
+): Promise<Article | undefined> {
+  const items = await getArticles({
+    sort: "latest",
+    limit: 20,
+    locale,
+  });
   return items.find((a) => a.featuredLevel === 3) ?? items[0];
 }
 
-export async function getBreakingArticle(): Promise<Article | undefined> {
+export async function getBreakingArticle(
+  locale: "id" | "en" = "id",
+): Promise<Article | undefined> {
   if (!(await useDb())) {
-    return seedArticles.find((a) => a.isBreaking && isPublishedSeed(a));
+    return seedArticles.find(
+      (a) =>
+        a.isBreaking &&
+        isPublishedSeed(a) &&
+        (a.locale === locale || locale === "id"),
+    );
   }
 
   const row = await prisma.article.findFirst({
-    where: { isBreaking: true, ...publishedWhere() },
+    where: { isBreaking: true, locale, ...publishedWhere() },
     include: { topics: true, author: true },
     orderBy: { publishedAt: "desc" },
   });
@@ -215,20 +228,28 @@ export async function getBreakingArticle(): Promise<Article | undefined> {
 
 export async function getPopularArticles(
   _hours: 6 | 24 | 168 = 24,
+  locale: "id" | "en" = "id",
 ): Promise<Article[]> {
-  return getArticles({ sort: "popular", limit: 5, locale: "id" });
+  return getArticles({ sort: "popular", limit: 5, locale });
 }
 
-export async function getEditorPicks(): Promise<Article[]> {
+export async function getEditorPicks(
+  locale: "id" | "en" = "id",
+): Promise<Article[]> {
   if (!(await useDb())) {
     return sortSeed(
-      seedArticles.filter((a) => a.featuredLevel >= 1 && isPublishedSeed(a)),
+      seedArticles.filter(
+        (a) =>
+          a.featuredLevel >= 1 &&
+          isPublishedSeed(a) &&
+          a.locale === locale,
+      ),
       "latest",
     ).slice(0, 6);
   }
 
   const rows = await prisma.article.findMany({
-    where: { featuredLevel: { gte: 1 }, ...publishedWhere() },
+    where: { featuredLevel: { gte: 1 }, locale, ...publishedWhere() },
     include: { topics: true, author: true },
     orderBy: { publishedAt: "desc" },
     take: 6,

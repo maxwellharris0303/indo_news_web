@@ -4,14 +4,19 @@ import { useState } from "react";
 import { NewsCard } from "@/components/news/news-card";
 import { Button } from "@/components/ui/button";
 import type { Article } from "@/lib/content/types";
+import type { SiteLocale } from "@/lib/locale";
+import { homeText } from "@/lib/locale-ui";
 
 export function InfiniteLatest({
   initial,
   startOffset,
+  locale,
 }: {
   initial: Article[];
   startOffset: number;
+  locale: SiteLocale;
 }) {
+  const copy = homeText(locale);
   const [items, setItems] = useState(initial);
   const [offset, setOffset] = useState(startOffset);
   const [loading, setLoading] = useState(false);
@@ -19,7 +24,9 @@ export function InfiniteLatest({
 
   async function loadMore() {
     setLoading(true);
-    const res = await fetch(`/api/articles?offset=${offset}&limit=8&locale=id`);
+    const res = await fetch(
+      `/api/articles?offset=${offset}&limit=8&locale=${locale}`,
+    );
     const data = (await res.json()) as {
       items: Article[];
       nextOffset: number;
@@ -40,7 +47,7 @@ export function InfiniteLatest({
       {!done && (
         <div className="mt-8 flex justify-center">
           <Button variant="outline" onClick={loadMore} disabled={loading}>
-            {loading ? "Memuat..." : "Muat berita lagi"}
+            {loading ? copy.loading : copy.loadMore}
           </Button>
         </div>
       )}

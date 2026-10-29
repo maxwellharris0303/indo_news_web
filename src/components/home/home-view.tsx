@@ -15,29 +15,34 @@ import {
   getRegions,
   getTopics,
 } from "@/lib/content/repository";
-import { categoryLabels } from "@/lib/site";
+import { articlePublicHref } from "@/lib/article-url";
 import { formatRelativeId } from "@/lib/format";
+import { getSiteLocale } from "@/lib/locale";
+import { homeText } from "@/lib/locale-ui";
+import { categoryLabels } from "@/lib/site";
 import { auth } from "@/auth";
 
 export async function HomeView() {
   const session = await auth();
+  const locale = await getSiteLocale();
+  const copy = homeText(locale);
   const cookieStore = await cookies();
   const regionCookie = cookieStore.get("kabardesk-region")?.value;
 
-  const hero = await getHeroLead();
-  const featured = (await getArticles({ limit: 4, sort: "latest" })).filter(
-    (a) => a.id !== hero?.id,
-  );
-  const latest = await getArticles({ limit: 8 });
-  const moreLatest = await getArticles({ limit: 8, offset: 8 });
-  const popular = await getPopularArticles(24);
-  const editorPicks = await getEditorPicks();
+  const hero = await getHeroLead(locale);
+  const featured = (
+    await getArticles({ limit: 4, sort: "latest", locale })
+  ).filter((a) => a.id !== hero?.id);
+  const latest = await getArticles({ limit: 8, locale });
+  const moreLatest = await getArticles({ limit: 8, offset: 8, locale });
+  const popular = await getPopularArticles(24, locale);
+  const editorPicks = await getEditorPicks(locale);
   const topics = await getTopics();
   const factChecks = (await getFactChecks()).slice(0, 3);
   const regions = await getRegions();
 
   const regionalArticles = regionCookie
-    ? await getArticles({ regionSlug: regionCookie, limit: 4 })
+    ? await getArticles({ regionSlug: regionCookie, limit: 4, locale })
     : [];
 
   const forYou = session?.user?.id
@@ -48,10 +53,10 @@ export async function HomeView() {
     <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8">
       {forYou.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-serif text-xl font-bold sm:text-2xl">Untuk kamu</h2>
-          <p className="text-sm text-muted-foreground">
-            Berdasarkan minat di akun KabarDesk
-          </p>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">
+            {copy.forYou}
+          </h2>
+          <p className="text-sm text-muted-foreground">{copy.forYouSub}</p>
           <div className="mt-4 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {forYou.map((article) => (
               <NewsCard key={article.id} article={article} />
@@ -75,10 +80,10 @@ export async function HomeView() {
       <section className="mb-10">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <h2 className="font-serif text-xl font-bold sm:text-2xl">Topik hangat</h2>
-            <p className="text-sm text-muted-foreground">
-              Liputan berkelanjutan dari redaksi KabarDesk
-            </p>
+            <h2 className="font-serif text-xl font-bold sm:text-2xl">
+              {copy.hotTopics}
+            </h2>
+            <p className="text-sm text-muted-foreground">{copy.hotTopicsSub}</p>
           </div>
         </div>
         <TopicChips topics={topics} />
@@ -86,7 +91,9 @@ export async function HomeView() {
 
       {regionalArticles.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-serif text-xl font-bold sm:text-2xl">Daerah kamu</h2>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">
+            {copy.yourRegion}
+          </h2>
           <div className="mt-4 grid gap-6 md:grid-cols-2">
             {regionalArticles.map((article) => (
               <NewsCard key={article.id} article={article} variant="horizontal" />
@@ -98,9 +105,11 @@ export async function HomeView() {
       <div className="grid gap-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-serif text-xl font-bold sm:text-2xl">Terkini</h2>
+            <h2 className="font-serif text-xl font-bold sm:text-2xl">
+              {copy.latest}
+            </h2>
             <Button variant="link" asChild>
-              <Link href="/indeks">Lihat indeks</Link>
+              <Link href="/indeks">{copy.viewIndex}</Link>
             </Button>
           </div>
           <div className="divide-y divide-border rounded-xl border border-border bg-card px-4">
@@ -109,14 +118,18 @@ export async function HomeView() {
             ))}
           </div>
           <div className="mt-8">
-            <InfiniteLatest initial={moreLatest} startOffset={16} />
+            <InfiniteLatest
+              initial={moreLatest}
+              startOffset={16}
+              locale={locale}
+            />
           </div>
         </section>
 
         <aside className="space-y-8">
           <AdSlot compact />
           <section className="rounded-xl border border-border bg-card p-5">
-            <h2 className="font-serif text-xl font-bold">Terpopuler</h2>
+            <h2 className="font-serif text-xl font-bold">{copy.popular}</h2>
             <ol className="mt-4 space-y-4">
               {popular.map((article, i) => (
                 <li key={article.id} className="flex gap-3">
@@ -125,7 +138,10 @@ export async function HomeView() {
                   </span>
                   <div>
                     <Link
-                      href={`/${article.category}/${article.slug}`}
+                      href={articlePublicHref(
+                        article.category,
+                        article.slug,
+                      )}
                       className="font-medium leading-snug hover:text-primary"
                     >
                       {article.title}
@@ -141,12 +157,12 @@ export async function HomeView() {
           </section>
 
           <section className="rounded-xl border border-border bg-card p-5">
-            <h2 className="font-serif text-xl font-bold">Pilihan editor</h2>
+            <h2 className="font-serif text-xl font-bold">{copy.editorPicks}</h2>
             <ul className="mt-4 space-y-3">
               {editorPicks.slice(0, 5).map((article) => (
                 <li key={article.id}>
                   <Link
-                    href={`/${article.category}/${article.slug}`}
+                    href={articlePublicHref(article.category, article.slug)}
                     className="text-sm font-medium leading-snug hover:text-primary"
                   >
                     {article.title}
@@ -160,9 +176,11 @@ export async function HomeView() {
 
       <section className="mt-12">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-xl font-bold sm:text-2xl">Daerah</h2>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">
+            {copy.regions}
+          </h2>
           <Button variant="link" asChild>
-            <Link href="/daerah">Semua provinsi</Link>
+            <Link href="/daerah">{copy.allProvinces}</Link>
           </Button>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
@@ -173,7 +191,9 @@ export async function HomeView() {
               className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary"
             >
               <p className="font-semibold">{region.name}</p>
-              <p className="text-sm text-muted-foreground">Liputan lokal</p>
+              <p className="text-sm text-muted-foreground">
+                {copy.localCoverage}
+              </p>
             </Link>
           ))}
         </div>
@@ -182,13 +202,13 @@ export async function HomeView() {
       <section className="mt-12 rounded-2xl border border-border bg-muted/20 p-6 md:p-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="font-serif text-xl font-bold sm:text-2xl">Cek Fakta</h2>
-            <p className="text-sm text-muted-foreground">
-              Verifikasi klaim viral sebelum share
-            </p>
+            <h2 className="font-serif text-xl font-bold sm:text-2xl">
+              {copy.factCheck}
+            </h2>
+            <p className="text-sm text-muted-foreground">{copy.factCheckSub}</p>
           </div>
           <Button variant="outline" asChild>
-            <Link href="/cek-fakta">Semua cek fakta</Link>
+            <Link href="/cek-fakta">{copy.allFactCheck}</Link>
           </Button>
         </div>
         <div className="grid gap-4 md:grid-cols-3">

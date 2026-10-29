@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { AuthNav } from "@/components/layout/auth-nav";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { MobileAuthLinks } from "@/components/layout/mobile-auth-links";
+import { useSiteLocale } from "@/components/locale/locale-provider";
+import { navCopy } from "@/lib/locale-ui";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { site, navMain } from "@/lib/site";
@@ -16,6 +18,8 @@ const iconBtnClass =
   "h-11 w-11 shrink-0 sm:h-10 sm:w-10";
 
 export function SiteHeader() {
+  const { locale } = useSiteLocale();
+  const ui = navCopy(locale);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -43,7 +47,7 @@ export function SiteHeader() {
             variant="ghost"
             size="icon"
             className={cn(iconBtnClass, "lg:hidden")}
-            aria-label={open ? "Tutup menu" : "Buka menu navigasi"}
+            aria-label={open ? ui.menuClose : ui.menuOpen}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
@@ -103,7 +107,7 @@ export function SiteHeader() {
             size="icon"
             className={iconBtnClass}
             asChild
-            aria-label="Cari berita"
+            aria-label={ui.search}
           >
             <Link href="/search">
               <Search className="h-5 w-5" aria-hidden />
@@ -150,7 +154,7 @@ export function SiteHeader() {
             ))}
             <li className="mt-2 border-t border-border pt-3">
               <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Bahasa
+                {ui.language}
               </p>
               <div className="px-3">
                 <LanguageSwitcher
@@ -165,7 +169,7 @@ export function SiteHeader() {
                 className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-primary hover:bg-muted"
                 onClick={() => setOpen(false)}
               >
-                Indeks Berita
+                {ui.indexNews}
               </Link>
             </li>
           </ul>

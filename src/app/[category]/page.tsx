@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/news-card";
 import { getArticles } from "@/lib/content/repository";
+import { getSiteLocale } from "@/lib/locale";
 import { categoryLabels, isCategorySlug } from "@/lib/site";
 
 type Props = { params: Promise<{ category: string }> };
@@ -19,7 +20,8 @@ export default async function CategoryPage({ params }: Props) {
   const { category } = await params;
   if (!isCategorySlug(category)) notFound();
 
-  const articles = await getArticles({ category, limit: 30 });
+  const locale = await getSiteLocale();
+  const articles = await getArticles({ category, limit: 30, locale });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
