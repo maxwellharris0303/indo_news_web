@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { isCategorySlug } from "@/lib/site";
@@ -38,7 +39,17 @@ async function requireStaff() {
 }
 
 export async function createArticleFormAction(formData: FormData) {
-  await createArticleAction(formData);
+  const result = await createArticleAction(formData);
+  if (result.ok) {
+    redirect(
+      `/admin/artikel?saved=1&slug=${encodeURIComponent(result.slug)}`,
+    );
+  }
+  const err =
+    result.error === "Slug sudah dipakai atau gagal simpan"
+      ? "slug"
+      : "validasi";
+  redirect(`/admin/artikel/baru?error=${err}`);
 }
 
 export async function createArticleAction(formData: FormData) {
@@ -100,7 +111,11 @@ export async function createArticleAction(formData: FormData) {
   revalidatePath(`/${data.category}`);
   revalidatePath(`/${data.category}/${data.slug}`);
   revalidatePath("/admin");
+  revalidatePath("/admin/artikel");
   revalidatePath("/indeks");
+  if (data.category === "daerah") {
+    revalidatePath(`/daerah/${data.slug}`);
+  }
 
   return { ok: true as const, id, category: data.category, slug: data.slug };
 }
@@ -129,6 +144,7 @@ export async function deleteArticleAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin");
+  revalidatePath("/admin/artikel");
   revalidatePath("/indeks");
   revalidatePath(`/${article.category}`);
   if (article.category === "daerah") {

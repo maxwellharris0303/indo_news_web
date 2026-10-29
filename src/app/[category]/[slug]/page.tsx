@@ -112,7 +112,7 @@ export default async function ArticlePage({ params }: Props) {
   };
 
   return (
-    <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <article className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8">
       {session?.user?.id && <TrackReading articleId={article.id} />}
       <script
         type="application/ld+json"
@@ -133,10 +133,12 @@ export default async function ArticlePage({ params }: Props) {
         <Badge variant="secondary" className="mb-3">
           {categoryLabels[category]}
         </Badge>
-        <h1 className="font-serif text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+        <h1 className="font-serif text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
           {article.title}
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">{article.dek}</p>
+        <p className="mt-4 text-base text-muted-foreground sm:text-lg">
+          {article.dek}
+        </p>
 
         <div className="mt-4">
           <ArticleToolbar

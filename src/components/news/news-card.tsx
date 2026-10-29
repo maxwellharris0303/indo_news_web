@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeId } from "@/lib/format";
 import type { Article } from "@/lib/content/types";
+import { articlePublicHref } from "@/lib/article-url";
 import { categoryLabels } from "@/lib/site";
 type Variant = "hero" | "featured" | "compact" | "horizontal";
 
@@ -16,7 +17,7 @@ export function NewsCard({
   priority?: boolean;
 }) {
   const authorLabel = article.authorName ?? "Redaksi";
-  const href = `/${article.category}/${article.slug}`;
+  const href = articlePublicHref(article.category, article.slug);
 
   if (variant === "hero") {
     return (
@@ -32,11 +33,11 @@ export function NewsCard({
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
-          <div className="flex flex-col justify-center p-6 md:p-8">
+          <div className="flex flex-col justify-center p-4 sm:p-6 md:p-8">
             <Badge variant="secondary" className="mb-3 w-fit">
               {categoryLabels[article.category]}
             </Badge>
-            <h2 className="font-serif text-2xl font-bold leading-tight tracking-tight md:text-3xl">
+            <h2 className="font-serif text-xl font-bold leading-tight tracking-tight sm:text-2xl md:text-3xl">
               {article.title}
             </h2>
             <p className="mt-3 line-clamp-3 text-muted-foreground">{article.dek}</p>
@@ -51,8 +52,11 @@ export function NewsCard({
 
   if (variant === "horizontal") {
     return (
-      <article className="group flex gap-4 border-b border-border py-4 last:border-0">
-        <Link href={href} className="relative h-24 w-32 shrink-0 overflow-hidden rounded-lg">
+      <article className="group flex gap-3 border-b border-border py-4 last:border-0 sm:gap-4">
+        <Link
+          href={href}
+          className="relative h-[4.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-32"
+        >
           <Image
             src={article.imageUrl}
             alt=""
@@ -66,7 +70,7 @@ export function NewsCard({
             <p className="text-xs font-medium uppercase tracking-wide text-primary">
               {categoryLabels[article.category]}
             </p>
-            <h3 className="mt-1 font-serif text-lg font-semibold leading-snug group-hover:text-primary">
+            <h3 className="mt-1 font-serif text-base font-semibold leading-snug group-hover:text-primary sm:text-lg">
               {article.title}
             </h3>
           </Link>

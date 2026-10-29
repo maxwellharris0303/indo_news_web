@@ -41,8 +41,14 @@ export function ArticleToolbar({
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button type="button" variant="outline" size="sm" onClick={onListen}>
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="min-h-11 w-full justify-center sm:w-auto"
+        onClick={onListen}
+      >
         <Volume2 className="h-4 w-4" />
         Dengarkan
       </Button>
@@ -50,6 +56,7 @@ export function ArticleToolbar({
         type="button"
         variant={saved ? "default" : "outline"}
         size="sm"
+        className="min-h-11 w-full justify-center sm:w-auto"
         disabled={pending}
         onClick={onSave}
       >

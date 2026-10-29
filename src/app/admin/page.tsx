@@ -1,151 +1,129 @@
 import Link from "next/link";
-import {
-  createArticleFormAction,
-  deleteArticleFormAction,
-} from "@/app/actions/admin";
-import { DeleteArticleButton } from "@/components/admin/delete-article-button";
-import { updateArticleStatusFormAction } from "@/app/actions/social";
+import type { ArticleStatus } from "@prisma/client";
+import { ArticleRowActions } from "@/components/admin/article-row-actions";
+import { StatCard } from "@/components/admin/stat-card";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { WorkflowBar } from "@/components/admin/workflow-bar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { prisma } from "@/lib/db";
-import { getAuthors } from "@/lib/content/repository";
-import { categoryLabels, categorySlugs } from "@/lib/site";
+import { articlePublicHref } from "@/lib/admin/article-url";
+import { getAdminDashboardStats } from "@/lib/admin/dashboard";
+import { categoryLabels } from "@/lib/site";
+import { formatShortWIB } from "@/lib/format";
 
-export const metadata = { title: "Admin" };
-
-const statusOptions = [
-  "DRAFT",
-  "REVIEW",
-  "SCHEDULED",
-  "PUBLISHED",
-  "CORRECTED",
-  "ARCHIVED",
-] as const;
-
-export default async function AdminPage() {
-  const authors = await getAuthors();
-  const articles = await prisma.article.findMany({
-    orderBy: { publishedAt: "desc" },
-    take: 25,
-    select: {
-      id: true,
-      title: true,
-      category: true,
-      slug: true,
-      viewCount: true,
-      status: true,
-      locale: true,
-    },
-  });
+export default async function AdminDashboardPage() {
+  const stats = await getAdminDashboardStats();
+  const publishedCount =
+    stats.byStatus.PUBLISHED + stats.byStatus.CORRECTED;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <h1 className="font-serif text-3xl font-bold">Redaksi Admin</h1>
-      <p className="mt-2 text-muted-foreground">
-        Kelola artikel, status workflow, dan publikasi KabarDesk.
-      </p>
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">Ringkasan</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pantau publikasi, engagement, dan antrean redaksi.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/admin/artikel/baru">+ Tulis artikel</Link>
+        </Button>
+      </div>
 
-      <section className="mt-10 rounded-xl border border-border p-6">
-        <h2 className="font-serif text-xl font-bold">Tulis artikel cepat</h2>
-        <form action={createArticleFormAction} className="mt-4 grid gap-4">
-          <Input name="title" placeholder="Judul" required />
-          <Input name="slug" placeholder="slug-url-artikel" required />
-          <select
-            name="category"
-            className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-            required
-          >
-            {categorySlugs.map((c) => (
-              <option key={c} value={c}>
-                {categoryLabels[c]}
-              </option>
-            ))}
-          </select>
-          <select
-            name="status"
-            className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-            defaultValue="PUBLISHED"
-          >
-            {statusOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <Input name="dek" placeholder="Lead / dek" required />
-          <textarea
-            name="body"
-            required
-            rows={6}
-            placeholder="Isi berita..."
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-          />
-          <select
-            name="authorId"
-            className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-            required
-          >
-            {authors.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-          <Button type="submit">Simpan artikel</Button>
-        </form>
-      </section>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Total artikel"
+          value={stats.totalArticles}
+          hint={`${publishedCount} terbit / koreksi`}
+          accent="primary"
+        />
+        <StatCard
+          label="Total views"
+          value={stats.totalViews}
+          hint="Akumulasi seluruh artikel"
+        />
+        <StatCard
+          label="Antrean redaksi"
+          value={stats.draftCount + stats.inReviewCount}
+          hint={`${stats.draftCount} draft · ${stats.inReviewCount} review/jadwal`}
+          accent="amber"
+        />
+        <StatCard
+          label="Komunitas"
+          value={stats.commentCount}
+          hint={`${stats.subscriberCount} langganan newsletter`}
+          accent="trust"
+        />
+      </div>
 
-      <section className="mt-12">
-        <h2 className="font-serif text-xl font-bold">Daftar artikel & workflow</h2>
-        <ul className="mt-4 divide-y divide-border">
-          {articles.map((a) => (
-            <li
-              key={a.id}
-              className="flex flex-wrap items-center justify-between gap-3 py-3"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{a.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {categoryLabels[a.category as keyof typeof categoryLabels]} ·{" "}
-                  {a.locale.toUpperCase()} · {a.viewCount} views · {a.status}
-                </p>
-              </div>
-              <form action={updateArticleStatusFormAction} className="flex items-center gap-2">
-                <input type="hidden" name="articleId" value={a.id} />
-                <select
-                  name="status"
-                  defaultValue={a.status}
-                  className="h-9 rounded-md border border-border bg-background px-2 text-xs"
-                >
-                  {statusOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <Button type="submit" size="sm" variant="secondary">
-                  Update
-                </Button>
-              </form>
-              <form action={deleteArticleFormAction}>
-                <input type="hidden" name="articleId" value={a.id} />
-                <DeleteArticleButton title={a.title} />
-              </form>
-              <Button variant="link" asChild size="sm">
-                <Link
-                  href={
-                    a.category === "daerah"
-                      ? `/daerah/${a.slug}`
-                      : `/${a.category}/${a.slug}`
-                  }
-                >
-                  Lihat
-                </Link>
-              </Button>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <WorkflowBar byStatus={stats.byStatus} total={stats.totalArticles} />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-5 py-4">
+            <h2 className="font-serif text-lg font-bold">Terpopuler</h2>
+            <p className="text-sm text-muted-foreground">Berdasarkan views</p>
+          </div>
+          <ul className="divide-y divide-border">
+            {stats.topByViews.map((a, i) => (
+              <li key={a.id} className="flex items-start gap-3 px-5 py-3">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={articlePublicHref(a.category, a.slug)}
+                    className="font-medium hover:text-primary"
+                  >
+                    {a.title}
+                  </Link>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {a.viewCount.toLocaleString("id-ID")} views ·{" "}
+                    {categoryLabels[a.category as keyof typeof categoryLabels]}
+                  </p>
+                </div>
+                <StatusBadge status={a.status} />
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div>
+              <h2 className="font-serif text-lg font-bold">Terbaru</h2>
+              <p className="text-sm text-muted-foreground">8 publikasi terakhir</p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/artikel">Semua</Link>
+            </Button>
+          </div>
+          <ul className="divide-y divide-border">
+            {stats.recentArticles.map((a) => (
+              <li key={a.id} className="px-5 py-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium leading-snug">{a.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatShortWIB(a.publishedAt)} · {a.viewCount} views
+                    </p>
+                  </div>
+                  <StatusBadge status={a.status as ArticleStatus} />
+                </div>
+                <div className="mt-2">
+                  <ArticleRowActions
+                    id={a.id}
+                    title={a.title}
+                    category={a.category}
+                    slug={a.slug}
+                    status={a.status}
+                    compact
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }

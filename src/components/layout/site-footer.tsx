@@ -13,7 +13,7 @@ const footerLinks = [
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-border bg-muted/30">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-3">
+      <div className="mx-auto grid max-w-7xl gap-8 px-3 py-10 sm:px-6 sm:py-12 md:grid-cols-3">
         <div>
           <p className="font-serif text-xl font-bold">{site.name}</p>
           <p className="mt-2 text-sm text-muted-foreground">{site.tagline}</p>

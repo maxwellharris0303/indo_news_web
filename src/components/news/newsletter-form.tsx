@@ -29,9 +29,13 @@ export function NewsletterForm({ compact }: { compact?: boolean }) {
         type="email"
         required
         placeholder="Email Anda"
-        className={compact ? "sm:flex-1" : undefined}
+        className={compact ? "min-h-11 sm:flex-1" : "min-h-11"}
       />
-      <Button type="submit" disabled={pending} className={compact ? "shrink-0" : undefined}>
+      <Button
+        type="submit"
+        disabled={pending}
+        className={compact ? "min-h-11 shrink-0" : "min-h-11 w-full sm:w-auto"}
+      >
         {pending ? "Mendaftar..." : "Langganan"}
       </Button>
       {message && (

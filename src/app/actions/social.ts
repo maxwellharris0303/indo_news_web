@@ -79,6 +79,7 @@ export async function updateArticleStatusAction(formData: FormData) {
 
   await updateArticleStatus(articleId, status);
   revalidatePath("/admin");
+  revalidatePath("/admin/artikel");
   revalidatePath("/");
   return { ok: true as const };
 }

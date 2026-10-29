@@ -16,14 +16,20 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex gap-2">
+    <form
+      onSubmit={onSubmit}
+      className="flex flex-col gap-2 sm:flex-row sm:items-center"
+    >
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Cari judul atau topik..."
         aria-label="Kata kunci pencarian"
+        className="min-h-11 flex-1"
       />
-      <Button type="submit">Cari</Button>
+      <Button type="submit" className="min-h-11 shrink-0 sm:px-8">
+        Cari
+      </Button>
     </form>
   );
 }

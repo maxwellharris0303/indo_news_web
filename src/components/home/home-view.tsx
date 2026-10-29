@@ -45,10 +45,10 @@ export async function HomeView() {
     : [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8">
       {forYou.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-serif text-2xl font-bold">Untuk kamu</h2>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">Untuk kamu</h2>
           <p className="text-sm text-muted-foreground">
             Berdasarkan minat di akun KabarDesk
           </p>
@@ -75,7 +75,7 @@ export async function HomeView() {
       <section className="mb-10">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold">Topik hangat</h2>
+            <h2 className="font-serif text-xl font-bold sm:text-2xl">Topik hangat</h2>
             <p className="text-sm text-muted-foreground">
               Liputan berkelanjutan dari redaksi KabarDesk
             </p>
@@ -86,7 +86,7 @@ export async function HomeView() {
 
       {regionalArticles.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-serif text-2xl font-bold">Daerah kamu</h2>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">Daerah kamu</h2>
           <div className="mt-4 grid gap-6 md:grid-cols-2">
             {regionalArticles.map((article) => (
               <NewsCard key={article.id} article={article} variant="horizontal" />
@@ -98,7 +98,7 @@ export async function HomeView() {
       <div className="grid gap-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-serif text-2xl font-bold">Terkini</h2>
+            <h2 className="font-serif text-xl font-bold sm:text-2xl">Terkini</h2>
             <Button variant="link" asChild>
               <Link href="/indeks">Lihat indeks</Link>
             </Button>
@@ -160,7 +160,7 @@ export async function HomeView() {
 
       <section className="mt-12">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-2xl font-bold">Daerah</h2>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">Daerah</h2>
           <Button variant="link" asChild>
             <Link href="/daerah">Semua provinsi</Link>
           </Button>
@@ -182,7 +182,7 @@ export async function HomeView() {
       <section className="mt-12 rounded-2xl border border-border bg-muted/20 p-6 md:p-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold">Cek Fakta</h2>
+            <h2 className="font-serif text-xl font-bold sm:text-2xl">Cek Fakta</h2>
             <p className="text-sm text-muted-foreground">
               Verifikasi klaim viral sebelum share
             </p>
