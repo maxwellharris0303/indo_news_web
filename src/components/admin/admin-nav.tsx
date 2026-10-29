@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAdminLocale } from "@/components/admin/admin-locale-provider";
+import { navText } from "@/lib/admin/locale-ui";
 import { cn } from "@/lib/utils";
-
-const nav = [
-  { href: "/admin", label: "Ringkasan", exact: true },
-  { href: "/admin/artikel", label: "Artikel", exact: false },
-  { href: "/admin/artikel/baru", label: "Tulis baru", exact: false },
-] as const;
 
 export function AdminNav() {
   const activePath = usePathname();
+  const { locale } = useAdminLocale();
+  const copy = navText(locale);
+  const nav = [
+    { href: "/admin", label: copy.overview, exact: true },
+    { href: "/admin/artikel", label: copy.articles, exact: false },
+    { href: "/admin/artikel/baru", label: copy.compose, exact: false },
+  ] as const;
 
   return (
     <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">

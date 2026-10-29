@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import {
   ARTICLE_STATUSES,
   selectClassName,
-  STATUS_LABELS,
 } from "@/lib/admin/constants";
 import { listAdminArticles } from "@/lib/admin/dashboard";
+import { adminStatusLabels, articlesText } from "@/lib/admin/locale-ui";
+import { getAdminLocale } from "@/lib/admin-locale";
 import { formatShortWIB } from "@/lib/format";
 import { categoryLabels, categorySlugs, isCategorySlug } from "@/lib/site";
 
@@ -27,6 +28,9 @@ type Props = {
 export const metadata = { title: "Kelola Artikel" };
 
 export default async function AdminArticlesPage({ searchParams }: Props) {
+  const locale = await getAdminLocale();
+  const copy = articlesText(locale);
+  const statusLabels = adminStatusLabels[locale];
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const status =
@@ -58,15 +62,16 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-xl font-bold sm:text-2xl">
-            Daftar artikel
+            {copy.title}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {total.toLocaleString("id-ID")} artikel · halaman {page} dari{" "}
-            {totalPages}
+            {locale === "en"
+              ? `${total.toLocaleString("en-US")} articles · page ${page} of ${totalPages}`
+              : `${total.toLocaleString("id-ID")} artikel · halaman ${page} dari ${totalPages}`}
           </p>
         </div>
         <Button asChild>
-          <Link href="/admin/artikel/baru">+ Tulis baru</Link>
+          <Link href="/admin/artikel/baru">{copy.new}</Link>
         </Button>
       </div>
 
@@ -75,7 +80,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           className="rounded-lg border border-trust/40 bg-trust/10 px-4 py-3 text-sm text-trust"
           role="status"
         >
-          Artikel berhasil disimpan
+          {copy.saved}
           {sp.slug ? (
             <>
               {" "}
@@ -91,37 +96,37 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         className="grid gap-3 rounded-xl border border-border bg-card p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
       >
         <label className="text-sm lg:col-span-2">
-          <span className="font-medium">Cari judul</span>
+          <span className="font-medium">{copy.search}</span>
           <Input
             name="q"
             defaultValue={sp.q ?? ""}
-            placeholder="Kata kunci..."
+            placeholder={copy.searchPh}
             className="mt-1.5"
           />
         </label>
         <label className="text-sm">
-          <span className="font-medium">Status</span>
+          <span className="font-medium">{copy.status}</span>
           <select
             name="status"
             defaultValue={status ?? ""}
             className={`mt-1.5 ${selectClassName}`}
           >
-            <option value="">Semua status</option>
+            <option value="">{copy.allStatus}</option>
             {ARTICLE_STATUSES.map((s) => (
               <option key={s} value={s}>
-                {STATUS_LABELS[s]}
+                {statusLabels[s]}
               </option>
             ))}
           </select>
         </label>
         <label className="text-sm">
-          <span className="font-medium">Kanal</span>
+          <span className="font-medium">{copy.channel}</span>
           <select
             name="category"
             defaultValue={category ?? ""}
             className={`mt-1.5 ${selectClassName}`}
           >
-            <option value="">Semua kanal</option>
+            <option value="">{copy.allChannels}</option>
             {categorySlugs.map((c) => (
               <option key={c} value={c}>
                 {categoryLabels[c]}
@@ -130,10 +135,10 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           </select>
         </label>
         <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
-          <Button type="submit">Terapkan filter</Button>
+          <Button type="submit">{copy.apply}</Button>
           {(sp.q || status || category) && (
             <Button type="button" variant="outline" asChild>
-              <Link href="/admin/artikel">Reset</Link>
+              <Link href="/admin/artikel">{copy.reset}</Link>
             </Button>
           )}
         </div>
@@ -141,15 +146,15 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
 
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid">
-          <span>Judul</span>
-          <span className="w-28 text-center">Status</span>
-          <span className="w-24 text-right">Views</span>
-          <span className="w-[min(100%,14rem)]">Aksi</span>
+          <span>{copy.colTitle}</span>
+          <span className="w-28 text-center">{copy.colStatus}</span>
+          <span className="w-24 text-right">{copy.colViews}</span>
+          <span className="w-[min(100%,14rem)]">{copy.colActions}</span>
         </div>
         <ul className="divide-y divide-border">
           {items.length === 0 ? (
             <li className="px-4 py-12 text-center text-muted-foreground">
-              Tidak ada artikel untuk filter ini.
+              {copy.empty}
             </li>
           ) : (
             items.map((a) => (
@@ -190,15 +195,15 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         <div className="flex flex-wrap items-center justify-center gap-2">
           {page > 1 ? (
             <Button variant="outline" size="sm" asChild>
-              <Link href={pageHref(page - 1)}>← Sebelumnya</Link>
+              <Link href={pageHref(page - 1)}>{copy.prev}</Link>
             </Button>
           ) : null}
           <span className="px-2 text-sm text-muted-foreground">
-            {page} / {totalPages} · {pageSize} per halaman
+            {page} / {totalPages} · {pageSize} {copy.perPage}
           </span>
           {page < totalPages ? (
             <Button variant="outline" size="sm" asChild>
-              <Link href={pageHref(page + 1)}>Berikutnya →</Link>
+              <Link href={pageHref(page + 1)}>{copy.next}</Link>
             </Button>
           ) : null}
         </div>

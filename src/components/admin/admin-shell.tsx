@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { AdminLanguageSwitcher } from "@/components/admin/admin-language-switcher";
 import { AdminNav } from "@/components/admin/admin-nav";
-import { site } from "@/lib/site";
+import { getAdminLocale } from "@/lib/admin-locale";
+import { shellText } from "@/lib/admin/locale-ui";
 import { ROLE_LABELS } from "@/lib/admin/constants";
+import { site } from "@/lib/site";
 
 type Props = {
   children: React.ReactNode;
@@ -12,7 +15,9 @@ type Props = {
   };
 };
 
-export function AdminShell({ children, user }: Props) {
+export async function AdminShell({ children, user }: Props) {
+  const locale = await getAdminLocale();
+  const copy = shellText(locale);
   const roleLabel = user?.role ? ROLE_LABELS[user.role] ?? user.role : "Staff";
 
   return (
@@ -21,7 +26,7 @@ export function AdminShell({ children, user }: Props) {
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-              Redaksi
+              {copy.desk}
             </p>
             <h1 className="font-serif text-2xl font-bold sm:text-3xl">
               {site.name} Admin
@@ -30,18 +35,19 @@ export function AdminShell({ children, user }: Props) {
               {user?.name ?? user?.email ?? "Staff"} · {roleLabel}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <AdminLanguageSwitcher />
             <Link
               href="/"
               className="rounded-md border border-border bg-card px-3 py-2 font-medium hover:bg-muted"
             >
-              Lihat situs
+              {copy.viewSite}
             </Link>
             <Link
               href="/akun"
               className="rounded-md border border-border bg-card px-3 py-2 font-medium hover:bg-muted"
             >
-              Akun
+              {copy.account}
             </Link>
           </div>
         </div>

@@ -7,10 +7,14 @@ import { WorkflowBar } from "@/components/admin/workflow-bar";
 import { Button } from "@/components/ui/button";
 import { articlePublicHref } from "@/lib/admin/article-url";
 import { getAdminDashboardStats } from "@/lib/admin/dashboard";
+import { dashboardText } from "@/lib/admin/locale-ui";
+import { getAdminLocale } from "@/lib/admin-locale";
 import { categoryLabels } from "@/lib/site";
 import { formatShortWIB } from "@/lib/format";
 
 export default async function AdminDashboardPage() {
+  const locale = await getAdminLocale();
+  const copy = dashboardText(locale);
   const stats = await getAdminDashboardStats();
   const publishedCount =
     stats.byStatus.PUBLISHED + stats.byStatus.CORRECTED;
@@ -19,49 +23,58 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-serif text-xl font-bold sm:text-2xl">Ringkasan</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pantau publikasi, engagement, dan antrean redaksi.
-          </p>
+          <h2 className="font-serif text-xl font-bold sm:text-2xl">
+            {copy.title}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">{copy.subtitle}</p>
         </div>
         <Button asChild>
-          <Link href="/admin/artikel/baru">+ Tulis artikel</Link>
+          <Link href="/admin/artikel/baru">{copy.newArticle}</Link>
         </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total artikel"
+          label={copy.statTotal}
           value={stats.totalArticles}
-          hint={`${publishedCount} terbit / koreksi`}
+          hint={copy.statTotalHint(publishedCount)}
           accent="primary"
         />
         <StatCard
-          label="Total views"
+          label={copy.statViews}
           value={stats.totalViews}
-          hint="Akumulasi seluruh artikel"
+          hint={copy.statViewsHint}
         />
         <StatCard
-          label="Antrean redaksi"
+          label={copy.statQueue}
           value={stats.draftCount + stats.inReviewCount}
-          hint={`${stats.draftCount} draft · ${stats.inReviewCount} review/jadwal`}
+          hint={copy.statQueueHint(stats.draftCount, stats.inReviewCount)}
           accent="amber"
         />
         <StatCard
-          label="Komunitas"
+          label={copy.statCommunity}
           value={stats.commentCount}
-          hint={`${stats.subscriberCount} langganan newsletter`}
+          hint={copy.statCommunityHint(
+            stats.commentCount,
+            stats.subscriberCount,
+          )}
           accent="trust"
         />
       </div>
 
-      <WorkflowBar byStatus={stats.byStatus} total={stats.totalArticles} />
+      <WorkflowBar
+        byStatus={stats.byStatus}
+        total={stats.totalArticles}
+        title={copy.workflow}
+        subtitle={copy.workflowSub}
+        locale={locale}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
-            <h2 className="font-serif text-lg font-bold">Terpopuler</h2>
-            <p className="text-sm text-muted-foreground">Berdasarkan views</p>
+            <h2 className="font-serif text-lg font-bold">{copy.topPopular}</h2>
+            <p className="text-sm text-muted-foreground">{copy.topPopularSub}</p>
           </div>
           <ul className="divide-y divide-border">
             {stats.topByViews.map((a, i) => (
@@ -90,11 +103,11 @@ export default async function AdminDashboardPage() {
         <section className="rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div>
-              <h2 className="font-serif text-lg font-bold">Terbaru</h2>
-              <p className="text-sm text-muted-foreground">8 publikasi terakhir</p>
+              <h2 className="font-serif text-lg font-bold">{copy.recent}</h2>
+              <p className="text-sm text-muted-foreground">{copy.recentSub}</p>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/artikel">Semua</Link>
+              <Link href="/admin/artikel">{copy.allArticles}</Link>
             </Button>
           </div>
           <ul className="divide-y divide-border">

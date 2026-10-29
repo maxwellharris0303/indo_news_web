@@ -1,9 +1,14 @@
 import type { ArticleStatus } from "@prisma/client";
-import { ARTICLE_STATUSES, STATUS_LABELS } from "@/lib/admin/constants";
+import { ARTICLE_STATUSES } from "@/lib/admin/constants";
+import type { AdminLocale } from "@/lib/admin-locale";
+import { adminStatusLabels } from "@/lib/admin/locale-ui";
 
 type Props = {
   byStatus: Record<ArticleStatus, number>;
   total: number;
+  title: string;
+  subtitle: string;
+  locale: AdminLocale;
 };
 
 const barColors: Record<ArticleStatus, string> = {
@@ -15,15 +20,20 @@ const barColors: Record<ArticleStatus, string> = {
   ARCHIVED: "bg-muted-foreground/25",
 };
 
-export function WorkflowBar({ byStatus, total }: Props) {
+export function WorkflowBar({
+  byStatus,
+  total,
+  title,
+  subtitle,
+  locale,
+}: Props) {
   const safeTotal = total || 1;
+  const statusLabels = adminStatusLabels[locale];
 
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <h2 className="font-serif text-lg font-bold">Alur workflow</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Distribusi status seluruh artikel di database.
-      </p>
+      <h2 className="font-serif text-lg font-bold">{title}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-muted">
         {ARTICLE_STATUSES.map((status) => {
           const count = byStatus[status];
@@ -34,7 +44,7 @@ export function WorkflowBar({ byStatus, total }: Props) {
               key={status}
               className={barColors[status]}
               style={{ width: `${pct}%` }}
-              title={`${STATUS_LABELS[status]}: ${count}`}
+              title={`${statusLabels[status]}: ${count}`}
             />
           );
         })}
@@ -49,7 +59,7 @@ export function WorkflowBar({ byStatus, total }: Props) {
               <span
                 className={`inline-block h-2.5 w-2.5 rounded-full ${barColors[status]}`}
               />
-              {STATUS_LABELS[status]}
+              {statusLabels[status]}
             </span>
             <span className="font-semibold tabular-nums">
               {byStatus[status].toLocaleString("id-ID")}
