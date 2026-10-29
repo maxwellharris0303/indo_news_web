@@ -1,5 +1,4 @@
 import { format, formatDistanceToNow } from "date-fns";
-import { enUS } from "date-fns/locale/en-US";
 import { id as localeId } from "date-fns/locale";
 import type { AdminLocale } from "@/lib/admin-locale";
 
@@ -22,18 +21,43 @@ export function formatWIB(date: Date | string): string {
     .concat(" WIB");
 }
 
-export function formatShortWIB(date: Date | string): string {
+function formatShortInTimeZone(
+  date: Date | string,
+  locale: string,
+): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return format(d, "dd MMM yyyy, HH:mm", { locale: localeId }) + " WIB";
+  const parts = new Intl.DateTimeFormat(locale, {
+    timeZone: TZ,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+
+  const day = pick("day");
+  const month = pick("month");
+  const year = pick("year");
+  const hour = pick("hour").replace(/\./g, ":");
+  const minute = pick("minute").replace(/\./g, ":");
+
+  return `${day} ${month} ${year}, ${hour}:${minute} WIB`;
+}
+
+export function formatShortWIB(date: Date | string): string {
+  return formatShortInTimeZone(date, "id-ID");
 }
 
 export function formatShortAdmin(
   date: Date | string,
   locale: AdminLocale,
 ): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const dfLocale = locale === "en" ? enUS : localeId;
-  return format(d, "dd MMM yyyy, HH:mm", { locale: dfLocale }) + " WIB";
+  const intlLocale = locale === "en" ? "en-GB" : "id-ID";
+  return formatShortInTimeZone(date, intlLocale);
 }
 
 export function formatRelativeId(date: Date | string): string {
