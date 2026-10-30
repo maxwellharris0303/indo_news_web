@@ -17,6 +17,7 @@ import {
 } from "@/lib/rss/batch-job-client";
 import { RssFeedBrandMark } from "@/components/admin/rss-feed-brand";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export type RssInboxRow = {
   id: string;
@@ -44,6 +45,8 @@ type Copy = {
   keepTop10: string;
   rewriteTop3: string;
   rewriteSelected: string;
+  rewriteCount: string;
+  rewriteCountAria: string;
   rewritingBatch: string;
   batchDone: string;
   batchRunning: string;
@@ -72,6 +75,18 @@ export function RssInboxPanel({
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [batchProgress, setBatchProgress] = useState<string | null>(null);
+  const [rewriteCount, setRewriteCount] = useState("10");
+
+  function parseRewriteCount(raw: string, fallback: number): number {
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 1) return fallback;
+    return n;
+  }
+
+  function takeBatchIds(ids: string[]): string[] {
+    const n = parseRewriteCount(rewriteCount, ids.length);
+    return ids.slice(0, n);
+  }
 
   const syncBatchFromServer = useCallback(
     async (job: RssBatchJob, refreshPage: boolean) => {
@@ -202,7 +217,7 @@ export function RssInboxPanel({
   }
 
   async function runBatchRewrite(ids: string[]) {
-    const batchIds = ids.slice(0, 5);
+    const batchIds = takeBatchIds(ids);
     if (batchIds.length === 0) return;
 
     const job: RssBatchJob = {
@@ -292,13 +307,24 @@ export function RssInboxPanel({
           >
             {copy.keepTop10}
           </Button>
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <span className="sr-only sm:not-sr-only">{copy.rewriteCount}</span>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={rewriteCount}
+              onChange={(e) => setRewriteCount(e.target.value)}
+              className="h-9 w-20 tabular-nums"
+              aria-label={copy.rewriteCountAria}
+              disabled={!!busy}
+            />
+          </label>
           <Button
             type="button"
             size="sm"
             disabled={!!busy || rewriteCandidates.length === 0}
-            onClick={() =>
-              runBatchRewrite(rewriteCandidates.slice(0, 3))
-            }
+            onClick={() => runBatchRewrite(rewriteCandidates)}
           >
             {copy.rewriteTop3}
           </Button>
@@ -316,7 +342,7 @@ export function RssInboxPanel({
               const ids = selectedArr.filter((id) =>
                 items.find((i) => i.id === id)?.canRewrite,
               );
-              runBatchRewrite(ids.slice(0, 5));
+              runBatchRewrite(ids);
             }}
           >
             {copy.rewriteSelected}

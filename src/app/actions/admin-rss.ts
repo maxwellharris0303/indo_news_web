@@ -341,14 +341,23 @@ export async function rewriteRssItemAction(input: {
   }
 }
 
+/** Safety cap per request (sequential OpenAI calls). Raise via env if needed. */
+const BATCH_REWRITE_MAX =
+  Number(process.env.RSS_BATCH_REWRITE_MAX) > 0
+    ? Number(process.env.RSS_BATCH_REWRITE_MAX)
+    : 500;
+
 export async function batchRewriteRssItemsAction(itemIds: string[]) {
   await requireStaff();
-  const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))].slice(
-    0,
-    5,
-  );
+  const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))];
   if (ids.length === 0) {
     return { ok: false as const, error: "Tidak ada item dipilih" };
+  }
+  if (ids.length > BATCH_REWRITE_MAX) {
+    return {
+      ok: false as const,
+      error: `Maksimal ${BATCH_REWRITE_MAX} item per batch rewrite`,
+    };
   }
   const results: {
     itemId: string;
@@ -372,10 +381,7 @@ export async function batchRewriteRssItemsAction(itemIds: string[]) {
 
 export async function getRssBatchProgressAction(itemIds: string[]) {
   await requireStaff();
-  const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))].slice(
-    0,
-    10,
-  );
+  const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))];
   if (ids.length === 0) {
     return {
       ok: true as const,
