@@ -49,8 +49,22 @@ export function ArticleToolbar({
     [title, dek, summaryBullets, body],
   );
 
-  const { status: speechStatus, togglePlayPause, stop } =
-    useArticleSpeech(speechText);
+  const {
+    status: speechStatus,
+    speechError,
+    prepareVoices,
+    togglePlayPause,
+    stop,
+  } = useArticleSpeech(speechText);
+
+  const speechErrorMessage =
+    speechError === "not-allowed"
+      ? "Chrome memblokir suara untuk situs ini. Klik ikon gembok → Izinkan suara, atau matikan ekstensi pembaca/teks."
+      : speechError === "start-failed"
+        ? "Audio tidak mulai. Coba klik Dengarkan lagi, atau buka tab baru / mode tamu jika profil Chrome punya kebijakan ketat."
+        : speechError === "synthesis-failed"
+          ? "Pemutaran suara gagal. Periksa volume sistem dan pengaturan TTS di Chrome (chrome://settings/accessibility)."
+          : null;
 
   const speechActive = speechStatus === "playing" || speechStatus === "paused";
 
@@ -100,6 +114,7 @@ export function ArticleToolbar({
             size="sm"
             className="min-h-11 w-full justify-center sm:w-auto"
             disabled={speechStatus === "unsupported" || !speechText.trim()}
+            onPointerDown={prepareVoices}
             onClick={togglePlayPause}
             aria-pressed={speechActive}
             aria-label={
@@ -156,11 +171,12 @@ export function ArticleToolbar({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        {speechStatus === "unsupported"
-          ? "Browser Anda tidak mendukung baca suara. Coba Chrome atau Edge."
-          : speechActive
-            ? "Membacakan judul, ringkasan, dan isi artikel (suara perangkat)."
-            : "Dengarkan: judul, ringkasan Baca cepat, dan teks artikel lengkap."}
+        {speechErrorMessage ??
+          (speechStatus === "unsupported"
+            ? "Browser Anda tidak mendukung baca suara. Coba Chrome atau Edge."
+            : speechActive
+              ? "Membacakan judul, ringkasan, dan isi artikel (suara perangkat)."
+              : "Dengarkan: judul, ringkasan Baca cepat, dan teks artikel lengkap.")}
       </p>
 
       {saveMessage ? (

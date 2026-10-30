@@ -2,6 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chunkSpeechText } from "@/lib/article/speech-text";
+import {
+  applyUtteranceVoice,
+  isSpeechSupported,
+  mapSpeechError,
+  startSpeechKeepAlive,
+  type SpeechStartError,
+  warmSpeechVoices,
+} from "@/lib/article/speech-synth";
 
 export type ArticleSpeechStatus =
   | "unsupported"
@@ -9,36 +17,49 @@ export type ArticleSpeechStatus =
   | "playing"
   | "paused";
 
-function pickIndonesianVoice(
-  voices: SpeechSynthesisVoice[],
-): SpeechSynthesisVoice | undefined {
-  const id = voices.find(
-    (v) =>
-      v.lang.toLowerCase().startsWith("id") ||
-      v.name.toLowerCase().includes("indonesia"),
-  );
-  return id ?? voices.find((v) => v.lang.toLowerCase().startsWith("id"));
-}
-
 export function useArticleSpeech(fullText: string) {
   const [status, setStatus] = useState<ArticleSpeechStatus>("idle");
+  const [speechError, setSpeechError] = useState<SpeechStartError | null>(
+    null,
+  );
   const queueRef = useRef<string[]>([]);
   const indexRef = useRef(0);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const mountedRef = useRef(true);
+  const keepAliveStopRef = useRef<(() => void) | null>(null);
+  const startTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    if (!isSpeechSupported()) {
       setStatus("unsupported");
       return () => {
         mountedRef.current = false;
       };
     }
-    setStatus("idle");
+
+    const refreshVoices = () => {
+      voicesRef.current = window.speechSynthesis.getVoices();
+    };
+    refreshVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", refreshVoices);
+
     return () => {
       mountedRef.current = false;
+      window.speechSynthesis.removeEventListener("voiceschanged", refreshVoices);
+      keepAliveStopRef.current?.();
+      if (startTimerRef.current != null) {
+        window.clearTimeout(startTimerRef.current);
+      }
       window.speechSynthesis.cancel();
     };
+  }, []);
+
+  const clearStartTimer = useCallback(() => {
+    if (startTimerRef.current != null) {
+      window.clearTimeout(startTimerRef.current);
+      startTimerRef.current = null;
+    }
   }, []);
 
   const speakNext = useCallback(() => {
@@ -48,77 +69,113 @@ export function useArticleSpeech(fullText: string) {
     if (i >= queue.length) {
       queueRef.current = [];
       indexRef.current = 0;
+      keepAliveStopRef.current?.();
+      keepAliveStopRef.current = null;
       if (mountedRef.current) setStatus("idle");
       return;
     }
 
     const utterance = new SpeechSynthesisUtterance(queue[i]);
-    utterance.lang = "id-ID";
-    const voices = synth.getVoices();
-    const voice = pickIndonesianVoice(voices);
-    if (voice) utterance.voice = voice;
-    utterance.rate = 1;
-    utterance.pitch = 1;
+    const voices =
+      voicesRef.current.length > 0
+        ? voicesRef.current
+        : warmSpeechVoices();
+    applyUtteranceVoice(utterance, voices);
+
+    utterance.onstart = () => {
+      clearStartTimer();
+      if (mountedRef.current) setSpeechError(null);
+    };
 
     utterance.onend = () => {
       indexRef.current += 1;
       speakNext();
     };
-    utterance.onerror = () => {
-      if (mountedRef.current) setStatus("idle");
+
+    utterance.onerror = (ev) => {
+      clearStartTimer();
+      keepAliveStopRef.current?.();
+      keepAliveStopRef.current = null;
       queueRef.current = [];
       indexRef.current = 0;
+      if (mountedRef.current) {
+        setSpeechError(mapSpeechError(ev.error));
+        setStatus("idle");
+      }
     };
 
+    if (synth.paused) synth.resume();
     synth.speak(utterance);
-  }, []);
+
+    clearStartTimer();
+    startTimerRef.current = window.setTimeout(() => {
+      if (!mountedRef.current) return;
+      if (!synth.speaking && !synth.pending && queueRef.current.length > 0) {
+        setSpeechError("start-failed");
+        setStatus("idle");
+        queueRef.current = [];
+        indexRef.current = 0;
+        keepAliveStopRef.current?.();
+        keepAliveStopRef.current = null;
+        synth.cancel();
+      }
+    }, 800);
+  }, [clearStartTimer]);
 
   const stop = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (!isSpeechSupported()) return;
+    clearStartTimer();
+    keepAliveStopRef.current?.();
+    keepAliveStopRef.current = null;
     window.speechSynthesis.cancel();
     queueRef.current = [];
     indexRef.current = 0;
-    if (mountedRef.current) setStatus("idle");
-  }, []);
+    if (mountedRef.current) {
+      setStatus("idle");
+      setSpeechError(null);
+    }
+  }, [clearStartTimer]);
 
   useEffect(() => {
     stop();
   }, [fullText, stop]);
 
+  const prepareVoices = useCallback(() => {
+    if (!isSpeechSupported()) return;
+    voicesRef.current = warmSpeechVoices();
+  }, []);
+
   const play = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    if (!isSpeechSupported()) {
       setStatus("unsupported");
       return;
     }
     const trimmed = fullText.trim();
     if (!trimmed) return;
 
+    setSpeechError(null);
+    voicesRef.current = warmSpeechVoices();
+
     window.speechSynthesis.cancel();
     queueRef.current = chunkSpeechText(trimmed);
     indexRef.current = 0;
     if (queueRef.current.length === 0) return;
 
+    keepAliveStopRef.current?.();
+    keepAliveStopRef.current = startSpeechKeepAlive();
     setStatus("playing");
 
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        speakNext();
-      };
-    } else {
-      speakNext();
-    }
+    speakNext();
   }, [fullText, speakNext]);
 
   const pause = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (!isSpeechSupported()) return;
     window.speechSynthesis.pause();
     if (mountedRef.current) setStatus("paused");
   }, []);
 
   const resume = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (!isSpeechSupported()) return;
     window.speechSynthesis.resume();
     if (mountedRef.current) setStatus("playing");
   }, []);
@@ -129,5 +186,14 @@ export function useArticleSpeech(fullText: string) {
     else play();
   }, [status, pause, resume, play]);
 
-  return { status, play, pause, resume, stop, togglePlayPause };
+  return {
+    status,
+    speechError,
+    prepareVoices,
+    play,
+    pause,
+    resume,
+    stop,
+    togglePlayPause,
+  };
 }
