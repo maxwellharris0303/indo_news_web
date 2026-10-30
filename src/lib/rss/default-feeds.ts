@@ -55,7 +55,7 @@ export const SINDONEWS_CHANNEL_FEEDS: DefaultFeedSeed[] = [
     name: "Sindonews · Edukasi",
     siteUrl: "https://edukasi.sindonews.com",
     feedUrl: "https://edukasi.sindonews.com/rss",
-    defaultCategory: "nasional",
+    defaultCategory: "edukasi",
     ...sindonewsChannelDefaults,
   },
   {

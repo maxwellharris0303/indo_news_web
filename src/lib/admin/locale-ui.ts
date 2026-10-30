@@ -418,6 +418,7 @@ export const adminCategoryLabels: Record<
     "politik-hukum": "Politics & Law",
     olahraga: "Sports",
     tekno: "Tech",
+    edukasi: "Education",
     "gaya-hidup": "Lifestyle",
     daerah: "Regions",
     opini: "Opinion",

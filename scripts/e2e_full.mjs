@@ -17,6 +17,7 @@ const staticRoutes = [
   "/politik-hukum",
   "/olahraga",
   "/tekno",
+  "/edukasi",
   "/gaya-hidup",
   "/daerah",
   "/daerah/provinsi/dki-jakarta",
