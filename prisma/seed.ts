@@ -113,7 +113,13 @@ async function seedProduction() {
   await upsertDemoUsers();
   const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
   await seedDefaultRssFeeds();
-  console.log("Production seed: demo users + RSS feeds (data preserved)");
+  const { seedDemoArticleComments } = await import(
+    "../src/lib/content/seed-comments"
+  );
+  const commentsAdded = await seedDemoArticleComments(prisma);
+  console.log(
+    `Production seed: demo users + RSS feeds (data preserved); +${commentsAdded} demo comments`,
+  );
 }
 
 async function seedDevelopment() {
@@ -202,6 +208,12 @@ async function seedDevelopment() {
   const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
   await seedDefaultRssFeeds();
   console.log("RSS feeds default: 8 sumber");
+
+  const { seedDemoArticleComments } = await import(
+    "../src/lib/content/seed-comments"
+  );
+  const commentsAdded = await seedDemoArticleComments(prisma);
+  console.log(`Demo comments: ${commentsAdded} rows`);
 
   console.log("Seed selesai: artikel + akun demo, admin@kabardesk.id / admin123");
 }
