@@ -9,6 +9,99 @@ export type DefaultFeedSeed = {
   defaultAiProvider: AiRewriteProvider;
 };
 
+const sindonewsChannelDefaults = {
+  scrapeMode: "FETCH_ARTICLE" as const,
+  defaultAiProvider: "OPENAI" as const,
+};
+
+/** SINDOnews per-channel RSS (replaces single www homepage feed). */
+export const SINDONEWS_CHANNEL_FEEDS: DefaultFeedSeed[] = [
+  {
+    name: "Sindonews · Nasional",
+    siteUrl: "https://nasional.sindonews.com",
+    feedUrl: "https://nasional.sindonews.com/rss",
+    defaultCategory: "nasional",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Daerah",
+    siteUrl: "https://daerah.sindonews.com",
+    feedUrl: "https://daerah.sindonews.com/rss",
+    defaultCategory: "daerah",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Lifestyle",
+    siteUrl: "https://lifestyle.sindonews.com",
+    feedUrl: "https://lifestyle.sindonews.com/rss",
+    defaultCategory: "gaya-hidup",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Ekonomi",
+    siteUrl: "https://ekbis.sindonews.com",
+    feedUrl: "https://ekbis.sindonews.com/rss",
+    defaultCategory: "ekonomi",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Tekno",
+    siteUrl: "https://tekno.sindonews.com",
+    feedUrl: "https://tekno.sindonews.com/rss",
+    defaultCategory: "tekno",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Edukasi",
+    siteUrl: "https://edukasi.sindonews.com",
+    feedUrl: "https://edukasi.sindonews.com/rss",
+    defaultCategory: "nasional",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Multimedia",
+    siteUrl: "https://media.sindonews.com",
+    feedUrl: "https://media.sindonews.com/rss",
+    defaultCategory: "multimedia",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Internasional",
+    siteUrl: "https://international.sindonews.com",
+    feedUrl: "https://international.sindonews.com/rss",
+    defaultCategory: "internasional",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Sports",
+    siteUrl: "https://sports.sindonews.com",
+    feedUrl: "https://sports.sindonews.com/rss",
+    defaultCategory: "olahraga",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Otomotif",
+    siteUrl: "https://otomotif.sindonews.com",
+    feedUrl: "https://otomotif.sindonews.com/rss",
+    defaultCategory: "tekno",
+    ...sindonewsChannelDefaults,
+  },
+  {
+    name: "Sindonews · Kalam",
+    siteUrl: "https://kalam.sindonews.com",
+    feedUrl: "https://kalam.sindonews.com/rss",
+    defaultCategory: "opini",
+    ...sindonewsChannelDefaults,
+  },
+];
+
+/** Old single-feed URL — superseded by channel feeds; disabled on seed. */
+export const LEGACY_SINDONEWS_FEED_URLS = [
+  "https://sindonews.com/rss",
+  "https://www.sindonews.com/rss",
+  "https://www.sindonews.com/feed",
+] as const;
+
 /** Known or common RSS endpoints — editable in admin if URLs change. */
 export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
   {
@@ -35,14 +128,7 @@ export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
     defaultCategory: "nasional",
     defaultAiProvider: "OPENAI",
   },
-  {
-    name: "Sindonews",
-    siteUrl: "https://www.sindonews.com",
-    feedUrl: "https://sindonews.com/rss",
-    scrapeMode: "FETCH_ARTICLE",
-    defaultCategory: "nasional",
-    defaultAiProvider: "OPENAI",
-  },
+  ...SINDONEWS_CHANNEL_FEEDS,
   {
     name: "iNews.id",
     siteUrl: "https://www.inews.id",
@@ -94,7 +180,13 @@ export async function seedDefaultRssFeeds() {
       update: {
         name: feed.name,
         siteUrl: feed.siteUrl,
+        defaultCategory: feed.defaultCategory,
       },
     });
   }
+
+  await prisma.rssFeed.updateMany({
+    where: { feedUrl: { in: [...LEGACY_SINDONEWS_FEED_URLS] } },
+    data: { enabled: false },
+  });
 }

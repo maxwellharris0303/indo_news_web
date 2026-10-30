@@ -138,6 +138,7 @@ export async function listAdminArticles(filters: ArticleListFilters) {
         isBreaking: true,
         isDeveloping: true,
         breakingExpiresAt: true,
+        featuredLevel: true,
       },
     }),
     prisma.article.count({ where }),

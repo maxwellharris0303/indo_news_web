@@ -187,6 +187,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           slug: a.slug,
           isBreaking: rowBreakingActive(a.isBreaking, a.breakingExpiresAt),
           isDeveloping: a.isDeveloping,
+          featuredLevel: a.featuredLevel,
         }))}
         copy={copy}
         actionCopy={actionCopy}

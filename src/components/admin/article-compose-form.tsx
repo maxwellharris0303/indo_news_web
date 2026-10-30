@@ -109,6 +109,20 @@ export function ArticleComposeForm({ authors, error, copy }: Props) {
         </div>
       </fieldset>
 
+      <fieldset className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
+        <legend className="px-1 text-sm font-medium">{copy.featuredTitle}</legend>
+        <p className="text-xs text-muted-foreground">{copy.featuredHint}</p>
+        <select
+          name="featuredLevel"
+          className={selectClassName}
+          defaultValue="0"
+        >
+          <option value="0">{copy.featuredNone}</option>
+          <option value="1">{copy.featuredEditorPick}</option>
+          <option value="3">{copy.featuredHero}</option>
+        </select>
+      </fieldset>
+
       <label className="block text-sm">
         <span className="font-medium">Lead / dek</span>
         <textarea

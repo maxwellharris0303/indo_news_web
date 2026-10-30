@@ -299,6 +299,8 @@ export const adminArticlesCopy = {
     bulkPublishSelected: "Terbitkan terpilih",
     bulkPublishReviewPage: "Terbitkan semua Review di halaman",
     bulkArchiveSelected: "Arsipkan terpilih",
+    bulkEditorPickSelected: "Pilihan editor (terpilih)",
+    bulkClearFeaturedSelected: "Hapus sorotan (terpilih)",
     selected: "terpilih",
     bulkDone: "Bulk selesai",
     urgentPanel: {
@@ -335,6 +337,8 @@ export const adminArticlesCopy = {
     bulkPublishSelected: "Publish selected",
     bulkPublishReviewPage: "Publish all Review on page",
     bulkArchiveSelected: "Archive selected",
+    bulkEditorPickSelected: "Editor's pick (selected)",
+    bulkClearFeaturedSelected: "Clear highlight (selected)",
     selected: "selected",
     bulkDone: "Bulk done",
     urgentPanel: {
@@ -368,6 +372,12 @@ export const adminActionsCopy = {
     urgencyBreakingAria: "Tampilkan sebagai Breaking selama 6 jam",
     urgencyDevelopingAria: "Tampilkan sebagai Berlangsung",
     urgencyClearAria: "Hapus dari headline bar",
+    featuredEditorPick: "Pilihan editor",
+    featuredHero: "Hero",
+    featuredClear: "Hapus sorotan",
+    featuredEditorPickAria: "Tampilkan di sidebar Pilihan editor",
+    featuredHeroAria: "Jadikan hero utama beranda",
+    featuredClearAria: "Hapus dari Pilihan editor dan hero",
   },
   en: {
     view: "View",
@@ -387,6 +397,12 @@ export const adminActionsCopy = {
     urgencyBreakingAria: "Show as Breaking for 6 hours",
     urgencyDevelopingAria: "Show as Developing",
     urgencyClearAria: "Remove from headline bar",
+    featuredEditorPick: "Editor pick",
+    featuredHero: "Hero",
+    featuredClear: "Clear highlight",
+    featuredEditorPickAria: "Show in Editor's pick sidebar",
+    featuredHeroAria: "Set as homepage hero lead",
+    featuredClearAria: "Remove from editor picks and hero",
   },
 } as const;
 
@@ -420,6 +436,12 @@ export const adminComposeCopy = {
     breakingHours: "Durasi Breaking",
     urgencyHint:
       "Hanya untuk artikel terbit. Satu Breaking aktif per locale; Breaking lama diganti otomatis.",
+    featuredTitle: "Sorotan beranda (opsional)",
+    featuredNone: "Biasa (tidak disorot)",
+    featuredEditorPick: "Pilihan editor (sidebar)",
+    featuredHero: "Hero utama beranda",
+    featuredHint:
+      "Pilihan editor muncul di sidebar. Hero = kartu besar di atas; hanya satu hero aktif per locale.",
   },
   en: {
     title: "Write new article",
@@ -431,6 +453,12 @@ export const adminComposeCopy = {
     breakingHours: "Breaking duration",
     urgencyHint:
       "Published articles only. One active Breaking per locale; previous Breaking is replaced.",
+    featuredTitle: "Homepage highlight (optional)",
+    featuredNone: "Normal (not highlighted)",
+    featuredEditorPick: "Editor's pick (sidebar)",
+    featuredHero: "Homepage hero lead",
+    featuredHint:
+      "Editor picks appear in the sidebar. Hero is the large top card; only one active hero per locale.",
   },
 } as const;
 

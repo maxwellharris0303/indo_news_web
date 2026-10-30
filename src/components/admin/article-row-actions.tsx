@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ArticleStatus } from "@prisma/client";
 import {
   deleteArticleFormAction,
+  setArticleFeaturedLevelFormAction,
   setArticleUrgencyFormAction,
 } from "@/app/actions/admin";
 import { updateArticleStatusFormAction } from "@/app/actions/social";
@@ -26,6 +27,7 @@ type Props = {
   returnTo: string;
   isBreaking?: boolean;
   isDeveloping?: boolean;
+  featuredLevel?: number;
 };
 
 export function ArticleRowActions({
@@ -40,10 +42,14 @@ export function ArticleRowActions({
   returnTo,
   isBreaking,
   isDeveloping,
+  featuredLevel = 0,
 }: Props) {
   const href = articlePublicHref(category, slug);
   const isPreviewOnly = !PUBLIC_STATUSES.has(status);
   const canUrgent = PUBLIC_STATUSES.has(status);
+  const canFeature = PUBLIC_STATUSES.has(status);
+  const isEditorPick = featuredLevel >= 1 && featuredLevel !== 3;
+  const isHero = featuredLevel === 3;
 
   return (
     <div
@@ -53,6 +59,58 @@ export function ArticleRowActions({
           : "flex flex-col gap-2 sm:flex-row sm:items-center"
       }
     >
+      {canFeature ? (
+        <div className="flex flex-wrap gap-1">
+          <form action={setArticleFeaturedLevelFormAction}>
+            <input type="hidden" name="articleId" value={id} />
+            <input
+              type="hidden"
+              name="featuredLevel"
+              value={isEditorPick || isHero ? "0" : "1"}
+            />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <Button
+              type="submit"
+              size="sm"
+              variant={isEditorPick || isHero ? "default" : "outline"}
+              className="h-8 px-2 text-xs"
+              aria-label={copy.featuredEditorPickAria}
+            >
+              {copy.featuredEditorPick}
+            </Button>
+          </form>
+          <form action={setArticleFeaturedLevelFormAction}>
+            <input type="hidden" name="articleId" value={id} />
+            <input type="hidden" name="featuredLevel" value="3" />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <Button
+              type="submit"
+              size="sm"
+              variant={isHero ? "default" : "outline"}
+              className="h-8 px-2 text-xs"
+              aria-label={copy.featuredHeroAria}
+            >
+              {copy.featuredHero}
+            </Button>
+          </form>
+          {featuredLevel > 0 ? (
+            <form action={setArticleFeaturedLevelFormAction}>
+              <input type="hidden" name="articleId" value={id} />
+              <input type="hidden" name="featuredLevel" value="0" />
+              <input type="hidden" name="returnTo" value={returnTo} />
+              <Button
+                type="submit"
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-xs"
+                aria-label={copy.featuredClearAria}
+              >
+                {copy.featuredClear}
+              </Button>
+            </form>
+          ) : null}
+        </div>
+      ) : null}
       {canUrgent ? (
         <div className="flex flex-wrap gap-1">
           <form action={setArticleUrgencyFormAction}>

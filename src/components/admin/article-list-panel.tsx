@@ -3,7 +3,10 @@
 import type { ArticleStatus } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { bulkUpdateArticleStatusAction } from "@/app/actions/admin";
+import {
+  bulkSetArticleFeaturedLevelAction,
+  bulkUpdateArticleStatusAction,
+} from "@/app/actions/admin";
 import { ArticleRowActions } from "@/components/admin/article-row-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +23,7 @@ export type ArticleListRow = {
   slug: string;
   isBreaking?: boolean;
   isDeveloping?: boolean;
+  featuredLevel?: number;
 };
 
 type Copy = {
@@ -32,6 +36,8 @@ type Copy = {
   bulkPublishSelected: string;
   bulkPublishReviewPage: string;
   bulkArchiveSelected: string;
+  bulkEditorPickSelected: string;
+  bulkClearFeaturedSelected: string;
   selected: string;
   bulkDone: string;
 };
@@ -79,6 +85,24 @@ export function ArticleListPanel({
   function toggleAll() {
     if (allSelected) setSelected(new Set());
     else setSelected(new Set(items.map((i) => i.id)));
+  }
+
+  async function bulkFeatured(ids: string[], level: 0 | 1 | 3) {
+    if (ids.length === 0) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await bulkSetArticleFeaturedLevelAction(ids, level);
+      if (!res.ok) {
+        setMessage(res.error);
+        return;
+      }
+      setSelected(new Set());
+      setMessage(`${copy.bulkDone}: ${res.count} artikel.`);
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function bulkSetStatus(ids: string[], status: ArticleStatus) {
@@ -136,6 +160,24 @@ export function ArticleListPanel({
               onClick={() => bulkSetStatus(selectedIds, "ARCHIVED")}
             >
               {copy.bulkArchiveSelected}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={busy || selectedIds.length === 0}
+              onClick={() => bulkFeatured(selectedIds, 1)}
+            >
+              {copy.bulkEditorPickSelected}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={busy || selectedIds.length === 0}
+              onClick={() => bulkFeatured(selectedIds, 0)}
+            >
+              {copy.bulkClearFeaturedSelected}
             </Button>
           </div>
         </div>
@@ -195,6 +237,16 @@ export function ArticleListPanel({
                         Berlangsung
                       </span>
                     ) : null}
+                    {a.featuredLevel === 3 ? (
+                      <span className="mr-2 inline-block rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">
+                        Hero
+                      </span>
+                    ) : null}
+                    {(a.featuredLevel ?? 0) >= 1 && a.featuredLevel !== 3 ? (
+                      <span className="mr-2 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-foreground">
+                        Editor
+                      </span>
+                    ) : null}
                     {a.title}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">{a.meta}</p>
@@ -218,6 +270,7 @@ export function ArticleListPanel({
                     returnTo={returnTo}
                     isBreaking={a.isBreaking}
                     isDeveloping={a.isDeveloping}
+                    featuredLevel={a.featuredLevel}
                   />
                 </div>
               </li>

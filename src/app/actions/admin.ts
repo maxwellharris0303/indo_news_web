@@ -23,6 +23,15 @@ const BULK_STATUS_ALLOWED: ArticleStatus[] = [
   "SCHEDULED",
 ];
 
+const FEATURED_LEVELS = [0, 1, 2, 3] as const;
+export type FeaturedLevel = (typeof FEATURED_LEVELS)[number];
+
+function parseFeaturedLevel(raw: unknown): FeaturedLevel {
+  const n = Number(raw);
+  if (n === 1 || n === 2 || n === 3) return n;
+  return 0;
+}
+
 const articleSchema = z.object({
   title: z.string().min(10),
   slug: z.string().min(3),
@@ -40,6 +49,7 @@ const articleSchema = z.object({
       "ARCHIVED",
     ])
     .default("PUBLISHED"),
+  featuredLevel: z.coerce.number().int().min(0).max(3).default(0),
 });
 
 export async function createArticleFormAction(formData: FormData) {
@@ -67,6 +77,7 @@ export async function createArticleAction(formData: FormData) {
     body: formData.get("body"),
     authorId: formData.get("authorId"),
     status: formData.get("status") ?? "PUBLISHED",
+    featuredLevel: formData.get("featuredLevel") ?? "0",
   });
 
   if (!parsed.success) {
@@ -99,7 +110,7 @@ export async function createArticleAction(formData: FormData) {
       imageCaption: "Ilustrasi berita",
       imageCredit: "KabarDesk",
       sources: JSON.stringify(["Redaksi KabarDesk"]),
-      featuredLevel: 0,
+      featuredLevel: parseFeaturedLevel(data.featuredLevel),
       viewCount: 0,
       status: data.status,
       locale: "id",
@@ -125,6 +136,11 @@ export async function createArticleAction(formData: FormData) {
   revalidatePath("/indeks");
   if (data.category === "daerah") {
     revalidatePath(`/daerah/${data.slug}`);
+  }
+
+  const featured = parseFeaturedLevel(data.featuredLevel);
+  if (featured === 3) {
+    await demoteOtherHeroArticles(id, "id");
   }
 
   return { ok: true as const, id, category: data.category, slug: data.slug };
@@ -259,4 +275,123 @@ export async function setArticleUrgencyFormAction(formData: FormData) {
     redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}urgencyError=1`);
   }
   redirect(returnTo);
+}
+
+async function demoteOtherHeroArticles(
+  articleId: string,
+  locale: string,
+): Promise<void> {
+  await prisma.article.updateMany({
+    where: {
+      locale,
+      featuredLevel: 3,
+      id: { not: articleId },
+    },
+    data: { featuredLevel: 1 },
+  });
+}
+
+function revalidateHomeAndArticles() {
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/artikel");
+  revalidatePath("/indeks");
+  revalidatePath("/api/articles");
+}
+
+export async function setArticleFeaturedLevelAction(
+  articleId: string,
+  featuredLevel: FeaturedLevel,
+) {
+  await requireStaff();
+  const id = articleId.trim();
+  if (!id) {
+    return { ok: false as const, error: "Artikel tidak ditemukan" };
+  }
+  const level = parseFeaturedLevel(featuredLevel);
+  if (!FEATURED_LEVELS.includes(level)) {
+    return { ok: false as const, error: "Level sorotan tidak valid" };
+  }
+
+  const article = await prisma.article.findUnique({
+    where: { id },
+    select: { locale: true },
+  });
+  if (!article) {
+    return { ok: false as const, error: "Artikel tidak ditemukan" };
+  }
+
+  if (level === 3) {
+    await demoteOtherHeroArticles(id, article.locale);
+  }
+
+  await prisma.article.update({
+    where: { id },
+    data: { featuredLevel: level },
+  });
+
+  revalidateHomeAndArticles();
+  return { ok: true as const };
+}
+
+export async function setArticleFeaturedLevelFormAction(formData: FormData) {
+  await requireStaff();
+  const articleId = String(formData.get("articleId") ?? "").trim();
+  const level = parseFeaturedLevel(formData.get("featuredLevel"));
+  const returnTo = String(formData.get("returnTo") ?? "/admin/artikel").trim();
+
+  const result = await setArticleFeaturedLevelAction(articleId, level);
+  if (!result.ok) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}featuredError=1`);
+  }
+  redirect(returnTo);
+}
+
+export async function bulkSetArticleFeaturedLevelAction(
+  articleIds: string[],
+  featuredLevel: FeaturedLevel,
+) {
+  await requireStaff();
+  const level = parseFeaturedLevel(featuredLevel);
+  if (level !== 0 && level !== 1 && level !== 3) {
+    return { ok: false as const, error: "Level sorotan tidak valid" };
+  }
+  const ids = [...new Set(articleIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) {
+    return { ok: false as const, error: "Tidak ada artikel dipilih" };
+  }
+  if (ids.length > 100) {
+    return { ok: false as const, error: "Maksimal 100 artikel per aksi" };
+  }
+
+  if (level === 3) {
+    if (ids.length !== 1) {
+      return {
+        ok: false as const,
+        error: "Hero utama: pilih tepat satu artikel",
+      };
+    }
+    const article = await prisma.article.findUnique({
+      where: { id: ids[0] },
+      select: { locale: true },
+    });
+    if (!article) {
+      return { ok: false as const, error: "Artikel tidak ditemukan" };
+    }
+    await demoteOtherHeroArticles(ids[0]!, article.locale);
+    await prisma.article.update({
+      where: { id: ids[0] },
+      data: { featuredLevel: 3 },
+    });
+    revalidateHomeAndArticles();
+    return { ok: true as const, count: 1 };
+  }
+
+  const result = await prisma.article.updateMany({
+    where: { id: { in: ids } },
+    data: { featuredLevel: level },
+  });
+
+  revalidateHomeAndArticles();
+  return { ok: true as const, count: result.count };
 }
