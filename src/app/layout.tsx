@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   },
   description: site.description,
   metadataBase: new URL(site.url),
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/kabardesk-icon.png", type: "image/png" }],
+  },
   openGraph: {
     type: "website",
     locale: "id_ID",
