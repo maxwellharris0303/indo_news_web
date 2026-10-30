@@ -59,9 +59,9 @@ export function ArticleToolbar({
 
   const speechErrorMessage =
     speechError === "not-allowed"
-      ? "Chrome memblokir suara untuk situs ini. Klik ikon gembok → Izinkan suara, atau matikan ekstensi pembaca/teks."
+      ? "Chrome memblokir suara untuk situs ini. Klik ikon gembok → Izinkan suara, atau nonaktifkan ekstensi pembaca/teks/tooltip mouse."
       : speechError === "start-failed"
-        ? "Audio tidak mulai. Coba klik Dengarkan lagi, atau buka tab baru / mode tamu jika profil Chrome punya kebijakan ketat."
+        ? "Audio tidak mulai. Ekstensi tooltip mouse sering mengganggu TTS — coba nonaktifkan untuk situs ini, lalu klik Dengarkan lagi."
         : speechError === "synthesis-failed"
           ? "Pemutaran suara gagal. Periksa volume sistem dan pengaturan TTS di Chrome (chrome://settings/accessibility)."
           : null;
