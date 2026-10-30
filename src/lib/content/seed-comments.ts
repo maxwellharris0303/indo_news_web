@@ -3,7 +3,6 @@ import { articles } from "@/lib/content/seed";
 
 /** Fixed ids so production re-seed can upsert without duplicating. */
 export const DEMO_COMMENTER_USERS = [
-  { id: "u-demo-reader", email: "pembaca@kabardesk.id", name: "Pembaca Demo" },
   { id: "u-cmt-budi", email: "budi.santoso@example.com", name: "Budi Santoso" },
   { id: "u-cmt-sari", email: "sari.m@example.com", name: "Sari Maulida" },
   { id: "u-cmt-dewi", email: "dewi.k@example.com", name: "Dewi Kartika" },
@@ -80,7 +79,7 @@ async function upsertCommentUsers(prisma: PrismaClient) {
         email: u.email,
         name: u.name,
         role: "READER",
-        plan: u.id === "u-demo-reader" ? "PLUS" : "FREE",
+        plan: "FREE",
         interests: "[]",
       },
       update: { name: u.name, email: u.email },
