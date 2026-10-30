@@ -39,6 +39,7 @@ export async function createReviewArticleFromRewrite(input: {
           category,
           locale: input.locale,
           status: "REVIEW",
+          editorialOrigin: "RSS_REWRITE",
           title: input.output.title,
           dek: input.output.dek,
           body: input.output.body,

@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
-import { getAllArticlePaths } from "@/lib/content/repository";
+import { getPublishedArticlesForSitemap } from "@/lib/content/repository";
 import { categorySlugs, site } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = site.url;
+  const staticLastMod = new Date();
+
   const staticRoutes = [
     "",
     "/daerah",
@@ -11,16 +13,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/cek-fakta",
     "/indeks",
     "/search",
+    "/redaksi",
     ...categorySlugs.map((c) => `/${c}`),
   ].map((path) => ({
     url: `${base}${path}`,
-    lastModified: "2026-10-29T00:00:00.000Z",
+    lastModified: staticLastMod,
   }));
 
-  const paths = await getAllArticlePaths();
-  const articles = paths.map(({ category, slug }) => ({
+  const published = await getPublishedArticlesForSitemap();
+  const articles = published.map(({ category, slug, publishedAt }) => ({
     url: `${base}/${category}/${slug}`,
-    lastModified: "2026-10-29T00:00:00.000Z",
+    lastModified: publishedAt,
   }));
 
   return [...staticRoutes, ...articles];

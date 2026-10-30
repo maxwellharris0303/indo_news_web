@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ArticleStatus } from "@prisma/client";
+import type { ArticleStatus, EditorialOrigin } from "@prisma/client";
 import { AdminUrgentPanel } from "@/components/admin/admin-urgent-panel";
 import { ArticleListPanel } from "@/components/admin/article-list-panel";
 import { getAdminUrgentSummary } from "@/lib/admin/urgent-summary";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ARTICLE_STATUSES,
+  EDITORIAL_ORIGINS,
   selectClassName,
 } from "@/lib/admin/constants";
 import { listAdminArticles } from "@/lib/admin/dashboard";
@@ -27,6 +28,7 @@ type Props = {
     status?: string;
     category?: string;
     page?: string;
+    origin?: string;
     saved?: string;
     slug?: string;
   }>;
@@ -47,6 +49,10 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
       : undefined;
   const category =
     sp.category && isCategorySlug(sp.category) ? sp.category : undefined;
+  const editorialOrigin =
+    sp.origin && EDITORIAL_ORIGINS.includes(sp.origin as EditorialOrigin)
+      ? (sp.origin as EditorialOrigin)
+      : undefined;
 
   const [{ items, total, totalPages, pageSize }, urgentSummary] =
     await Promise.all([
@@ -54,6 +60,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         q: sp.q,
         status,
         category,
+        editorialOrigin,
         page,
       }),
       getAdminUrgentSummary("id"),
@@ -64,6 +71,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
     if (sp.q) params.set("q", sp.q);
     if (status) params.set("status", status);
     if (category) params.set("category", category);
+    if (editorialOrigin) params.set("origin", editorialOrigin);
     if (nextPage > 1) params.set("page", String(nextPage));
     const qs = params.toString();
     return qs ? `/admin/artikel?${qs}` : "/admin/artikel";
@@ -117,7 +125,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
 
       <form
         method="get"
-        className="grid gap-3 rounded-xl border border-border bg-card p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-3 rounded-xl border border-border bg-card p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5"
       >
         <label className="text-sm lg:col-span-2">
           <span className="font-medium">{copy.search}</span>
@@ -158,9 +166,21 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
             ))}
           </select>
         </label>
-        <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
+        <label className="text-sm">
+          <span className="font-medium">{copy.origin}</span>
+          <select
+            name="origin"
+            defaultValue={editorialOrigin ?? ""}
+            className={`mt-1.5 ${selectClassName}`}
+          >
+            <option value="">{copy.allOrigins}</option>
+            <option value="ORIGINAL">{copy.originOriginal}</option>
+            <option value="RSS_REWRITE">{copy.originRss}</option>
+          </select>
+        </label>
+        <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-5">
           <Button type="submit">{copy.apply}</Button>
-          {(sp.q || status || category) && (
+          {(sp.q || status || category || editorialOrigin) && (
             <Button type="button" variant="outline" asChild>
               <Link href="/admin/artikel">{copy.reset}</Link>
             </Button>
@@ -188,6 +208,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           isBreaking: rowBreakingActive(a.isBreaking, a.breakingExpiresAt),
           isDeveloping: a.isDeveloping,
           featuredLevel: a.featuredLevel,
+          editorialOrigin: a.editorialOrigin,
         }))}
         copy={copy}
         actionCopy={actionCopy}

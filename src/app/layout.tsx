@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteShell } from "@/components/layout/site-shell";
+import { SiteOrganizationJsonLd } from "@/components/site-organization-jsonld";
 import { getSiteLocale } from "@/lib/locale";
 import { site } from "@/lib/site";
 import "./globals.css";
@@ -31,6 +32,10 @@ export const metadata: Metadata = {
     title: site.name,
     description: site.description,
   },
+  icons: {
+    icon: [{ url: "/icon", type: "image/png" }],
+    apple: [{ url: "/apple-icon", type: "image/png" }],
+  },
 };
 
 export default async function RootLayout({
@@ -47,6 +52,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col antialiased">
+        <SiteOrganizationJsonLd />
         <Providers locale={locale}>
           <ThemeProvider>
             <SiteShell>{children}</SiteShell>

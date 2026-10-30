@@ -105,27 +105,51 @@ export const LEGACY_SINDONEWS_FEED_URLS = [
 /** Known or common RSS endpoints — editable in admin if URLs change. */
 export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
   {
-    name: "Antara News",
+    name: "Antara · Top News",
     siteUrl: "https://www.antaranews.com",
-    feedUrl: "https://www.antaranews.com/rss/nasional.xml",
+    feedUrl: "https://www.antaranews.com/rss/top-news.xml",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
+    defaultAiProvider: "OPENAI",
+  },
+  {
+    name: "Antara · Ekonomi",
+    siteUrl: "https://www.antaranews.com",
+    feedUrl: "https://www.antaranews.com/rss/ekonomi.xml",
+    scrapeMode: "FETCH_ARTICLE",
+    defaultCategory: "ekonomi",
+    defaultAiProvider: "OPENAI",
+  },
+  {
+    name: "Antara · Politik",
+    siteUrl: "https://www.antaranews.com",
+    feedUrl: "https://www.antaranews.com/rss/politik.xml",
+    scrapeMode: "FETCH_ARTICLE",
+    defaultCategory: "politik-hukum",
     defaultAiProvider: "OPENAI",
   },
   {
     name: "Kompas.com",
     siteUrl: "https://www.kompas.com",
-    feedUrl: "https://www.kompas.com/rss",
+    feedUrl: "https://www.kompas.com/rss/read/all/",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
     defaultAiProvider: "OPENAI",
   },
   {
-    name: "Liputan6",
+    name: "Liputan6 · News",
     siteUrl: "https://www.liputan6.com",
-    feedUrl: "https://feed.liputan6.com/rss",
+    feedUrl: "https://feed.liputan6.com/rss/news",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
+    defaultAiProvider: "OPENAI",
+  },
+  {
+    name: "Liputan6 · Hot",
+    siteUrl: "https://www.liputan6.com",
+    feedUrl: "https://feed.liputan6.com/rss/hot",
+    scrapeMode: "FETCH_ARTICLE",
+    defaultCategory: "gaya-hidup",
     defaultAiProvider: "OPENAI",
   },
   ...SINDONEWS_CHANNEL_FEEDS,
@@ -138,9 +162,9 @@ export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
     defaultAiProvider: "OPENAI",
   },
   {
-    name: "Suara.com",
+    name: "Suara.com · News",
     siteUrl: "https://www.suara.com",
-    feedUrl: "https://www.suara.com/rss",
+    feedUrl: "https://www.suara.com/rss/news",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
     defaultAiProvider: "OPENAI",
@@ -187,6 +211,17 @@ export async function seedDefaultRssFeeds() {
 
   await prisma.rssFeed.updateMany({
     where: { feedUrl: { in: [...LEGACY_SINDONEWS_FEED_URLS] } },
+    data: { enabled: false },
+  });
+
+  const deprecatedFeedUrls = [
+    "https://www.antaranews.com/rss/nasional.xml",
+    "https://feed.liputan6.com/rss",
+    "https://www.kompas.com/rss",
+    "https://www.suara.com/rss",
+  ];
+  await prisma.rssFeed.updateMany({
+    where: { feedUrl: { in: deprecatedFeedUrls } },
     data: { enabled: false },
   });
 }

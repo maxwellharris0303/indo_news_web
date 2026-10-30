@@ -1,6 +1,6 @@
 "use client";
 
-import type { ArticleStatus } from "@prisma/client";
+import type { ArticleStatus, EditorialOrigin } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
@@ -24,6 +24,7 @@ export type ArticleListRow = {
   isBreaking?: boolean;
   isDeveloping?: boolean;
   featuredLevel?: number;
+  editorialOrigin?: EditorialOrigin;
 };
 
 type Copy = {
@@ -235,6 +236,11 @@ export function ArticleListPanel({
                     {a.isDeveloping ? (
                       <span className="mr-2 inline-block rounded bg-amber-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
                         Berlangsung
+                      </span>
+                    ) : null}
+                    {a.editorialOrigin === "RSS_REWRITE" ? (
+                      <span className="mr-2 inline-block rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                        RSS
                       </span>
                     ) : null}
                     {a.featuredLevel === 3 ? (

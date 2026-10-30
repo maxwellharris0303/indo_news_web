@@ -50,6 +50,7 @@ const articleSchema = z.object({
     ])
     .default("PUBLISHED"),
   featuredLevel: z.coerce.number().int().min(0).max(3).default(0),
+  editorialOrigin: z.enum(["ORIGINAL", "RSS_REWRITE"]).default("ORIGINAL"),
 });
 
 export async function createArticleFormAction(formData: FormData) {
@@ -78,6 +79,7 @@ export async function createArticleAction(formData: FormData) {
     authorId: formData.get("authorId"),
     status: formData.get("status") ?? "PUBLISHED",
     featuredLevel: formData.get("featuredLevel") ?? "0",
+    editorialOrigin: formData.get("editorialOrigin") ?? "ORIGINAL",
   });
 
   if (!parsed.success) {
@@ -113,6 +115,7 @@ export async function createArticleAction(formData: FormData) {
       featuredLevel: parseFeaturedLevel(data.featuredLevel),
       viewCount: 0,
       status: data.status,
+      editorialOrigin: data.editorialOrigin,
       locale: "id",
       galleryImages: "[]",
       aiSummary: "Artikel baru dari redaksi KabarDesk.",

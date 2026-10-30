@@ -19,6 +19,11 @@ enum MembershipPlan {
   PLUS
 }
 
+enum EditorialOrigin {
+  ORIGINAL
+  RSS_REWRITE
+}
+
 enum ArticleStatus {
   DRAFT
   REVIEW
@@ -149,6 +154,7 @@ model Article {
   category           String
   locale             String             @default("id")
   status             ArticleStatus      @default(PUBLISHED)
+  editorialOrigin    EditorialOrigin      @default(ORIGINAL)
   scheduledAt        DateTime?
   title              String
   dek                String

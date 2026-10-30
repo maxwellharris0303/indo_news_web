@@ -1,4 +1,6 @@
 import Parser from "rss-parser";
+import { fetchFeedXml } from "@/lib/rss/http-fetch";
+import { orderedFeedUrls } from "@/lib/rss/feed-catalog";
 
 export type ParsedFeedItem = {
   guid: string;
@@ -97,43 +99,58 @@ export function mapParserItem(item: Parser.Item): ParsedFeedItem | null {
 
 export async function fetchAndParseFeed(
   feedUrl: string,
-  conditional?: { etag?: string | null; lastModified?: string | null },
+  conditional?: {
+    etag?: string | null;
+    lastModified?: string | null;
+    siteUrl?: string | null;
+  },
 ): Promise<{
   feed: ParsedFeed;
   etag?: string;
   lastModified?: string;
   notModified: boolean;
+  resolvedFeedUrl?: string;
 }> {
-  const headers: Record<string, string> = {
-    "User-Agent":
-      "KabarDeskRSSBot/1.0 (+https://kabardesk.id; editorial ingest)",
-    Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml",
-  };
-  if (conditional?.etag) headers["If-None-Match"] = conditional.etag;
-  if (conditional?.lastModified) {
-    headers["If-Modified-Since"] = conditional.lastModified;
+  const urls = conditional?.siteUrl
+    ? orderedFeedUrls(feedUrl, conditional.siteUrl)
+    : [feedUrl];
+
+  let lastError: Error | undefined;
+
+  for (const url of urls) {
+    try {
+      const fetched = await fetchFeedXml(url, conditional);
+      if (fetched.notModified) {
+        return {
+          feed: { items: [] },
+          notModified: true,
+          resolvedFeedUrl: url,
+          etag: fetched.etag,
+          lastModified: fetched.lastModified,
+        };
+      }
+      const parsed = await parser.parseString(fetched.xml);
+      const items: ParsedFeedItem[] = [];
+      for (const item of parsed.items ?? []) {
+        const mapped = mapParserItem(item);
+        if (mapped) items.push(mapped);
+      }
+      if (items.length === 0 && parsed.items?.length === 0) {
+        throw new Error("Feed parsed but has no items");
+      }
+      return {
+        feed: { title: parsed.title, items },
+        etag: fetched.etag,
+        lastModified: fetched.lastModified,
+        notModified: false,
+        resolvedFeedUrl: fetched.usedUrl,
+      };
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+    }
   }
 
-  const res = await fetch(feedUrl, { headers, redirect: "follow" });
-  if (res.status === 304) {
-    return { feed: { items: [] }, notModified: true };
-  }
-  if (!res.ok) {
-    throw new Error(`Feed HTTP ${res.status}`);
-  }
-  const xml = await res.text();
-  const parsed = await parser.parseString(xml);
-  const items: ParsedFeedItem[] = [];
-  for (const item of parsed.items ?? []) {
-    const mapped = mapParserItem(item);
-    if (mapped) items.push(mapped);
-  }
-  return {
-    feed: { title: parsed.title, items },
-    etag: res.headers.get("etag") ?? undefined,
-    lastModified: res.headers.get("last-modified") ?? undefined,
-    notModified: false,
-  };
+  throw lastError ?? new Error(`Feed HTTP failed for ${feedUrl}`);
 }
 
 /** Parse RSS XML string (for tests). */

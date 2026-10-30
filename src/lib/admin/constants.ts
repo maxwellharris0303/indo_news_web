@@ -1,4 +1,4 @@
-import type { ArticleStatus } from "@prisma/client";
+import type { ArticleStatus, EditorialOrigin } from "@prisma/client";
 
 export const ARTICLE_STATUSES = [
   "DRAFT",
@@ -8,6 +8,16 @@ export const ARTICLE_STATUSES = [
   "CORRECTED",
   "ARCHIVED",
 ] as const satisfies readonly ArticleStatus[];
+
+export const EDITORIAL_ORIGINS = [
+  "ORIGINAL",
+  "RSS_REWRITE",
+] as const satisfies readonly EditorialOrigin[];
+
+export const EDITORIAL_ORIGIN_LABELS: Record<EditorialOrigin, string> = {
+  ORIGINAL: "Asli redaksi",
+  RSS_REWRITE: "Ulas ulang RSS",
+};
 
 export const STATUS_LABELS: Record<ArticleStatus, string> = {
   DRAFT: "Draft",

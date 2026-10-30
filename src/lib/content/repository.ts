@@ -427,23 +427,59 @@ export async function getMarketSnapshot(): Promise<MarketSnapshot | null> {
 export async function getAllArticlePaths(): Promise<
   { category: CategorySlug; slug: string }[]
 > {
+  const rows = await getPublishedArticlesForSitemap();
+  return rows.map(({ category, slug }) => ({ category, slug }));
+}
+
+export async function getPublishedArticlesForSitemap(): Promise<
+  {
+    category: CategorySlug;
+    slug: string;
+    publishedAt: Date;
+    title: string;
+  }[]
+> {
   if (!(await useDb())) {
-    return seedArticles
-      .filter(isPublishedSeed)
-      .map((a) => ({
-        category: a.category,
-        slug: a.slug,
-      }));
+    return seedArticles.filter(isPublishedSeed).map((a) => ({
+      category: a.category,
+      slug: a.slug,
+      publishedAt: new Date(a.publishedAt),
+      title: a.title,
+    }));
   }
 
   const rows = await prisma.article.findMany({
     where: publishedWhere(),
-    select: { category: true, slug: true },
+    select: {
+      category: true,
+      slug: true,
+      publishedAt: true,
+      title: true,
+    },
+    orderBy: { publishedAt: "desc" },
   });
   return rows.map((r) => ({
     category: r.category as CategorySlug,
     slug: r.slug,
+    publishedAt: r.publishedAt,
+    title: r.title,
   }));
+}
+
+/** Google News sitemap: articles from the last 48 hours (max 1000). */
+export async function getRecentNewsSitemapArticles(): Promise<
+  {
+    category: CategorySlug;
+    slug: string;
+    publishedAt: Date;
+    title: string;
+  }[]
+> {
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const all = await getPublishedArticlesForSitemap();
+  return all
+    .filter((a) => a.publishedAt >= cutoff)
+    .slice(0, 1000);
 }
 
 export async function incrementArticleViews(articleId: string) {

@@ -26,6 +26,7 @@ export async function pollSingleFeed(feed: RssFeed): Promise<PollFeedResult> {
       await fetchAndParseFeed(feed.feedUrl, {
         etag: feed.etag,
         lastModified: feed.lastModified,
+        siteUrl: feed.siteUrl,
       });
 
     if (notModified) {

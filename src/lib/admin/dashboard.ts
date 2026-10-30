@@ -1,4 +1,4 @@
-import type { ArticleStatus } from "@prisma/client";
+import type { ArticleStatus, EditorialOrigin } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { ARTICLE_STATUSES } from "./constants";
 
@@ -94,6 +94,7 @@ export type ArticleListFilters = {
   q?: string;
   status?: ArticleStatus;
   category?: string;
+  editorialOrigin?: EditorialOrigin;
   page?: number;
   pageSize?: number;
 };
@@ -107,6 +108,7 @@ export async function listAdminArticles(filters: ArticleListFilters) {
     title?: { contains: string };
     status?: ArticleStatus;
     category?: string;
+    editorialOrigin?: EditorialOrigin;
   } = {};
 
   const q = filters.q?.trim();
@@ -118,6 +120,9 @@ export async function listAdminArticles(filters: ArticleListFilters) {
   }
   if (filters.category) {
     where.category = filters.category;
+  }
+  if (filters.editorialOrigin) {
+    where.editorialOrigin = filters.editorialOrigin;
   }
 
   const [items, total] = await Promise.all([
@@ -139,6 +144,7 @@ export async function listAdminArticles(filters: ArticleListFilters) {
         isDeveloping: true,
         breakingExpiresAt: true,
         featuredLevel: true,
+        editorialOrigin: true,
       },
     }),
     prisma.article.count({ where }),

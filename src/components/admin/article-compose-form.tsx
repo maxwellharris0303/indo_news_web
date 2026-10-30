@@ -23,6 +23,7 @@ type Props = {
 export function ArticleComposeForm({ authors, error, copy }: Props) {
   return (
     <form action={createArticleFormAction} className="space-y-6">
+      <input type="hidden" name="editorialOrigin" value="ORIGINAL" />
       {error ? (
         <div
           className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
