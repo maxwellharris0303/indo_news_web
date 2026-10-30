@@ -1,18 +1,29 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
+export function SearchForm({
+  initialQuery = "",
+  onSubmitted,
+}: {
+  initialQuery?: string;
+  onSubmitted?: () => void;
+}) {
   const router = useRouter();
   const [q, setQ] = useState(initialQuery);
+
+  useEffect(() => {
+    setQ(initialQuery);
+  }, [initialQuery]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = q.trim();
     router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
+    onSubmitted?.();
   }
 
   return (

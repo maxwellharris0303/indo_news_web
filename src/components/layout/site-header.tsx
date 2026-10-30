@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { Menu, Search, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { AuthNav } from "@/components/layout/auth-nav";
 import { MobileAuthLinks } from "@/components/layout/mobile-auth-links";
+import { HeaderSearchPanel } from "@/components/search/header-search-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { NoTranslateBrand } from "@/components/brand/no-translate-brand";
@@ -16,16 +17,22 @@ import { cn } from "@/lib/utils";
 const iconBtnClass =
   "h-11 w-11 shrink-0 sm:h-10 sm:w-10";
 
+function HeaderSearchPanelFallback() {
+  return null;
+}
+
 export function SiteHeader() {
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    setOpen(false);
+    setMenuOpen(false);
+    setSearchOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!open) {
+    if (!menuOpen) {
       document.body.style.overflow = "";
       return;
     }
@@ -33,7 +40,29 @@ export function SiteHeader() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setMenuOpen(false);
+        setSearchOpen(true);
+        return;
+      }
+      if (e.key === "Escape" && searchOpen) {
+        e.preventDefault();
+        setSearchOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [searchOpen]);
+
+  function toggleSearch() {
+    setMenuOpen(false);
+    setSearchOpen((v) => !v);
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -44,11 +73,11 @@ export function SiteHeader() {
             variant="ghost"
             size="icon"
             className={cn(iconBtnClass, "lg:hidden")}
-            aria-label={open ? "Tutup menu" : "Buka menu navigasi"}
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
+            aria-label={menuOpen ? "Tutup menu" : "Buka menu navigasi"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
           >
-            {open ? (
+            {menuOpen ? (
               <X className="h-5 w-5" aria-hidden />
             ) : (
               <Menu className="h-5 w-5" aria-hidden />
@@ -114,26 +143,40 @@ export function SiteHeader() {
             <AuthNav />
           </div>
           <Button
-            variant="ghost"
+            type="button"
+            variant={searchOpen ? "secondary" : "ghost"}
             size="icon"
             className={iconBtnClass}
-            asChild
-            aria-label="Cari berita"
+            aria-label={searchOpen ? "Tutup pencarian" : "Buka pencarian"}
+            aria-expanded={searchOpen}
+            aria-controls="header-search-panel"
+            onClick={toggleSearch}
           >
-            <Link href="/search">
+            {searchOpen ? (
+              <X className="h-5 w-5" aria-hidden />
+            ) : (
               <Search className="h-5 w-5" aria-hidden />
-            </Link>
+            )}
           </Button>
           <ThemeToggle className={iconBtnClass} />
         </div>
       </div>
 
-      {open ? (
+      <div id="header-search-panel">
+        <Suspense fallback={<HeaderSearchPanelFallback />}>
+          <HeaderSearchPanel
+            open={searchOpen}
+            onClose={() => setSearchOpen(false)}
+          />
+        </Suspense>
+      </div>
+
+      {menuOpen ? (
         <button
           type="button"
           className="fixed inset-0 top-14 z-40 bg-black/40 sm:top-16 lg:hidden"
           aria-label="Tutup menu"
-          onClick={() => setOpen(false)}
+          onClick={() => setMenuOpen(false)}
         />
       ) : null}
 
@@ -141,7 +184,9 @@ export function SiteHeader() {
         id="mobile-nav-panel"
         className={cn(
           "relative z-50 border-t border-border bg-background shadow-lg lg:hidden",
-          open ? "block max-h-[min(70vh,calc(100dvh-3.5rem))] overflow-y-auto overscroll-contain" : "hidden",
+          menuOpen
+            ? "block max-h-[min(70vh,calc(100dvh-3.5rem))] overflow-y-auto overscroll-contain"
+            : "hidden",
         )}
       >
         <nav
@@ -149,7 +194,7 @@ export function SiteHeader() {
           aria-label="Menu mobile"
         >
           <div className="mb-3 md:hidden">
-            <MobileAuthLinks onNavigate={() => setOpen(false)} />
+            <MobileAuthLinks onNavigate={() => setMenuOpen(false)} />
           </div>
           <ul className="grid gap-0.5">
             {navMain.map((item) => {
@@ -162,7 +207,7 @@ export function SiteHeader() {
                       "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-muted active:bg-muted",
                       isIndeks && "font-semibold text-primary",
                     )}
-                    onClick={() => setOpen(false)}
+                    onClick={() => setMenuOpen(false)}
                   >
                     <NavChannelIcon
                       href={item.href}

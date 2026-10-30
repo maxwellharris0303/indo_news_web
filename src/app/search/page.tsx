@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SearchForm } from "@/components/search/search-form";
 import { getArticles } from "@/lib/content/repository";
 import { categoryLabels } from "@/lib/site";
 
@@ -16,15 +15,24 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <h1 className="font-serif text-3xl font-bold">Cari berita</h1>
-      <div className="mt-6">
-        <SearchForm initialQuery={query} />
-      </div>
+      <h1 className="font-serif text-3xl font-bold">
+        {query ? "Hasil pencarian" : "Pencarian"}
+      </h1>
+      {!query ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Gunakan ikon cari di header atau tekan Ctrl+K, lalu ketik kata kunci.
+        </p>
+      ) : null}
       {query && (
         <p className="mt-4 text-sm text-muted-foreground">
           {results.length} hasil untuk &quot;{query}&quot;
         </p>
       )}
+      {query && results.length === 0 ? (
+        <p className="mt-6 text-sm text-muted-foreground">
+          Tidak ada artikel yang cocok. Coba kata kunci lain dari header (Ctrl+K).
+        </p>
+      ) : null}
       <ul className="mt-6 divide-y divide-border">
         {results.map((article) => (
           <li key={article.id} className="py-4">
