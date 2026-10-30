@@ -111,8 +111,6 @@ export default async function ArticlePage({ params, searchParams }: Props) {
       topic: await getTopic(slug),
     })),
   );
-  const summaryText = article.summaryBullets.join(" ");
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -179,7 +177,10 @@ export default async function ArticlePage({ params, searchParams }: Props) {
           <ArticleToolbar
             articleId={article.id}
             title={article.title}
-            summaryText={summaryText}
+            dek={article.dek}
+            summaryBullets={article.summaryBullets}
+            body={article.body}
+            returnPath={articlePath}
             initiallySaved={initiallySaved}
           />
           <ArticleShareBar url={shareUrl} title={article.title} />

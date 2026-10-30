@@ -5,30 +5,40 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { cookies } from "next/headers";
 
-export async function toggleSavedArticle(articleId: string) {
+export async function toggleSavedArticle(
+  articleId: string,
+  articlePath?: string,
+) {
   const session = await auth();
-  if (!session?.user?.id) return { ok: false as const, error: "login_required" };
+  if (!session?.user?.id) {
+    return { ok: false as const, error: "login_required" as const };
+  }
 
-  const existing = await prisma.savedArticle.findUnique({
-    where: {
-      userId_articleId: { userId: session.user.id, articleId },
-    },
-  });
-
-  if (existing) {
-    await prisma.savedArticle.delete({
+  try {
+    const existing = await prisma.savedArticle.findUnique({
       where: {
         userId_articleId: { userId: session.user.id, articleId },
       },
     });
-  } else {
-    await prisma.savedArticle.create({
-      data: { userId: session.user.id, articleId },
-    });
-  }
 
-  revalidatePath("/akun");
-  return { ok: true as const, saved: !existing };
+    if (existing) {
+      await prisma.savedArticle.delete({
+        where: {
+          userId_articleId: { userId: session.user.id, articleId },
+        },
+      });
+    } else {
+      await prisma.savedArticle.create({
+        data: { userId: session.user.id, articleId },
+      });
+    }
+
+    revalidatePath("/akun");
+    if (articlePath) revalidatePath(articlePath);
+    return { ok: true as const, saved: !existing };
+  } catch {
+    return { ok: false as const, error: "server" as const };
+  }
 }
 
 export async function updateUserInterests(categories: string[]) {
