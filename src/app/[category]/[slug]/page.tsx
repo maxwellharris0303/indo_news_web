@@ -292,9 +292,9 @@ export default async function ArticlePage({ params, searchParams }: Props) {
           />
         </div>
 
-        <aside className="min-w-0 space-y-4 lg:self-start">
+        <aside className="min-w-0 space-y-4 lg:sticky lg:top-24 lg:z-10 lg:self-start">
           <TrustBox status={article.verificationStatus} sources={article.sources} />
-          <div className="rounded-xl border border-border p-4 text-xs text-muted-foreground">
+          <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground shadow-sm">
             <p className="font-semibold text-foreground">Transparansi</p>
             <p className="mt-2 leading-relaxed break-words">
               Artikel dipublikasikan {formatWIB(article.publishedAt)}. Status

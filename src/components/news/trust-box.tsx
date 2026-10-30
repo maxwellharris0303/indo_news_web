@@ -27,7 +27,7 @@ export function TrustBox({
   const parsed = parseArticleSources(sources);
 
   return (
-    <aside className="min-w-0 rounded-xl border border-border bg-muted/30 p-4 lg:sticky lg:top-24">
+    <aside className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-semibold">Status kepercayaan</span>
         <Badge variant={variants[status]}>{labels[status]}</Badge>
