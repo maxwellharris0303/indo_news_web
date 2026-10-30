@@ -51,6 +51,7 @@ export function ArticleToolbar({
 
   const {
     status: speechStatus,
+    isActive: speechActive,
     speechError,
     prepareVoices,
     togglePlayPause,
@@ -58,15 +59,15 @@ export function ArticleToolbar({
   } = useArticleSpeech(speechText);
 
   const speechErrorMessage =
-    speechError === "not-allowed"
+    speechActive
+      ? null
+      : speechError === "not-allowed"
       ? "Chrome memblokir suara untuk situs ini. Klik ikon gembok → Izinkan suara, atau nonaktifkan ekstensi pembaca/teks/tooltip mouse."
       : speechError === "start-failed"
         ? "Audio tidak mulai. Ekstensi tooltip mouse sering mengganggu TTS — coba nonaktifkan untuk situs ini, lalu klik Dengarkan lagi."
         : speechError === "synthesis-failed"
           ? "Pemutaran suara gagal. Periksa volume sistem dan pengaturan TTS di Chrome (chrome://settings/accessibility)."
           : null;
-
-  const speechActive = speechStatus === "playing" || speechStatus === "paused";
 
   function onSave() {
     setSaveMessage(null);
@@ -94,7 +95,7 @@ export function ArticleToolbar({
   const listenLabel =
     speechStatus === "unsupported"
       ? "TTS tidak didukung"
-      : speechStatus === "playing"
+      : speechActive && speechStatus !== "paused"
         ? "Jeda"
         : speechStatus === "paused"
           ? "Lanjutkan"
@@ -125,7 +126,7 @@ export function ArticleToolbar({
                   : "Dengarkan artikel dengan suara"
             }
           >
-            {speechStatus === "playing" ? (
+            {speechActive && speechStatus !== "paused" ? (
               <Pause className="h-4 w-4" aria-hidden />
             ) : speechStatus === "paused" ? (
               <Play className="h-4 w-4" aria-hidden />

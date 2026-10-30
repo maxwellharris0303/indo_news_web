@@ -54,6 +54,6 @@ export function startSpeechKeepAlive(): () => void {
 }
 
 export function mapSpeechError(code: string | undefined): SpeechStartError {
-  if (code === "not-allowed" || code === "interrupted") return "not-allowed";
+  if (code === "not-allowed") return "not-allowed";
   return "synthesis-failed";
 }
