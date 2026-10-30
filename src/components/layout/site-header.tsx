@@ -9,6 +9,7 @@ import { MobileAuthLinks } from "@/components/layout/mobile-auth-links";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { NoTranslateBrand } from "@/components/brand/no-translate-brand";
+import { NavChannelIcon } from "@/components/layout/nav-channel-icon";
 import { site, navMain } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -89,12 +90,19 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "whitespace-nowrap rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors xl:px-2.5 xl:py-2 xl:text-sm",
+                  "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors xl:gap-1.5 xl:px-2.5 xl:py-2 xl:text-sm",
                   isIndeks
                     ? "text-primary hover:bg-muted hover:text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
+                <NavChannelIcon
+                  href={item.href}
+                  className={cn(
+                    "h-3.5 w-3.5 xl:h-4 xl:w-4",
+                    isIndeks && "text-primary",
+                  )}
+                />
                 {item.label}
               </Link>
             );
@@ -144,26 +152,30 @@ export function SiteHeader() {
             <MobileAuthLinks onNavigate={() => setOpen(false)} />
           </div>
           <ul className="grid gap-0.5">
-            {navMain.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium hover:bg-muted active:bg-muted"
-                  onClick={() => setOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-            <li className="mt-2 border-t border-border pt-2">
-              <Link
-                href="/indeks"
-                className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-primary hover:bg-muted"
-                onClick={() => setOpen(false)}
-              >
-                Indeks Berita
-              </Link>
-            </li>
+            {navMain.map((item) => {
+              const isIndeks = item.href === "/indeks";
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium hover:bg-muted active:bg-muted",
+                      isIndeks && "font-semibold text-primary",
+                    )}
+                    onClick={() => setOpen(false)}
+                  >
+                    <NavChannelIcon
+                      href={item.href}
+                      className={cn(
+                        "h-5 w-5",
+                        isIndeks && "text-primary",
+                      )}
+                    />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       </div>
