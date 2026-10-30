@@ -11,7 +11,11 @@ export function NewsletterForm({ compact }: { compact?: boolean }) {
 
   return (
     <form
-      className={compact ? "flex flex-col gap-2 sm:flex-row" : "mt-4 space-y-3"}
+      className={
+        compact
+          ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2"
+          : "mt-4 space-y-3"
+      }
       action={async (formData) => {
         setPending(true);
         setMessage(null);
@@ -39,7 +43,9 @@ export function NewsletterForm({ compact }: { compact?: boolean }) {
         {pending ? "Mendaftar..." : "Langganan"}
       </Button>
       {message && (
-        <p className={`text-sm ${message.includes("Terima") ? "text-emerald-600" : "text-destructive"} ${compact ? "sm:basis-full" : ""}`}>
+        <p
+          className={`text-sm ${message.includes("Terima") ? "text-emerald-600" : "text-destructive"} ${compact ? "mt-1 basis-full sm:mt-0" : ""}`}
+        >
           {message}
         </p>
       )}

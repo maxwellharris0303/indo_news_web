@@ -45,10 +45,12 @@ export function SiteFooter() {
           <NoTranslateBrand as="p" className="text-sm font-semibold">
             Newsletter {site.name}
           </NoTranslateBrand>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Ringkasan berita penting setiap minggu, gratis.
           </p>
-          <NewsletterForm compact />
+          <div className="mt-4">
+            <NewsletterForm compact />
+          </div>
         </div>
       </div>
     </footer>
