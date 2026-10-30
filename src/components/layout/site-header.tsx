@@ -36,8 +36,8 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-3 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+      <div className="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2 sm:min-h-16 sm:gap-3 sm:px-6 lg:flex-nowrap">
+        <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
           <Button
             type="button"
             variant="ghost"
@@ -79,27 +79,29 @@ export function SiteHeader() {
         </div>
 
         <nav
-          className="hidden items-center gap-0.5 lg:flex"
+          className="hidden min-w-0 flex-1 flex-wrap items-center justify-center gap-0.5 lg:flex xl:justify-center"
           aria-label="Kanal utama"
         >
-          {navMain.slice(0, 8).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-md px-2.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            href="/indeks"
-            className="rounded-md px-2.5 py-2 text-sm font-medium text-primary"
-          >
-            Indeks
-          </Link>
+          {navMain.map((item) => {
+            const isIndeks = item.href === "/indeks";
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "whitespace-nowrap rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors xl:px-2.5 xl:py-2 xl:text-sm",
+                  isIndeks
+                    ? "text-primary hover:bg-muted hover:text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
           <div className="hidden md:block">
             <AuthNav />
           </div>
