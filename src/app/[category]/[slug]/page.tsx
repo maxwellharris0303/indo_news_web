@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArticleCoverImage } from "@/components/article/article-cover-image";
 import { notFound } from "next/navigation";
 import { ArticleGallery } from "@/components/article/article-gallery";
+import { ArticleShareBar } from "@/components/article/article-share-bar";
 import { ArticleToolbar } from "@/components/article/article-toolbar";
 import { ArticleVideo } from "@/components/article/article-video";
 import { CommentsSection } from "@/components/article/comments-section";
@@ -98,6 +99,7 @@ export default async function ArticlePage({ params, searchParams }: Props) {
     showAds = u?.plan !== "PLUS";
   }
   const articlePath = `/${category}/${slug}`;
+  const shareUrl = `${site.url.replace(/\/$/, "")}${articlePath}`;
 
   const author = await getAuthor(article.authorId);
   const related = await getRelatedArticles(article);
@@ -173,13 +175,14 @@ export default async function ArticlePage({ params, searchParams }: Props) {
           {article.dek}
         </p>
 
-        <div className="mt-4">
+        <div className="mt-4 space-y-4">
           <ArticleToolbar
             articleId={article.id}
             title={article.title}
             summaryText={summaryText}
             initiallySaved={initiallySaved}
           />
+          <ArticleShareBar url={shareUrl} title={article.title} />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
