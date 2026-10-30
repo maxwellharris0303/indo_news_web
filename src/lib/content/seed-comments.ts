@@ -73,18 +73,17 @@ function commentCreatedAt(articlePublishedAt: string, index: number): Date {
 
 async function upsertCommentUsers(prisma: PrismaClient) {
   for (const u of DEMO_COMMENTER_USERS) {
-    if (u.id === "u-demo-reader") continue;
     await prisma.user.upsert({
-      where: { email: u.email },
+      where: { id: u.id },
       create: {
         id: u.id,
         email: u.email,
         name: u.name,
         role: "READER",
-        plan: "FREE",
+        plan: u.id === "u-demo-reader" ? "PLUS" : "FREE",
         interests: "[]",
       },
-      update: { name: u.name },
+      update: { name: u.name, email: u.email },
     });
   }
 }
@@ -101,17 +100,30 @@ export async function seedDemoArticleComments(prisma: PrismaClient) {
       const existing = await prisma.comment.findUnique({ where: { id } });
       if (existing) continue;
 
-      const articleRow = await prisma.article.findUnique({
+      let articleRow = await prisma.article.findUnique({
         where: { id: article.id },
         select: { id: true, title: true, publishedAt: true },
       });
+      if (!articleRow) {
+        articleRow = await prisma.article.findFirst({
+          where: { category: article.category, slug: article.slug },
+          select: { id: true, title: true, publishedAt: true },
+        });
+      }
       if (!articleRow) continue;
+
+      const userId = commentUserId(article.id, i);
+      const userOk = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      if (!userOk) continue;
 
       await prisma.comment.create({
         data: {
           id,
           articleId: articleRow.id,
-          userId: commentUserId(article.id, i),
+          userId,
           body: commentBody(article.id, i, articleRow.title),
           approved: true,
           createdAt: commentCreatedAt(
