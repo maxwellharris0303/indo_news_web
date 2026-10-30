@@ -8,6 +8,7 @@ import { AuthNav } from "@/components/layout/auth-nav";
 import { MobileAuthLinks } from "@/components/layout/mobile-auth-links";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { NoTranslateBrand } from "@/components/brand/no-translate-brand";
 import { site, navMain } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -57,13 +58,19 @@ export function SiteHeader() {
             href="/"
             className="flex min-w-0 items-center gap-2.5 overflow-hidden"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+            <NoTranslateBrand
+              as="span"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground"
+            >
               KD
-            </span>
+            </NoTranslateBrand>
             <div className="min-w-0 leading-tight">
-              <p className="truncate font-serif text-base font-bold tracking-tight text-foreground sm:text-lg">
+              <NoTranslateBrand
+                as="p"
+                className="truncate font-serif text-base font-bold tracking-tight text-foreground sm:text-lg"
+              >
                 {site.name}
-              </p>
+              </NoTranslateBrand>
               <p className="hidden truncate text-[11px] text-muted-foreground md:block">
                 {site.tagline}
               </p>

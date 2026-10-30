@@ -4,6 +4,7 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { getAdminLocale } from "@/lib/admin-locale";
 import { shellText } from "@/lib/admin/locale-ui";
 import { ROLE_LABELS } from "@/lib/admin/constants";
+import { NoTranslateBrand } from "@/components/brand/no-translate-brand";
 import { site } from "@/lib/site";
 
 type Props = {
@@ -29,7 +30,7 @@ export async function AdminShell({ children, user }: Props) {
               {copy.desk}
             </p>
             <h1 className="font-serif text-2xl font-bold sm:text-3xl">
-              {site.name} Admin
+              <NoTranslateBrand as="span">{site.name}</NoTranslateBrand> Admin
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {user?.name ?? user?.email ?? "Staff"} · {roleLabel}
