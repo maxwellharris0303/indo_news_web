@@ -1,7 +1,7 @@
 "use client";
 
 import { Globe } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { setSiteLocaleAction } from "@/app/actions/locale";
 import { useSiteLocale } from "@/components/locale/locale-provider";
@@ -16,6 +16,7 @@ type Props = {
 export function LanguageSwitcher({ className, onNavigate }: Props) {
   const { locale, setLocale } = useSiteLocale();
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
 
   const target: SiteLocale = locale === "en" ? "id" : "en";
@@ -29,6 +30,11 @@ export function LanguageSwitcher({ className, onNavigate }: Props) {
     startTransition(async () => {
       setLocale(target);
       await setSiteLocaleAction(target);
+      if (target === "id" && pathname === "/en") {
+        router.push("/");
+      } else if (target === "en" && pathname === "/") {
+        router.push("/en");
+      }
       router.refresh();
       onNavigate?.();
     });

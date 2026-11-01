@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { SetLocaleLink } from "@/components/locale/set-locale-link";
 import { NewsCard } from "@/components/news/news-card";
 import { getEnglishArticles } from "@/lib/content/repository";
 import { site } from "@/lib/site";
@@ -24,12 +24,13 @@ export default async function EnglishHomePage() {
             Curated Indonesian and regional stories for international readers.
           </p>
         </div>
-        <Link
+        <SetLocaleLink
           href="/"
+          locale="id"
           className="text-sm font-medium text-primary hover:underline"
         >
           ← Bahasa Indonesia
-        </Link>
+        </SetLocaleLink>
       </div>
 
       <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">

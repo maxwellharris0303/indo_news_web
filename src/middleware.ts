@@ -1,20 +1,25 @@
 import { auth } from "@/auth";
-import { LOCALE_COOKIE } from "@/lib/locale";
+import { LOCALE_COOKIE, DEFAULT_SITE_LOCALE } from "@/lib/locale";
 import { NextResponse } from "next/server";
 
-export default auth((req) => {
-  if (req.nextUrl.pathname === "/en") {
-    const url = req.nextUrl.clone();
-    url.pathname = "/";
-    const res = NextResponse.redirect(url);
-    res.cookies.set(LOCALE_COOKIE, "en", {
+const LOCALE_MAX_AGE = 60 * 60 * 24 * 365;
+
+function withDefaultLocaleCookie(
+  req: { cookies: { get: (name: string) => { value: string } | undefined } },
+  res: NextResponse,
+): NextResponse {
+  if (!req.cookies.get(LOCALE_COOKIE)?.value) {
+    res.cookies.set(LOCALE_COOKIE, DEFAULT_SITE_LOCALE, {
       path: "/",
-      maxAge: 60 * 60 * 24 * 365,
+      maxAge: LOCALE_MAX_AGE,
       sameSite: "lax",
     });
-    return res;
   }
 
+  return res;
+}
+
+export default auth((req) => {
   const role = req.auth?.user?.role;
   const isStaff =
     role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR";
@@ -26,8 +31,12 @@ export default auth((req) => {
   if (req.nextUrl.pathname.startsWith("/akun") && !req.auth) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
+
+  return withDefaultLocaleCookie(req, NextResponse.next());
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/akun/:path*", "/en"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };
