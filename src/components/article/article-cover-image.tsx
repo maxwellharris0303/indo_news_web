@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useState } from "react";
 import {
-  isNextImageHost,
   normalizeImageUrl,
   picsumCoverForSlug,
+  useNextImageOptimizer,
 } from "@/lib/article-image";
 
 type Props = {
@@ -31,7 +31,7 @@ export function ArticleCoverImage({
   const [current, setCurrent] = useState(initial);
   const fallback = picsumCoverForSlug(slug);
 
-  if (isNextImageHost(current)) {
+  if (useNextImageOptimizer(current)) {
     return (
       <Image
         src={current}
@@ -40,16 +40,20 @@ export function ArticleCoverImage({
         priority={priority}
         className={className}
         sizes={sizes}
+        onError={() => {
+          if (current !== fallback) setCurrent(fallback);
+        }}
       />
     );
   }
 
   return (
-    // Publisher CDN — not in next/image allowlist; native img + picsum on error
+    // Publisher CDN — browser fetch (optimizer on VPS often times out)
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={current}
       alt={alt}
+      referrerPolicy="no-referrer"
       className={
         fill
           ? `absolute inset-0 h-full w-full object-cover ${className ?? ""}`

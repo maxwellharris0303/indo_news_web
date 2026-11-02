@@ -35,25 +35,38 @@ export function normalizeImageUrl(raw: string | null | undefined): string | null
   }
 }
 
-export function isNextImageHost(url: string): boolean {
+function hostnameOf(url: string): string | null {
   try {
-    const host = new URL(url).hostname.toLowerCase();
-    if (NEXT_IMAGE_HOSTS.includes(host as (typeof NEXT_IMAGE_HOSTS)[number])) {
-      return true;
-    }
-    if (
-      NEXT_IMAGE_HOSTS.some(
-        (allowed) => host === allowed || host.endsWith(`.${allowed}`),
-      )
-    ) {
-      return true;
-    }
-    return PUBLISHER_IMAGE_SUFFIXES.some(
-      (suffix) => host === suffix || host.endsWith(`.${suffix}`),
-    );
+    return new URL(url).hostname.toLowerCase();
   } catch {
-    return false;
+    return null;
   }
+}
+
+export function isPicsumImageHost(url: string): boolean {
+  const host = hostnameOf(url);
+  if (!host) return false;
+  return NEXT_IMAGE_HOSTS.some(
+    (allowed) => host === allowed || host.endsWith(`.${allowed}`),
+  );
+}
+
+export function isPublisherImageHost(url: string): boolean {
+  const host = hostnameOf(url);
+  if (!host) return false;
+  return PUBLISHER_IMAGE_SUFFIXES.some(
+    (suffix) => host === suffix || host.endsWith(`.${suffix}`),
+  );
+}
+
+/** @deprecated Use isPicsumImageHost or isPublisherImageHost. */
+export function isNextImageHost(url: string): boolean {
+  return isPicsumImageHost(url) || isPublisherImageHost(url);
+}
+
+/** Only picsum URLs — publisher CDNs often 403/504 via the VPS image optimizer. */
+export function useNextImageOptimizer(url: string): boolean {
+  return isPicsumImageHost(url);
 }
 
 /** Stable placeholder when publisher hotlink fails or domain is not configured. */
