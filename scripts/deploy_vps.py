@@ -72,6 +72,12 @@ def make_tarball() -> bytes:
                 continue
             if path.name in EXCLUDE:
                 continue
+            if path.name.startswith("tmp-") and path.suffix in {
+                ".html",
+                ".xml",
+                ".txt",
+            }:
+                continue
             if path.is_file():
                 tar.add(path, arcname=rel)
     buf.seek(0)
@@ -190,7 +196,8 @@ AUTH_SECURE_COOKIES=false
     run(
         client,
         f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
-        f"rm -rf src .next && tar xzf release.tgz && rm -f release.tgz",
+        f"rm -rf src .next && rm -f tmp-*.html tmp-*.xml && "
+        f"tar xzf release.tgz && rm -f release.tgz",
     )
     run(
         client,
