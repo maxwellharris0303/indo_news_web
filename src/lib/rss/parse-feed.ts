@@ -1,6 +1,11 @@
 import Parser from "rss-parser";
 import { fetchFeedXml } from "@/lib/rss/http-fetch";
 import { orderedFeedUrls } from "@/lib/rss/feed-catalog";
+import {
+  fetchAndParseGoogleNewsFeed,
+  parseGoogleNewsFeedToken,
+} from "@/lib/rss/google-news-feed";
+import { fetchAndParseNewsSitemap } from "@/lib/rss/sitemap-feed";
 
 export type ParsedFeedItem = {
   guid: string;
@@ -97,6 +102,88 @@ export function mapParserItem(item: Parser.Item): ParsedFeedItem | null {
   };
 }
 
+export function parseSitemapFeedToken(feedUrl: string): string | null {
+  if (feedUrl.startsWith("sitemap:")) {
+    return feedUrl.slice("sitemap:".length).trim();
+  }
+  return null;
+}
+
+async function fetchAndParseOneFeedUrl(
+  url: string,
+  conditional?: {
+    etag?: string | null;
+    lastModified?: string | null;
+  },
+): Promise<{
+  feed: ParsedFeed;
+  etag?: string;
+  lastModified?: string;
+  notModified: boolean;
+  resolvedFeedUrl: string;
+}> {
+  const googleSite = parseGoogleNewsFeedToken(url);
+  if (googleSite) {
+    const result = await fetchAndParseGoogleNewsFeed(googleSite, conditional);
+    return {
+      feed: result.feed,
+      etag: result.etag,
+      lastModified: result.lastModified,
+      notModified: result.notModified,
+      resolvedFeedUrl: result.resolvedFeedUrl,
+    };
+  }
+
+  const sitemapUrl = parseSitemapFeedToken(url);
+  if (sitemapUrl) {
+    const fetched = await fetchFeedXml(sitemapUrl, conditional);
+    if (fetched.notModified) {
+      return {
+        feed: { items: [] },
+        notModified: true,
+        resolvedFeedUrl: sitemapUrl,
+        etag: fetched.etag,
+        lastModified: fetched.lastModified,
+      };
+    }
+    const feed = await fetchAndParseNewsSitemap(sitemapUrl, fetched.xml);
+    return {
+      feed,
+      etag: fetched.etag,
+      lastModified: fetched.lastModified,
+      notModified: false,
+      resolvedFeedUrl: sitemapUrl,
+    };
+  }
+
+  const fetched = await fetchFeedXml(url, conditional);
+  if (fetched.notModified) {
+    return {
+      feed: { items: [] },
+      notModified: true,
+      resolvedFeedUrl: url,
+      etag: fetched.etag,
+      lastModified: fetched.lastModified,
+    };
+  }
+  const parsed = await parser.parseString(fetched.xml);
+  const items: ParsedFeedItem[] = [];
+  for (const item of parsed.items ?? []) {
+    const mapped = mapParserItem(item);
+    if (mapped) items.push(mapped);
+  }
+  if (items.length === 0 && (parsed.items?.length ?? 0) === 0) {
+    throw new Error("Feed parsed but has no items");
+  }
+  return {
+    feed: { title: parsed.title, items },
+    etag: fetched.etag,
+    lastModified: fetched.lastModified,
+    notModified: false,
+    resolvedFeedUrl: fetched.usedUrl,
+  };
+}
+
 export async function fetchAndParseFeed(
   feedUrl: string,
   conditional?: {
@@ -119,31 +206,13 @@ export async function fetchAndParseFeed(
 
   for (const url of urls) {
     try {
-      const fetched = await fetchFeedXml(url, conditional);
-      if (fetched.notModified) {
-        return {
-          feed: { items: [] },
-          notModified: true,
-          resolvedFeedUrl: url,
-          etag: fetched.etag,
-          lastModified: fetched.lastModified,
-        };
-      }
-      const parsed = await parser.parseString(fetched.xml);
-      const items: ParsedFeedItem[] = [];
-      for (const item of parsed.items ?? []) {
-        const mapped = mapParserItem(item);
-        if (mapped) items.push(mapped);
-      }
-      if (items.length === 0 && parsed.items?.length === 0) {
-        throw new Error("Feed parsed but has no items");
-      }
+      const result = await fetchAndParseOneFeedUrl(url, conditional);
       return {
-        feed: { title: parsed.title, items },
-        etag: fetched.etag,
-        lastModified: fetched.lastModified,
-        notModified: false,
-        resolvedFeedUrl: fetched.usedUrl,
+        feed: result.feed,
+        etag: result.etag,
+        lastModified: result.lastModified,
+        notModified: result.notModified,
+        resolvedFeedUrl: result.resolvedFeedUrl,
       };
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));

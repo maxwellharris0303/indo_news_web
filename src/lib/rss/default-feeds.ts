@@ -61,7 +61,7 @@ export const SINDONEWS_CHANNEL_FEEDS: DefaultFeedSeed[] = [
   {
     name: "Sindonews · Multimedia",
     siteUrl: "https://media.sindonews.com",
-    feedUrl: "https://media.sindonews.com/rss",
+    feedUrl: "google-news:media.sindonews.com",
     defaultCategory: "multimedia",
     ...sindonewsChannelDefaults,
   },
@@ -131,7 +131,7 @@ export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
   {
     name: "Kompas.com",
     siteUrl: "https://www.kompas.com",
-    feedUrl: "https://www.kompas.com/rss/read/all/",
+    feedUrl: "google-news:kompas.com",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
     defaultAiProvider: "OPENAI",
@@ -156,7 +156,7 @@ export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
   {
     name: "iNews.id",
     siteUrl: "https://www.inews.id",
-    feedUrl: "https://www.inews.id/rss/latest",
+    feedUrl: "https://www.inews.id/feed",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
     defaultAiProvider: "OPENAI",
@@ -164,7 +164,7 @@ export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
   {
     name: "Suara.com · News",
     siteUrl: "https://www.suara.com",
-    feedUrl: "https://www.suara.com/rss/news",
+    feedUrl: "google-news:suara.com",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
     defaultAiProvider: "OPENAI",
@@ -172,18 +172,18 @@ export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
   {
     name: "Inilah.com",
     siteUrl: "https://www.inilah.com",
-    feedUrl: "https://www.inilah.com/rss/feed/",
-    scrapeMode: "RSS_ONLY",
+    feedUrl: "google-news:inilah.com",
+    scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
-    defaultAiProvider: "ANTHROPIC",
+    defaultAiProvider: "OPENAI",
   },
   {
     name: "DDTC (news.ddtc.co.id)",
     siteUrl: "https://news.ddtc.co.id",
-    feedUrl: "https://news.ddtc.co.id/rss",
-    scrapeMode: "RSS_ONLY",
+    feedUrl: "sitemap:https://news.ddtc.co.id/terbaru/sitemap_news.xml",
+    scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "ekonomi",
-    defaultAiProvider: "ANTHROPIC",
+    defaultAiProvider: "OPENAI",
   },
 ];
 
@@ -218,10 +218,51 @@ export async function seedDefaultRssFeeds() {
     "https://www.antaranews.com/rss/nasional.xml",
     "https://feed.liputan6.com/rss",
     "https://www.kompas.com/rss",
+    "https://www.kompas.com/rss/read/all/",
     "https://www.suara.com/rss",
+    "https://www.suara.com/rss/news",
+    "https://www.inews.id/rss/latest",
+    "https://www.inilah.com/rss/feed/",
+    "https://news.ddtc.co.id/rss",
+    "https://media.sindonews.com/rss",
   ];
   await prisma.rssFeed.updateMany({
     where: { feedUrl: { in: deprecatedFeedUrls } },
     data: { enabled: false },
   });
+
+  /** Point existing DB rows at working endpoints without duplicating names. */
+  const feedUrlReplacements: { from: string; to: string }[] = [
+    {
+      from: "https://www.kompas.com/rss/read/all/",
+      to: "google-news:kompas.com",
+    },
+    { from: "https://www.suara.com/rss/news", to: "google-news:suara.com" },
+    { from: "https://www.inews.id/rss/latest", to: "https://www.inews.id/feed" },
+    { from: "https://www.inilah.com/rss/feed/", to: "google-news:inilah.com" },
+    {
+      from: "https://news.ddtc.co.id/rss",
+      to: "sitemap:https://news.ddtc.co.id/terbaru/sitemap_news.xml",
+    },
+    {
+      from: "https://media.sindonews.com/rss",
+      to: "google-news:media.sindonews.com",
+    },
+  ];
+  for (const { from, to } of feedUrlReplacements) {
+    const row = await prisma.rssFeed.findUnique({ where: { feedUrl: from } });
+    if (!row) continue;
+    const conflict = await prisma.rssFeed.findUnique({ where: { feedUrl: to } });
+    if (conflict) {
+      await prisma.rssFeed.update({
+        where: { id: row.id },
+        data: { enabled: false },
+      });
+    } else {
+      await prisma.rssFeed.update({
+        where: { id: row.id },
+        data: { feedUrl: to, enabled: true, lastError: null, errorCount: 0 },
+      });
+    }
+  }
 }
