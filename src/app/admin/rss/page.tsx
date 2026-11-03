@@ -8,7 +8,7 @@ import { RssBulkAutoPostCard } from "@/components/admin/rss-bulk-auto-post-card"
 import { RssPollAllButton } from "@/components/admin/rss-poll-all-button";
 import { Button } from "@/components/ui/button";
 import { aiProviderConfigured } from "@/lib/ai/rewrite-article";
-import { selectClassName } from "@/lib/admin/constants";
+import { RssFeedSelect } from "@/components/admin/rss-feed-select";
 import { rssText, rssItemStatusLabels } from "@/lib/admin/locale-ui";
 import { getAdminLocale } from "@/lib/admin-locale";
 import { getAuthors } from "@/lib/content/repository";
@@ -137,7 +137,11 @@ export default async function AdminRssPage({ searchParams }: Props) {
 
       <RssBulkAutoPostCard
         copy={copy}
-        feeds={feeds.map((f) => ({ id: f.id, name: f.name }))}
+        feeds={feeds.map((f) => ({
+          id: f.id,
+          name: f.name,
+          siteUrl: f.siteUrl,
+        }))}
         defaultFeedId={feedFilter}
       />
 
@@ -176,18 +180,18 @@ export default async function AdminRssPage({ searchParams }: Props) {
                 ) : null}
                 <label className="text-xs font-medium text-muted-foreground">
                   {copy.inboxFilterFeed}
-                  <select
-                    name="feed"
-                    defaultValue={feedFilter}
-                    className={`ml-1 mt-1 block ${selectClassName} h-9 text-xs`}
-                  >
-                    <option value="">—</option>
-                    {feeds.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-1">
+                    <RssFeedSelect
+                      name="feed"
+                      defaultValue={feedFilter}
+                      feeds={feeds.map((f) => ({
+                        id: f.id,
+                        name: f.name,
+                        siteUrl: f.siteUrl,
+                      }))}
+                      aria-label={copy.inboxFilterFeed}
+                    />
+                  </div>
                 </label>
                 <Button type="submit" size="sm" variant="outline">
                   OK
@@ -204,7 +208,11 @@ export default async function AdminRssPage({ searchParams }: Props) {
         ) : (
           <RssInboxPanel
             items={inboxRows}
-            feeds={feeds.map((f) => ({ id: f.id, name: f.name }))}
+            feeds={feeds.map((f) => ({
+              id: f.id,
+              name: f.name,
+              siteUrl: f.siteUrl,
+            }))}
             copy={copy}
             newCount={
               feedFilter

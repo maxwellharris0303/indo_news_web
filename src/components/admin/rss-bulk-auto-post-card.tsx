@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { prepareBulkAutoPostAction } from "@/app/actions/admin-rss";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RssFeedSelect } from "@/components/admin/rss-feed-select";
 import {
   clearAutoPostPrepCancelFlag,
   clearRssAutoPostJob,
@@ -38,7 +39,7 @@ type Copy = {
   autoPostFeedAll: string;
 };
 
-type FeedOption = { id: string; name: string };
+type FeedOption = { id: string; name: string; siteUrl: string };
 
 export function RssBulkAutoPostCard({
   copy,
@@ -178,19 +179,17 @@ export function RssBulkAutoPostCard({
         {feeds.length > 0 ? (
           <label className="text-xs font-medium text-muted-foreground">
             Feed
-            <select
-              value={feedId}
-              onChange={(e) => setFeedId(e.target.value)}
-              disabled={busy}
-              className="mt-1 block h-9 min-w-[160px] rounded-md border border-input bg-background px-2 text-sm"
-            >
-              <option value="">{copy.autoPostFeedAll}</option>
-              {feeds.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1">
+              <RssFeedSelect
+                feeds={feeds}
+                emptyLabel={copy.autoPostFeedAll}
+                value={feedId}
+                onValueChange={setFeedId}
+                disabled={busy}
+                className="min-w-[200px]"
+                aria-label="Feed"
+              />
+            </div>
           </label>
         ) : null}
         <label className="flex items-center gap-2 text-sm">
