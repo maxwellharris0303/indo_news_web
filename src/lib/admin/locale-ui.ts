@@ -47,6 +47,15 @@ export const adminTopicsCopy = {
     retagHint:
       "Jalankan inferensi kata kunci pada hingga 300 artikel terbit terbaru yang belum punya topik.",
     retagButton: "Jalankan auto-tag",
+    retagPending: "Memproses…",
+    retagSuccess: (tagged: number, scanned: number) =>
+      `Selesai: ${tagged.toLocaleString("id-ID")} artikel ditandai topik dari ${scanned.toLocaleString("id-ID")} yang diperiksa.`,
+    retagNone: (scanned: number) =>
+      scanned === 0
+        ? "Semua artikel terbit sudah punya topik, atau tidak ada artikel terbit."
+        : `Tidak ada artikel baru yang cocok dengan kata kunci topik (${scanned.toLocaleString("id-ID")} diperiksa). Coba edit topik manual di daftar Artikel.`,
+    retagError: "Auto-tag gagal. Coba lagi atau periksa log server.",
+    retagAuthError: "Sesi admin habis — login ulang lalu coba lagi.",
     articleCount: "Artikel terbit",
     viewPublic: "Lihat publik",
     findArticles: "Cari artikel",
@@ -67,6 +76,15 @@ export const adminTopicsCopy = {
     retagHint:
       "Run keyword inference on up to 300 recent published articles with no topics.",
     retagButton: "Run auto-tag",
+    retagPending: "Running…",
+    retagSuccess: (tagged: number, scanned: number) =>
+      `Done: tagged ${tagged.toLocaleString("en-US")} of ${scanned.toLocaleString("en-US")} articles scanned.`,
+    retagNone: (scanned: number) =>
+      scanned === 0
+        ? "Every published article already has topics, or there are no published articles."
+        : `No articles matched topic keywords (${scanned.toLocaleString("en-US")} scanned). Assign topics manually from Articles.`,
+    retagError: "Auto-tag failed. Try again or check server logs.",
+    retagAuthError: "Admin session expired — sign in again and retry.",
     articleCount: "Published stories",
     viewPublic: "View public page",
     findArticles: "Find articles",

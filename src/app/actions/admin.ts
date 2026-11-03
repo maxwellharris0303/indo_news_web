@@ -505,9 +505,26 @@ export async function retagUntaggedArticlesAction() {
 
   revalidateTopicSlugs([...touchedTopics]);
   revalidatePath("/admin/topik");
+  revalidatePath("/topik");
+  revalidatePath("/");
   return {
     ok: true as const,
     scanned: rows.length,
     tagged,
   };
+}
+
+export async function retagUntaggedArticlesFormAction() {
+  try {
+    const res = await retagUntaggedArticlesAction();
+    redirect(
+      `/admin/topik?retag=${res.tagged}&scanned=${res.scanned}`,
+    );
+  } catch (e) {
+    const message =
+      e instanceof Error && e.message === "Unauthorized"
+        ? "auth"
+        : "error";
+    redirect(`/admin/topik?retag=${message}`);
+  }
 }
