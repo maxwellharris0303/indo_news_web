@@ -39,6 +39,7 @@ const staticRoutes = [
   "/robots.txt",
   "/sitemap.xml",
   "/api/articles?offset=0&limit=8",
+  "/api/health",
   "/nasional/pemerintah-tegaskan-komitmen-tangani-isu-publik-pasca-demo",
   "/nasional/e2e-automation-test-article",
 ];

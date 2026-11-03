@@ -1,0 +1,20 @@
+# Optional PostgreSQL for production (bind to localhost only).
+# Usage: docker compose -f docker-compose.postgres.yml up -d
+# Then set DATABASE_URL in server .env, e.g.:
+# postgresql://kabardesk:CHANGE_ME@127.0.0.1:5432/kabardesk
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kabardesk
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: kabardesk
+    volumes:
+      - kabardesk_pg_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
+volumes:
+  kabardesk_pg_data:

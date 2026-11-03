@@ -46,7 +46,32 @@ const DEMO_ADMIN_ID = "u-demo-admin";
 const DEMO_READER_ID = "u-demo-reader";
 const SUPERADMIN_ID = "u-superadmin";
 
-async function upsertDemoUsers() {
+async function upsertSuperadminFromEnv() {
+  const superEmail = process.env.KABARDESK_SUPERADMIN_EMAIL?.trim().toLowerCase();
+  const superPassword = process.env.KABARDESK_SUPERADMIN_PASSWORD;
+  if (!superEmail || !superPassword) return;
+  const superHash = await bcrypt.hash(superPassword, 10);
+  await prisma.user.upsert({
+    where: { email: superEmail },
+    create: {
+      id: SUPERADMIN_ID,
+      email: superEmail,
+      name: "Super Admin",
+      passwordHash: superHash,
+      role: "SUPERADMIN",
+      plan: "PLUS",
+    },
+    update: {
+      passwordHash: superHash,
+      role: "SUPERADMIN",
+      plan: "PLUS",
+    },
+  });
+  console.log(`Superadmin seed: ${superEmail}`);
+}
+
+/** Dev + first-time local setup — resets demo passwords on each seed. */
+async function upsertDemoUsersForDevelopment() {
   const passwordHash = await bcrypt.hash("admin123", 10);
   await prisma.user.upsert({
     where: { email: "admin@kabardesk.id" },
@@ -85,40 +110,69 @@ async function upsertDemoUsers() {
     },
   });
 
-  const superEmail = process.env.KABARDESK_SUPERADMIN_EMAIL?.trim().toLowerCase();
-  const superPassword = process.env.KABARDESK_SUPERADMIN_PASSWORD;
-  if (superEmail && superPassword) {
-    const superHash = await bcrypt.hash(superPassword, 10);
-    await prisma.user.upsert({
-      where: { email: superEmail },
-      create: {
-        id: SUPERADMIN_ID,
-        email: superEmail,
-        name: "Super Admin",
-        passwordHash: superHash,
-        role: "SUPERADMIN",
-        plan: "PLUS",
-      },
-      update: {
-        passwordHash: superHash,
-        role: "SUPERADMIN",
-        plan: "PLUS",
-      },
+  await upsertSuperadminFromEnv();
+}
+
+/** Production — never reset existing demo passwords; optional skip demo accounts. */
+async function ensureUsersForProduction() {
+  if (process.env.KABARDESK_DISABLE_DEMO_USERS !== "1") {
+    const existingAdmin = await prisma.user.findUnique({
+      where: { email: "admin@kabardesk.id" },
     });
-    console.log(`Superadmin seed: ${superEmail}`);
+    if (!existingAdmin) {
+      const passwordHash = await bcrypt.hash("admin123", 10);
+      await prisma.user.create({
+        data: {
+          id: DEMO_ADMIN_ID,
+          email: "admin@kabardesk.id",
+          name: "Admin KabarDesk",
+          passwordHash,
+          role: "ADMIN",
+        },
+      });
+      console.log(
+        "Production: created admin@kabardesk.id (first run only — change password)",
+      );
+    }
+
+    const existingReader = await prisma.user.findUnique({
+      where: { email: "pembaca@kabardesk.id" },
+    });
+    if (!existingReader) {
+      const readerHash = await bcrypt.hash("reader123", 10);
+      await prisma.user.create({
+        data: {
+          id: DEMO_READER_ID,
+          email: "pembaca@kabardesk.id",
+          name: "Pembaca Demo",
+          passwordHash: readerHash,
+          role: "READER",
+          plan: "PLUS",
+          interests: JSON.stringify(["nasional", "ekonomi"]),
+          regionSlug: "dki-jakarta",
+        },
+      });
+    }
+  } else {
+    console.log("Production: demo users skipped (KABARDESK_DISABLE_DEMO_USERS=1)");
   }
+
+  await upsertSuperadminFromEnv();
 }
 
 async function seedProduction() {
-  await upsertDemoUsers();
+  await ensureUsersForProduction();
   const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
   await seedDefaultRssFeeds();
-  const { seedDemoArticleComments } = await import(
-    "../src/lib/content/seed-comments"
-  );
-  const commentsAdded = await seedDemoArticleComments(prisma);
+  let commentsAdded = 0;
+  if (process.env.KABARDESK_SEED_DEMO_COMMENTS === "1") {
+    const { seedDemoArticleComments } = await import(
+      "../src/lib/content/seed-comments"
+    );
+    commentsAdded = await seedDemoArticleComments(prisma);
+  }
   console.log(
-    `Production seed: demo users + RSS feeds (data preserved); +${commentsAdded} demo comments`,
+    `Production seed: users + RSS feeds (data preserved); demo comments +${commentsAdded}`,
   );
 }
 
@@ -203,7 +257,7 @@ async function seedDevelopment() {
     });
   }
 
-  await upsertDemoUsers();
+  await upsertDemoUsersForDevelopment();
 
   const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
   await seedDefaultRssFeeds();

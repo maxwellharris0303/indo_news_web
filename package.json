@@ -7,6 +7,8 @@
     "build": "prisma generate && prisma db push && next build && node scripts/prepare-standalone.mjs",
     "start": "node scripts/start-production.mjs",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "probe:health": "node scripts/probe-health.mjs",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",

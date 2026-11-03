@@ -46,13 +46,17 @@ Buka [http://localhost:3000](http://localhost:3000).
 | `npm run build` | Generate DB, seed, production build |
 | `npm run db:seed` | Isi ulang data demo |
 
+## Production (VPS, tanpa domain)
+
+Lihat **[docs/PRODUCTION.md](docs/PRODUCTION.md)** — env merge saat deploy, cron RSS, backup, health check, PostgreSQL opsional.
+
 ## PostgreSQL (production)
 
 Ubah `DATABASE_URL` di `.env`, misalnya:
 
 `DATABASE_URL="postgresql://user:pass@localhost:5432/kabardesk"`
 
-Lalu `npm run setup`.
+Atau `docker compose -f docker-compose.postgres.yml up -d` di server. Lalu `npm run setup`.
 
 ## Struktur
 

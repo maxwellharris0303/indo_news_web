@@ -131,6 +131,117 @@ def load_auth_secret() -> str:
     return secret
 
 
+ENV_PROTECT_KEYS = frozenset(
+    {
+        "AUTH_SECRET",
+        "DATABASE_URL",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "KABARDESK_SUPERADMIN_EMAIL",
+        "KABARDESK_SUPERADMIN_PASSWORD",
+    },
+)
+
+
+def parse_env_file(text: str) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for line in text.splitlines():
+        trimmed = line.strip()
+        if not trimmed or trimmed.startswith("#"):
+            continue
+        if "=" not in trimmed:
+            continue
+        key, _, rest = trimmed.partition("=")
+        key = key.strip()
+        val = rest.strip()
+        if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
+            val = val[1:-1]
+        out[key] = val
+    return out
+
+
+def render_env_file(values: dict[str, str]) -> str:
+    order = [
+        "DATABASE_URL",
+        "AUTH_SECRET",
+        "AUTH_URL",
+        "NEXTAUTH_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "PORT",
+        "HOSTNAME",
+        "NODE_ENV",
+        "KABARDESK_PRESERVE_DATA",
+        "KABARDESK_DISABLE_DEMO_USERS",
+        "AUTH_SECURE_COOKIES",
+        "KABARDESK_SUPERADMIN_EMAIL",
+        "KABARDESK_SUPERADMIN_PASSWORD",
+        "OPENAI_API_KEY",
+        "OPENAI_REWRITE_MODEL",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_REWRITE_MODEL",
+    ]
+    lines: list[str] = []
+    seen: set[str] = set()
+    for key in order:
+        if key in values and values[key] != "":
+            lines.append(f'{key}="{values[key].replace(chr(34), "")}"')
+            seen.add(key)
+    for key in sorted(values):
+        if key in seen or values[key] == "":
+            continue
+        lines.append(f'{key}="{values[key].replace(chr(34), "")}"')
+    return "\n".join(lines) + "\n"
+
+
+def read_remote_env(sftp: paramiko.SFTPClient, remote_path: str) -> dict[str, str]:
+    try:
+        with sftp.file(remote_path, "r") as f:
+            return parse_env_file(f.read().decode("utf-8", errors="replace"))
+    except OSError:
+        return {}
+
+
+def write_remote_env(sftp: paramiko.SFTPClient, remote_path: str, content: str) -> None:
+    with sftp.file(remote_path, "w") as f:
+        f.write(content.encode("utf-8"))
+
+
+def merge_env(
+    existing: dict[str, str],
+    defaults: dict[str, str],
+) -> dict[str, str]:
+    merged = dict(existing)
+    for key, val in defaults.items():
+        if key in ENV_PROTECT_KEYS and existing.get(key):
+            continue
+        merged[key] = val
+    return merged
+
+
+def install_vps_cron(client: paramiko.SSHClient, remote_dir: str) -> None:
+    rss_line = (
+        f"*/30 * * * * cd {remote_dir} && "
+        f"flock -n /tmp/kabardesk-rss.lock npm run rss:poll "
+        f">> /var/log/kabardesk-rss.log 2>&1"
+    )
+    backup_line = (
+        f"15 3 * * * bash {remote_dir}/scripts/backup-db.sh "
+        f">> /var/log/kabardesk-backup.log 2>&1"
+    )
+    run(
+        client,
+        "touch /var/log/kabardesk-rss.log /var/log/kabardesk-backup.log",
+        check=False,
+    )
+    run(
+        client,
+        "(crontab -l 2>/dev/null | grep -v kabardesk-rss.lock | "
+        "grep -v backup-db.sh; "
+        f"echo '{rss_line}'; echo '{backup_line}') | crontab -",
+        check=False,
+    )
+
+
 def main() -> None:
     auth_secret = load_auth_secret()
     super_email, super_password = load_superadmin()
@@ -169,21 +280,33 @@ def main() -> None:
     sftp.close()
 
     app_url = f"http://{HOST}:{internal_port}"
+    auth_base = app_url if internal_port == PUBLIC_PORT else site_url
     db_path = f"{REMOTE_DIR}/prisma/dev.db"
-    env_content = f"""DATABASE_URL="file:{db_path}"
-AUTH_SECRET="{auth_secret}"
-AUTH_URL="{app_url if internal_port == PUBLIC_PORT else site_url}"
-NEXTAUTH_URL="{app_url if internal_port == PUBLIC_PORT else site_url}"
-NEXT_PUBLIC_SITE_URL="{site_url}"
-PORT={internal_port}
-HOSTNAME=0.0.0.0
-NODE_ENV=production
-KABARDESK_PRESERVE_DATA=1
-AUTH_SECURE_COOKIES=false
-"""
+    run(
+        client,
+        f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
+        f"rm -rf src .next && rm -f tmp-*.html tmp-*.xml && "
+        f"tar xzf release.tgz && rm -f release.tgz",
+    )
+
+    sftp = client.open_sftp()
+    existing_env = read_remote_env(sftp, f"{REMOTE_DIR}/.env")
+    defaults: dict[str, str] = {
+        "DATABASE_URL": f"file:{db_path}",
+        "AUTH_SECRET": auth_secret,
+        "AUTH_URL": auth_base,
+        "NEXTAUTH_URL": auth_base,
+        "NEXT_PUBLIC_SITE_URL": site_url,
+        "PORT": str(internal_port),
+        "HOSTNAME": "0.0.0.0",
+        "NODE_ENV": "production",
+        "KABARDESK_PRESERVE_DATA": "1",
+        "KABARDESK_DISABLE_DEMO_USERS": "1",
+        "AUTH_SECURE_COOKIES": "false",
+    }
     if super_email and super_password:
-        env_content += f'KABARDESK_SUPERADMIN_EMAIL="{super_email}"\n'
-        env_content += f'KABARDESK_SUPERADMIN_PASSWORD="{super_password}"\n'
+        defaults["KABARDESK_SUPERADMIN_EMAIL"] = super_email
+        defaults["KABARDESK_SUPERADMIN_PASSWORD"] = super_password
     for key in (
         "OPENAI_API_KEY",
         "OPENAI_REWRITE_MODEL",
@@ -192,23 +315,22 @@ AUTH_SECURE_COOKIES=false
     ):
         val = os.environ.get(key, "").strip()
         if val:
-            env_content += f'{key}="{val.replace(chr(34), "")}"\n'
-    run(
-        client,
-        f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
-        f"rm -rf src .next && rm -f tmp-*.html tmp-*.xml && "
-        f"tar xzf release.tgz && rm -f release.tgz",
-    )
-    run(
-        client,
-        f"cat > {REMOTE_DIR}/.env << 'ENVEOF'\n{env_content}ENVEOF",
-    )
+            defaults[key] = val
+    merged = merge_env(existing_env, defaults)
+    merged["PORT"] = str(internal_port)
+    merged["AUTH_URL"] = auth_base
+    merged["NEXTAUTH_URL"] = auth_base
+    write_remote_env(sftp, f"{REMOTE_DIR}/.env", render_env_file(merged))
+    sftp.close()
+    print("Updated server .env (merged; secrets not logged)")
     run(client, f"cd {REMOTE_DIR} && npm install && npm run setup && npm run build")
     run(
         client,
         f"cd {REMOTE_DIR} && pm2 delete {PM2_NAME} 2>/dev/null; PORT={internal_port} pm2 start npm --name {PM2_NAME} -- start && pm2 save",
         check=False,
     )
+    run(client, "command -v pm2 >/dev/null && pm2 install pm2-logrotate 2>/dev/null || true", check=False)
+    install_vps_cron(client, REMOTE_DIR)
 
     # Server uses Caddy on 80/443 — do not touch Caddyfile. App listens on {internal_port} only.
     run(
@@ -229,10 +351,20 @@ AUTH_SECURE_COOKIES=false
         f"cd {REMOTE_DIR} && node scripts/e2e-seed-article.mjs",
         check=False,
     )
+    e2e_email = super_email or os.environ.get("E2E_EMAIL", "").strip()
+    e2e_password = super_password or os.environ.get("E2E_PASSWORD", "").strip()
+    if not e2e_email or not e2e_password:
+        e2e_email = "admin@kabardesk.id"
+        e2e_password = "admin123"
     run(
         client,
         f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
-        f"E2E_EMAIL=admin@kabardesk.id E2E_PASSWORD=admin123 node scripts/e2e_full.mjs",
+        f"E2E_EMAIL={e2e_email} E2E_PASSWORD={e2e_password} node scripts/e2e_full.mjs",
+        check=False,
+    )
+    run(
+        client,
+        f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} node scripts/probe-health.mjs",
         check=False,
     )
     print("\nRunning live market ticker test on VPS…")
@@ -256,7 +388,12 @@ AUTH_SECURE_COOKIES=false
         )
     client.close()
     print(f"\nDeployed (no conflict with port 80 sites): {site_url}")
-    print("Admin: admin@kabardesk.id / admin123")
+    if super_email:
+        print(f"Superadmin login: {super_email} (password in scripts/.superadmin-credentials)")
+    elif merged.get("KABARDESK_DISABLE_DEMO_USERS") == "1":
+        print("Demo logins disabled — use KABARDESK_SUPERADMIN_* in server .env")
+    else:
+        print("Admin: admin@kabardesk.id (change default password on production)")
 
 
 if __name__ == "__main__":
