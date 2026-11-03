@@ -10,12 +10,12 @@ import {
 } from "@/lib/rss/batch-job-client";
 import { resumeRssAutoPostJob } from "@/lib/rss/auto-post-runner";
 import { useAdminLocale } from "@/components/admin/admin-locale-provider";
-import { rssPageText } from "@/lib/admin/locale-ui";
+import { rssText } from "@/lib/admin/locale-ui";
 
 export function AdminAutoPostBanner() {
   const router = useRouter();
   const { locale } = useAdminLocale();
-  const copy = rssPageText(locale);
+  const copy = rssText(locale);
   const [job, setJob] = useState<RssAutoPostJob | null>(() =>
     typeof window === "undefined" ? null : loadRssAutoPostJob(),
   );
