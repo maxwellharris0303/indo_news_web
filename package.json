@@ -17,6 +17,7 @@
     "test:e2e:full": "node scripts/e2e-bootstrap.mjs && npm run test:e2e:seed && node scripts/e2e_full.mjs",
     "test:e2e:seed": "tsx scripts/e2e-seed-article.mjs",
     "rss:poll": "node scripts/rss-poll.mjs",
+    "rss:bulk": "tsx scripts/bulk-rss-rewrite.ts",
     "test:rss": "tsx scripts/test-rss-system.ts",
     "test:rss:live": "tsx scripts/test-rss-rewrite-live.ts",
     "deploy:vps": "python scripts/deploy_vps.py"
