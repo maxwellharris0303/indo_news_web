@@ -210,15 +210,23 @@ export async function getArticleBySlugOnly(
   return row ? mapArticle(row) : undefined;
 }
 
+const HERO_FEATURED_MAX_AGE_MS = 72 * 60 * 60 * 1000;
+
 export async function getHeroLead(
   locale: "id" | "en" = "id",
 ): Promise<Article | undefined> {
   const items = await getArticles({
     sort: "latest",
-    limit: 20,
+    limit: 30,
     locale,
   });
-  return items.find((a) => a.featuredLevel === 3) ?? items[0];
+  const now = Date.now();
+  const pinnedHero = items.find(
+    (a) =>
+      a.featuredLevel === 3 &&
+      now - new Date(a.publishedAt).getTime() <= HERO_FEATURED_MAX_AGE_MS,
+  );
+  return pinnedHero ?? items[0];
 }
 
 export type UrgentBannerKind = "breaking" | "developing";
@@ -605,7 +613,7 @@ export async function getRecommendationsForUser(
 
   const batches = await Promise.all(
     interests.slice(0, 3).map((cat) =>
-      getArticles({ category: cat as CategorySlug, limit: 3 }),
+      getArticles({ category: cat as CategorySlug, limit: 8 }),
     ),
   );
   const merged = batches.flat();
@@ -615,9 +623,21 @@ export async function getRecommendationsForUser(
     if (seen.has(a.id)) continue;
     seen.add(a.id);
     unique.push(a);
+  }
+  unique.sort(
+    (a, b) =>
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  );
+  if (unique.length >= limit) {
+    return unique.slice(0, limit);
+  }
+  const latest = await getArticles({ limit: limit * 2 });
+  for (const a of latest) {
+    if (seen.has(a.id)) continue;
+    unique.push(a);
     if (unique.length >= limit) break;
   }
-  return unique.length ? unique : getArticles({ limit });
+  return unique.length ? unique.slice(0, limit) : getArticles({ limit });
 }
 
 export async function getAdminArticles(limit = 30) {

@@ -212,15 +212,39 @@ def write_remote_env(sftp: paramiko.SFTPClient, remote_path: str, content: str) 
         f.write(content.encode("utf-8"))
 
 
+def canonical_sqlite_url(remote_dir: str) -> str:
+    return f"file:{remote_dir}/prisma/dev.db"
+
+
+def normalize_database_url(existing: str | None, remote_dir: str) -> str:
+    canonical = canonical_sqlite_url(remote_dir)
+    if not existing or not existing.strip():
+        return canonical
+    url = existing.strip()
+    if url.startswith("postgresql:"):
+        return url
+    if url in ("file:./dev.db", "file:./prisma/dev.db"):
+        return canonical
+    if url.startswith("file:./"):
+        return canonical
+    return url
+
+
 def merge_env(
     existing: dict[str, str],
     defaults: dict[str, str],
+    remote_dir: str,
 ) -> dict[str, str]:
     merged = dict(existing)
     for key, val in defaults.items():
+        if key == "DATABASE_URL":
+            merged[key] = normalize_database_url(existing.get("DATABASE_URL"), remote_dir)
+            continue
         if key in ENV_PROTECT_KEYS and existing.get(key):
             continue
         merged[key] = val
+    if "DATABASE_URL" not in merged or not merged["DATABASE_URL"]:
+        merged["DATABASE_URL"] = canonical_sqlite_url(remote_dir)
     return merged
 
 
@@ -288,6 +312,7 @@ def main() -> None:
     app_url = f"http://{HOST}:{internal_port}"
     auth_base = app_url if internal_port == PUBLIC_PORT else site_url
     db_path = f"{REMOTE_DIR}/prisma/dev.db"
+    sqlite_url = canonical_sqlite_url(REMOTE_DIR)
     run(
         client,
         f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
@@ -298,7 +323,7 @@ def main() -> None:
     sftp = client.open_sftp()
     existing_env = read_remote_env(sftp, f"{REMOTE_DIR}/.env")
     defaults: dict[str, str] = {
-        "DATABASE_URL": f"file:{db_path}",
+        "DATABASE_URL": sqlite_url,
         "AUTH_SECRET": auth_secret,
         "AUTH_URL": auth_base,
         "NEXTAUTH_URL": auth_base,
@@ -322,7 +347,7 @@ def main() -> None:
         val = os.environ.get(key, "").strip()
         if val:
             defaults[key] = val
-    merged = merge_env(existing_env, defaults)
+    merged = merge_env(existing_env, defaults, REMOTE_DIR)
     merged["PORT"] = str(internal_port)
     merged["AUTH_URL"] = auth_base
     merged["NEXTAUTH_URL"] = auth_base
@@ -330,6 +355,11 @@ def main() -> None:
     sftp.close()
     print("Updated server .env (merged; secrets not logged)")
     run(client, f"cd {REMOTE_DIR} && npm install && npm run setup && npm run build")
+    run(
+        client,
+        f"cd {REMOTE_DIR} && node scripts/sync-standalone-db.mjs",
+        check=False,
+    )
     run(
         client,
         f"cd {REMOTE_DIR} && pm2 delete {PM2_NAME} 2>/dev/null; PORT={internal_port} pm2 start npm --name {PM2_NAME} -- start && pm2 save",

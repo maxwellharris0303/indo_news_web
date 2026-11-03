@@ -2,6 +2,7 @@
  * Poll RSS, rewrite N items with OpenAI, optionally publish (PUBLISHED).
  * VPS: BULK_COUNT=20 PUBLISH=1 npx tsx scripts/bulk-rss-rewrite.ts
  */
+import { execSync } from "node:child_process";
 import { PrismaClient, type RssItemStatus } from "@prisma/client";
 import { aiProviderConfigured, rewriteArticleFromSource } from "../src/lib/ai/rewrite-article";
 import { REWRITE_PROMPT_VERSION } from "../src/lib/ai/rewrite-schema";
@@ -231,6 +232,12 @@ async function main() {
   }
 
   if (published.length === 0) process.exit(1);
+
+  try {
+    execSync("node scripts/sync-standalone-db.mjs", { stdio: "inherit" });
+  } catch {
+    console.warn("Could not sync standalone DB — run deploy or sync manually, then pm2 restart");
+  }
 }
 
 main()

@@ -32,6 +32,11 @@ def main() -> None:
         sys.exit(2)
 
     remote_cmd = " ".join(args)
+    if remote_cmd.startswith("-- "):
+        remote_cmd = remote_cmd[3:]
+    elif remote_cmd == "--":
+        print("Missing remote command")
+        sys.exit(2)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     connect(client)
