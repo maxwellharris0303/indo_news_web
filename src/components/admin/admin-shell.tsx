@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminLanguageSwitcher } from "@/components/admin/admin-language-switcher";
+import { AdminAutoPostBanner } from "@/components/admin/admin-auto-post-banner";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { getAdminLocale } from "@/lib/admin-locale";
 import { shellText } from "@/lib/admin/locale-ui";
@@ -57,7 +58,10 @@ export async function AdminShell({ children, user }: Props) {
           <aside className="lg:w-52 lg:shrink-0">
             <AdminNav />
           </aside>
-          <div className="min-w-0 flex-1">{children}</div>
+          <div className="min-w-0 flex-1">
+            <AdminAutoPostBanner />
+            {children}
+          </div>
         </div>
       </div>
     </div>

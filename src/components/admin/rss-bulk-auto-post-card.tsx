@@ -1,13 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import {
-  bulkAutoPostChunkAction,
-  prepareBulkAutoPostAction,
-} from "@/app/actions/admin-rss";
+import { useCallback, useEffect, useState } from "react";
+import { prepareBulkAutoPostAction } from "@/app/actions/admin-rss";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  clearRssAutoPostJob,
+  loadRssAutoPostJob,
+  RSS_AUTO_POST_CHANGED,
+  saveRssAutoPostJob,
+} from "@/lib/rss/batch-job-client";
+import { resumeRssAutoPostJob } from "@/lib/rss/auto-post-runner";
+import { loadAutoPostCardUi } from "@/lib/rss/auto-post-ui";
 
 type Copy = {
   autoPostTitle: string;
@@ -37,9 +42,40 @@ export function RssBulkAutoPostCard({
   const [pollFirst, setPollFirst] = useState(true);
   const [publish, setPublish] = useState(true);
   const [feedId, setFeedId] = useState(defaultFeedId ?? "");
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(
+    () => loadAutoPostCardUi(copy.autoPostRunning).busy,
+  );
+  const [progress, setProgress] = useState<string | null>(
+    () => loadAutoPostCardUi(copy.autoPostRunning).progress,
+  );
+  const [message, setMessage] = useState<string | null>(
+    () => loadAutoPostCardUi(copy.autoPostRunning).message,
+  );
+
+  const applyStorageUi = useCallback(() => {
+    const ui = loadAutoPostCardUi(copy.autoPostRunning);
+    setBusy(ui.busy);
+    setProgress(ui.progress);
+    setMessage(ui.message);
+  }, [copy.autoPostRunning]);
+
+  useEffect(() => {
+    const onChange = () => applyStorageUi();
+    window.addEventListener(RSS_AUTO_POST_CHANGED, onChange);
+    return () => window.removeEventListener(RSS_AUTO_POST_CHANGED, onChange);
+  }, [applyStorageUi]);
+
+  useEffect(() => {
+    const job = loadRssAutoPostJob();
+    if (!job || job.status !== "running") return;
+    void resumeRssAutoPostJob(
+      {
+        autoPostRunning: copy.autoPostRunning,
+        autoPostDone: copy.autoPostDone,
+      },
+      () => router.refresh(),
+    );
+  }, [copy.autoPostDone, copy.autoPostRunning, router]);
 
   async function runAutoPost() {
     const n = parseInt(count, 10);
@@ -47,6 +83,13 @@ export function RssBulkAutoPostCard({
       setMessage("Jumlah tidak valid.");
       return;
     }
+    const existing = loadRssAutoPostJob();
+    if (existing?.status === "running") {
+      setMessage("Auto post masih berjalan.");
+      return;
+    }
+    clearRssAutoPostJob();
+
     setBusy(true);
     setMessage(null);
     setProgress(`${copy.autoPostRunning}: 0/${n}…`);
@@ -59,41 +102,37 @@ export function RssBulkAutoPostCard({
       });
       if (!prep.ok) {
         setMessage("Gagal menyiapkan antrian.");
+        setProgress(null);
         return;
       }
-      let queue = [...prep.itemIds];
+      const queue = [...prep.itemIds];
       if (queue.length === 0) {
         setMessage("Tidak ada item NEW di inbox.");
         setProgress(null);
         return;
       }
 
-      let ok = 0;
-      let fail = 0;
-      let done = 0;
       const target = Math.min(n, queue.length);
+      saveRssAutoPostJob({
+        queue,
+        target,
+        publish,
+        startedAt: Date.now(),
+        status: "running",
+        ok: 0,
+        fail: 0,
+        message: `${copy.autoPostRunning}: 0/${target}…`,
+      });
 
-      while (queue.length > 0 && done < target) {
-        const chunkRes = await bulkAutoPostChunkAction({
-          itemIds: queue,
-          publish,
-        });
-        if (!chunkRes.ok) {
-          setMessage(chunkRes.error);
-          break;
-        }
-        ok += chunkRes.results.filter((r) => r.ok).length;
-        fail += chunkRes.results.filter((r) => !r.ok).length;
-        done = ok + fail;
-        queue = queue.slice(chunkRes.results.length);
-        setProgress(`${copy.autoPostRunning}: ${done}/${target}…`);
-      }
-
-      setProgress(null);
-      setMessage(`${copy.autoPostDone}: ${ok} publikasi${fail ? `, ${fail} gagal` : ""}.`);
-      router.refresh();
+      await resumeRssAutoPostJob(
+        {
+          autoPostRunning: copy.autoPostRunning,
+          autoPostDone: copy.autoPostDone,
+        },
+        () => router.refresh(),
+      );
     } finally {
-      setBusy(false);
+      applyStorageUi();
     }
   }
 
