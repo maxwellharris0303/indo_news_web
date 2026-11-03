@@ -84,8 +84,14 @@ def make_tarball() -> bytes:
     return buf.read()
 
 
-def run(client: paramiko.SSHClient, cmd: str, check: bool = True) -> str:
-    print(f"$ {cmd}")
+def run(
+    client: paramiko.SSHClient,
+    cmd: str,
+    check: bool = True,
+    *,
+    echo: str | None = None,
+) -> str:
+    print(f"$ {echo if echo is not None else cmd}")
     stdin, stdout, stderr = client.exec_command(cmd, get_pty=True)
     out = stdout.read().decode(errors="replace")
     err = stderr.read().decode(errors="replace")
@@ -361,6 +367,10 @@ def main() -> None:
         f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
         f"E2E_EMAIL={e2e_email} E2E_PASSWORD={e2e_password} node scripts/e2e_full.mjs",
         check=False,
+        echo=(
+            f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
+            f"E2E_EMAIL={e2e_email} E2E_PASSWORD=*** node scripts/e2e_full.mjs"
+        ),
     )
     run(
         client,

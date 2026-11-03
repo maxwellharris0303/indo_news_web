@@ -7,6 +7,10 @@ const slug = "e2e-automation-test-article";
 const prisma = new PrismaClient();
 
 try {
+  let authorId = "a1";
+  const author = await prisma.author.findFirst({ select: { id: true } });
+  if (author) authorId = author.id;
+
   await prisma.article.upsert({
     where: { category_slug: { category: "nasional", slug } },
     create: {
