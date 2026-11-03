@@ -515,11 +515,9 @@ export async function retagUntaggedArticlesAction() {
 }
 
 export async function retagUntaggedArticlesFormAction() {
+  let res: Awaited<ReturnType<typeof retagUntaggedArticlesAction>>;
   try {
-    const res = await retagUntaggedArticlesAction();
-    redirect(
-      `/admin/topik?retag=${res.tagged}&scanned=${res.scanned}`,
-    );
+    res = await retagUntaggedArticlesAction();
   } catch (e) {
     const message =
       e instanceof Error && e.message === "Unauthorized"
@@ -527,4 +525,5 @@ export async function retagUntaggedArticlesFormAction() {
         : "error";
     redirect(`/admin/topik?retag=${message}`);
   }
+  redirect(`/admin/topik?retag=${res.tagged}&scanned=${res.scanned}`);
 }
