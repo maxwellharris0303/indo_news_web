@@ -3,6 +3,7 @@ import { parseRewriteJson } from "../src/lib/ai/rewrite-schema";
 import { contentHash, normalizeArticleUrl } from "../src/lib/rss/normalize-url";
 import { mapParserItem, parseFeedXml } from "../src/lib/rss/parse-feed";
 import { extractArticleFromHtml } from "../src/lib/rss/scrape-article";
+import { extractKompasArticleFromHtml } from "../src/lib/rss/kompas-scrape";
 import { slugify } from "../src/lib/slugify";
 import { PrismaClient } from "@prisma/client";
 import { seedDefaultRssFeeds } from "../src/lib/rss/default-feeds";
@@ -50,6 +51,23 @@ function testScrape() {
   if (r.ok) {
     assert.ok(r.textContent.length > 200);
     assert.equal(r.imageUrl, "https://example.com/img.jpg");
+  }
+}
+
+function testKompasExtract() {
+  const html = `<!DOCTYPE html><html><head>
+<meta property="og:title" content="Judul Berita Kompas - Kompas.com" />
+<meta property="og:image" content="https://asset.kompas.com/img.jpg" />
+<script type="application/ld+json">{"@type":"NewsArticle","articleBody":"${"Paragraf panjang Kompas. ".repeat(30)}"}</script>
+</head><body><div class="read__content"><p>Fallback</p></div></body></html>`;
+  const r = extractKompasArticleFromHtml(
+    html,
+    "https://www.kompas.com/nasional/read/2025/11/03/1/judul",
+  );
+  assert.equal(r.ok, true);
+  if (r.ok) {
+    assert.ok(r.textContent.length > 200);
+    assert.ok(r.title.includes("Judul Berita Kompas"));
   }
 }
 
@@ -122,6 +140,7 @@ async function runOnce(label: string) {
   testNormalizeUrl();
   await testParseRss();
   testScrape();
+  testKompasExtract();
   testRewriteJsonParse();
   testSlugify();
   testMapParserItemMinimal();

@@ -19,11 +19,13 @@ export type FeedFetchResult = {
   lastModified?: string;
   notModified: boolean;
   usedUrl: string;
+  contentType?: string;
 };
 
 export async function fetchFeedXml(
   feedUrl: string,
   conditional?: { etag?: string | null; lastModified?: string | null },
+  extraHeaders?: Record<string, string>,
 ): Promise<FeedFetchResult> {
   const attempts: { ua: string; label: string }[] = [
     { ua: BROWSER_UA, label: "browser" },
@@ -41,6 +43,7 @@ export async function fetchFeedXml(
     };
     const ref = refererFor(feedUrl);
     if (ref) headers.Referer = ref;
+    if (extraHeaders) Object.assign(headers, extraHeaders);
     if (conditional?.etag) headers["If-None-Match"] = conditional.etag;
     if (conditional?.lastModified) {
       headers["If-Modified-Since"] = conditional.lastModified;
@@ -74,6 +77,7 @@ export async function fetchFeedXml(
         usedUrl: feedUrl,
         etag: res.headers.get("etag") ?? undefined,
         lastModified: res.headers.get("last-modified") ?? undefined,
+        contentType: res.headers.get("content-type") ?? undefined,
       };
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));

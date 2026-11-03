@@ -80,8 +80,21 @@ export function extractArticleFromHtml(
 
 export async function scrapeArticlePage(url: string): Promise<ScrapeResult> {
   try {
+    const {
+      isKompasArticleUrl,
+      scrapeKompasArticlePage,
+      resolveKompasArticleUrl,
+    } = await import("@/lib/rss/kompas-scrape");
+    let target = url;
+    if (url.includes("news.google.com") || isKompasArticleUrl(url)) {
+      target = await resolveKompasArticleUrl(url);
+    }
+    if (isKompasArticleUrl(target)) {
+      const kompas = await scrapeKompasArticlePage(target);
+      if (kompas.ok) return kompas;
+    }
     const html = await fetchHtml(url);
-    return extractArticleFromHtml(html, url);
+    return extractArticleFromHtml(html, target);
   } catch (e) {
     return {
       ok: false,

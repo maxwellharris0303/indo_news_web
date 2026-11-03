@@ -6,6 +6,10 @@ import {
   parseGoogleNewsFeedToken,
 } from "@/lib/rss/google-news-feed";
 import { fetchAndParseNewsSitemap } from "@/lib/rss/sitemap-feed";
+import {
+  fetchAndParseKompasFeed,
+  parseKompasApiFeedToken,
+} from "@/lib/rss/kompas-feed";
 
 export type ParsedFeedItem = {
   guid: string;
@@ -122,6 +126,18 @@ async function fetchAndParseOneFeedUrl(
   notModified: boolean;
   resolvedFeedUrl: string;
 }> {
+  const kompasChannel = parseKompasApiFeedToken(url);
+  if (kompasChannel) {
+    const result = await fetchAndParseKompasFeed(kompasChannel, conditional);
+    return {
+      feed: result.feed,
+      etag: result.etag,
+      lastModified: result.lastModified,
+      notModified: result.notModified,
+      resolvedFeedUrl: result.resolvedFeedUrl,
+    };
+  }
+
   const googleSite = parseGoogleNewsFeedToken(url);
   if (googleSite) {
     const result = await fetchAndParseGoogleNewsFeed(googleSite, conditional);

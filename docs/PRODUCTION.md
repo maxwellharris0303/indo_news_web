@@ -41,6 +41,9 @@ KABARDESK_SUPERADMIN_PASSWORD="…"
 
 OPENAI_API_KEY=""
 OPENAI_REWRITE_MODEL="gpt-4o-mini"
+
+# Optional: Kompas rss.kompas.com API (lebih andal daripada Google News saja)
+KOMPAS_RSS_API_KEY=""
 ```
 
 Opsional lokal untuk deploy (gitignored):

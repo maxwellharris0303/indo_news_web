@@ -131,9 +131,25 @@ export const DEFAULT_RSS_FEEDS: DefaultFeedSeed[] = [
   {
     name: "Kompas.com",
     siteUrl: "https://www.kompas.com",
-    feedUrl: "google-news:kompas.com",
+    feedUrl: "kompas-api:all",
     scrapeMode: "FETCH_ARTICLE",
     defaultCategory: "nasional",
+    defaultAiProvider: "OPENAI",
+  },
+  {
+    name: "Kompas · Nasional",
+    siteUrl: "https://www.kompas.com",
+    feedUrl: "kompas-api:nasional",
+    scrapeMode: "FETCH_ARTICLE",
+    defaultCategory: "nasional",
+    defaultAiProvider: "OPENAI",
+  },
+  {
+    name: "Kompas · Ekonomi",
+    siteUrl: "https://www.kompas.com",
+    feedUrl: "kompas-api:ekonomi",
+    scrapeMode: "FETCH_ARTICLE",
+    defaultCategory: "ekonomi",
     defaultAiProvider: "OPENAI",
   },
   {
@@ -235,8 +251,9 @@ export async function seedDefaultRssFeeds() {
   const feedUrlReplacements: { from: string; to: string }[] = [
     {
       from: "https://www.kompas.com/rss/read/all/",
-      to: "google-news:kompas.com",
+      to: "kompas-api:all",
     },
+    { from: "google-news:kompas.com", to: "kompas-api:all" },
     { from: "https://www.suara.com/rss/news", to: "google-news:suara.com" },
     { from: "https://www.inews.id/rss/latest", to: "https://www.inews.id/feed" },
     { from: "https://www.inilah.com/rss/feed/", to: "google-news:inilah.com" },

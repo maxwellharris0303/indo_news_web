@@ -191,6 +191,8 @@ export async function rewriteRssItemAction(input: {
   itemId: string;
   aiProvider?: AiRewriteProvider;
   scrapeMode?: RssScrapeMode;
+  /** When true, publish immediately instead of REVIEW-only draft. */
+  publish?: boolean;
 }) {
   await requireStaff();
   try {
@@ -316,6 +318,13 @@ export async function rewriteRssItemAction(input: {
     return { ok: false as const, error: created.error, jobId: job.id };
   }
 
+  if (input.publish) {
+    await prisma.article.update({
+      where: { id: created.articleId },
+      data: { status: "PUBLISHED", publishedAt: new Date() },
+    });
+  }
+
   revalidatePath("/");
   revalidatePath("/admin/artikel");
   revalidateRss();
@@ -347,7 +356,10 @@ const BATCH_REWRITE_MAX =
     ? Number(process.env.RSS_BATCH_REWRITE_MAX)
     : 500;
 
-export async function batchRewriteRssItemsAction(itemIds: string[]) {
+export async function batchRewriteRssItemsAction(
+  itemIds: string[],
+  options?: { publish?: boolean },
+) {
   await requireStaff();
   const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))];
   if (ids.length === 0) {
@@ -366,7 +378,10 @@ export async function batchRewriteRssItemsAction(itemIds: string[]) {
     slug?: string;
   }[] = [];
   for (const itemId of ids) {
-    const res = await rewriteRssItemAction({ itemId });
+    const res = await rewriteRssItemAction({
+      itemId,
+      publish: options?.publish,
+    });
     results.push({
       itemId,
       ok: res.ok,
@@ -376,7 +391,61 @@ export async function batchRewriteRssItemsAction(itemIds: string[]) {
   }
   revalidateRss();
   revalidatePath("/admin/artikel");
+  revalidatePath("/indeks");
+  if (options?.publish) revalidatePath("/");
   return { ok: true as const, results };
+}
+
+export async function prepareBulkAutoPostAction(input: {
+  count: number;
+  pollFirst?: boolean;
+  feedId?: string;
+}) {
+  await requireStaff();
+  const limit = Math.min(Math.max(input.count, 1), 100);
+  if (input.pollFirst) {
+    if (input.feedId) {
+      const feed = await prisma.rssFeed.findUnique({
+        where: { id: input.feedId },
+      });
+      if (feed) await pollSingleFeed(feed);
+    } else {
+      await pollAllEnabledFeeds();
+    }
+  }
+  const { listNewRssItemIds } = await import("@/lib/rss/auto-post-queue");
+  const itemIds = await listNewRssItemIds({
+    limit,
+    feedId: input.feedId?.trim() || undefined,
+  });
+  revalidateRss();
+  return { ok: true as const, itemIds, queued: itemIds.length };
+}
+
+/** Process up to `chunkSize` items (keeps under server timeout). */
+export async function bulkAutoPostChunkAction(input: {
+  itemIds: string[];
+  publish?: boolean;
+}) {
+  await requireStaff();
+  const chunkSize = 8;
+  const ids = input.itemIds.slice(0, chunkSize);
+  if (ids.length === 0) {
+    return {
+      ok: true as const,
+      results: [],
+      remaining: 0,
+    };
+  }
+  const res = await batchRewriteRssItemsAction(ids, {
+    publish: input.publish !== false,
+  });
+  if (!res.ok) return res;
+  return {
+    ok: true as const,
+    results: res.results,
+    remaining: Math.max(0, input.itemIds.length - ids.length),
+  };
 }
 
 export async function getRssBatchProgressAction(itemIds: string[]) {

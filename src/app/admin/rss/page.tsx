@@ -4,6 +4,7 @@ import {
   RssFeedCreateForm,
 } from "@/components/admin/rss-feed-card";
 import { RssInboxPanel } from "@/components/admin/rss-inbox-panel";
+import { RssBulkAutoPostCard } from "@/components/admin/rss-bulk-auto-post-card";
 import { RssPollAllButton } from "@/components/admin/rss-poll-all-button";
 import { Button } from "@/components/ui/button";
 import { aiProviderConfigured } from "@/lib/ai/rewrite-article";
@@ -133,6 +134,12 @@ export default async function AdminRssPage({ searchParams }: Props) {
           hint={copy.pollAllHint}
         />
       </div>
+
+      <RssBulkAutoPostCard
+        copy={copy}
+        feeds={feeds.map((f) => ({ id: f.id, name: f.name }))}
+        defaultFeedId={feedFilter}
+      />
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">

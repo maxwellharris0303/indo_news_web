@@ -152,7 +152,14 @@ export async function ensureItemExtracted(
   }
 
   const { scrapeArticlePage } = await import("@/lib/rss/scrape-article");
-  const scraped = await scrapeArticlePage(item.link);
+  const { resolveKompasArticleUrl, isKompasArticleUrl } = await import(
+    "@/lib/rss/kompas-scrape"
+  );
+  let fetchUrl = item.link;
+  if (isKompasArticleUrl(fetchUrl) || fetchUrl.includes("news.google.com")) {
+    fetchUrl = await resolveKompasArticleUrl(fetchUrl);
+  }
+  const scraped = await scrapeArticlePage(fetchUrl);
   if (!scraped.ok) {
     return { ok: false, error: scraped.error };
   }

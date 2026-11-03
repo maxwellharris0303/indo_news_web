@@ -33,9 +33,11 @@ export const PUBLISHER_FEED_CATALOG: PublisherFeedSpec[] = [
     publisherId: "kompas",
     siteUrl: "https://www.kompas.com",
     feedUrlCandidates: [
+      "kompas-api:all",
+      "kompas-api:nasional",
+      "kompas-api:ekonomi",
       "https://www.kompas.com/getrss/all",
       "https://www.kompas.com/getrss/nasional",
-      "https://www.kompas.com/rss/read/all/",
       "google-news:kompas.com",
     ],
   },
