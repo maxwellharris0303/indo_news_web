@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { prepareBulkAutoPostAction } from "@/app/actions/admin-rss";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,11 @@ import {
   autoPostStoppedMessage,
   resumeRssAutoPostJob,
 } from "@/lib/rss/auto-post-runner";
-import { loadAutoPostCardUi } from "@/lib/rss/auto-post-ui";
+import { useAdminLocale } from "@/components/admin/admin-locale-provider";
+import {
+  buildAutoPostRunnerCopy,
+  loadAutoPostCardUi,
+} from "@/lib/rss/auto-post-ui";
 
 type Copy = {
   autoPostTitle: string;
@@ -46,6 +50,11 @@ export function RssBulkAutoPostCard({
   defaultFeedId?: string;
 }) {
   const router = useRouter();
+  const { locale } = useAdminLocale();
+  const runnerCopy = useMemo(
+    () => buildAutoPostRunnerCopy(locale),
+    [locale],
+  );
   const [count, setCount] = useState("20");
   const [pollFirst, setPollFirst] = useState(true);
   const [publish, setPublish] = useState(true);
@@ -73,17 +82,11 @@ export function RssBulkAutoPostCard({
     return () => window.removeEventListener(RSS_AUTO_POST_CHANGED, onChange);
   }, [applyStorageUi]);
 
-  const runnerCopy = {
-    autoPostRunning: copy.autoPostRunning,
-    autoPostDone: copy.autoPostDone,
-    autoPostStopped: copy.autoPostStopped,
-  };
-
   useEffect(() => {
     const job = loadRssAutoPostJob();
     if (!job || job.status !== "running") return;
     void resumeRssAutoPostJob(runnerCopy, () => router.refresh());
-  }, [copy.autoPostDone, copy.autoPostRunning, copy.autoPostStopped, router]);
+  }, [runnerCopy, router]);
 
   function stopAutoPost() {
     requestCancelRssAutoPostJob();
@@ -124,8 +127,13 @@ export function RssBulkAutoPostCard({
         return;
       }
       const queue = [...prep.itemIds];
+      const skippedGoogleNews = prep.skippedGoogleNews ?? 0;
       if (queue.length === 0) {
-        setMessage("Tidak ada item NEW di inbox.");
+        setMessage(
+          skippedGoogleNews > 0
+            ? `Tidak ada item siap antrian (${skippedGoogleNews} link Google News dilewati).`
+            : "Tidak ada item NEW di inbox.",
+        );
         setProgress(null);
         return;
       }
@@ -139,6 +147,8 @@ export function RssBulkAutoPostCard({
         status: "running",
         ok: 0,
         fail: 0,
+        failBuckets: {},
+        skippedGoogleNews,
         message: `${copy.autoPostRunning}: 0/${target}…`,
       });
 

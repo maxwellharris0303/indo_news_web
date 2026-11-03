@@ -1,8 +1,28 @@
+import type { AdminLocale } from "@/lib/admin-locale";
+import { adminRssCopy } from "@/lib/admin/locale-ui";
+import type { AutoPostRunnerCopy } from "@/lib/rss/auto-post-runner";
 import {
   autoPostProgressLabel,
   loadRssAutoPostJob,
   type RssAutoPostJob,
 } from "@/lib/rss/batch-job-client";
+
+export function buildAutoPostRunnerCopy(
+  locale: AdminLocale,
+): AutoPostRunnerCopy {
+  const c = adminRssCopy[locale];
+  return {
+    autoPostRunning: c.autoPostRunning,
+    autoPostDone: c.autoPostDone,
+    autoPostStopped: c.autoPostStopped,
+    autoPostPublishedWord: c.autoPostPublishedWord,
+    autoPostFailedWord: c.autoPostFailedWord,
+    autoPostSkippedGoogleNews: (count) =>
+      locale === "en"
+        ? `(${count} Google News link${count === 1 ? "" : "s"} skipped when queuing.)`
+        : `(${count} link Google News dilewati saat antrian.)`,
+  };
+}
 
 export type AutoPostCardUi = {
   busy: boolean;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   loadRssAutoPostJob,
@@ -11,6 +11,7 @@ import {
   type RssAutoPostJob,
 } from "@/lib/rss/batch-job-client";
 import { resumeRssAutoPostJob } from "@/lib/rss/auto-post-runner";
+import { buildAutoPostRunnerCopy } from "@/lib/rss/auto-post-ui";
 import { useAdminLocale } from "@/components/admin/admin-locale-provider";
 import { rssText } from "@/lib/admin/locale-ui";
 
@@ -18,6 +19,10 @@ export function AdminAutoPostBanner() {
   const router = useRouter();
   const { locale } = useAdminLocale();
   const copy = rssText(locale);
+  const runnerCopy = useMemo(
+    () => buildAutoPostRunnerCopy(locale),
+    [locale],
+  );
   const [job, setJob] = useState<RssAutoPostJob | null>(() =>
     typeof window === "undefined" ? null : loadRssAutoPostJob(),
   );
@@ -35,15 +40,8 @@ export function AdminAutoPostBanner() {
   useEffect(() => {
     const current = loadRssAutoPostJob();
     if (!current || current.status !== "running") return;
-    void resumeRssAutoPostJob(
-      {
-        autoPostRunning: copy.autoPostRunning,
-        autoPostDone: copy.autoPostDone,
-        autoPostStopped: copy.autoPostStopped,
-      },
-      onRefresh,
-    );
-  }, [copy.autoPostDone, copy.autoPostRunning, copy.autoPostStopped, onRefresh]);
+    void resumeRssAutoPostJob(runnerCopy, onRefresh);
+  }, [runnerCopy, onRefresh]);
 
   if (!job) return null;
   if (job.status === "done" && !job.message) return null;

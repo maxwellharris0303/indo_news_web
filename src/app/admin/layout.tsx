@@ -7,6 +7,9 @@ export const metadata = {
   title: "Admin Redaksi",
 };
 
+/** Bulk RSS rewrite/auto-post server actions (any admin tab). */
+export const maxDuration = 600;
+
 export default async function AdminLayout({
   children,
 }: {

@@ -358,7 +358,7 @@ const BATCH_REWRITE_MAX =
 
 export async function batchRewriteRssItemsAction(
   itemIds: string[],
-  options?: { publish?: boolean },
+  options?: { publish?: boolean; delayBetweenMs?: number },
 ) {
   await requireStaff();
   const ids = [...new Set(itemIds.map((id) => id.trim()).filter(Boolean))];
@@ -377,7 +377,9 @@ export async function batchRewriteRssItemsAction(
     error?: string;
     slug?: string;
   }[] = [];
-  for (const itemId of ids) {
+  const delayMs = options?.delayBetweenMs ?? 0;
+  for (let i = 0; i < ids.length; i++) {
+    const itemId = ids[i]!;
     const res = await rewriteRssItemAction({
       itemId,
       publish: options?.publish,
@@ -388,6 +390,9 @@ export async function batchRewriteRssItemsAction(
       error: res.ok ? undefined : res.error,
       slug: res.ok ? res.slug : undefined,
     });
+    if (delayMs > 0 && i < ids.length - 1) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
   }
   revalidateRss();
   revalidatePath("/admin/artikel");
@@ -413,13 +418,18 @@ export async function prepareBulkAutoPostAction(input: {
       await pollAllEnabledFeeds();
     }
   }
-  const { listNewRssItemIds } = await import("@/lib/rss/auto-post-queue");
-  const itemIds = await listNewRssItemIds({
+  const { listAutoPostItemIds } = await import("@/lib/rss/auto-post-queue");
+  const { ids: itemIds, skippedGoogleNews } = await listAutoPostItemIds({
     limit,
     feedId: input.feedId?.trim() || undefined,
   });
   revalidateRss();
-  return { ok: true as const, itemIds, queued: itemIds.length };
+  return {
+    ok: true as const,
+    itemIds,
+    queued: itemIds.length,
+    skippedGoogleNews,
+  };
 }
 
 /** Process up to `chunkSize` items (keeps under server timeout). */
@@ -428,7 +438,10 @@ export async function bulkAutoPostChunkAction(input: {
   publish?: boolean;
 }) {
   await requireStaff();
-  const chunkSize = 8;
+  const { autoPostChunkSize, autoPostDelayBetweenItemsMs } = await import(
+    "@/lib/rss/auto-post-config"
+  );
+  const chunkSize = autoPostChunkSize();
   const ids = input.itemIds.slice(0, chunkSize);
   if (ids.length === 0) {
     return {
@@ -439,6 +452,7 @@ export async function bulkAutoPostChunkAction(input: {
   }
   const res = await batchRewriteRssItemsAction(ids, {
     publish: input.publish !== false,
+    delayBetweenMs: autoPostDelayBetweenItemsMs(),
   });
   if (!res.ok) return res;
   return {

@@ -47,6 +47,8 @@ export type RssAutoPostJob = {
   fail: number;
   message: string;
   cancelRequested?: boolean;
+  failBuckets?: Record<string, number>;
+  skippedGoogleNews?: number;
 };
 
 const AUTO_POST_KEY = "kabardesk-rss-auto-post";

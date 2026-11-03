@@ -1,5 +1,9 @@
 import { bulkAutoPostChunkAction } from "@/app/actions/admin-rss";
 import {
+  buildAutoPostFinishMessage,
+  mergeFailBuckets,
+} from "@/lib/rss/auto-post-fail-summary";
+import {
   autoPostProgressLabel,
   loadRssAutoPostJob,
   saveRssAutoPostJob,
@@ -8,25 +12,46 @@ import {
 
 let activeRun: Promise<void> | null = null;
 
+/** Pause between server-action chunks (client-side). */
+const CHUNK_DELAY_MS = 2500;
+
 export type AutoPostRunnerCopy = {
   autoPostRunning: string;
   autoPostDone: string;
   autoPostStopped: string;
+  autoPostPublishedWord: string;
+  autoPostFailedWord: string;
+  autoPostSkippedGoogleNews: (count: number) => string;
 };
 
-function stoppedMessage(
-  stoppedLabel: string,
+function delay(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function finishMessage(
+  copy: AutoPostRunnerCopy,
+  label: string,
+  job: RssAutoPostJob,
   ok: number,
   fail: number,
 ): string {
-  return `${stoppedLabel}: ${ok} publikasi${fail ? `, ${fail} gagal` : ""}.`;
+  return buildAutoPostFinishMessage({
+    doneLabel: label,
+    ok,
+    fail,
+    failBuckets: job.failBuckets ?? {},
+    skippedGoogleNews: job.skippedGoogleNews,
+    skippedGoogleNewsNote: copy.autoPostSkippedGoogleNews,
+    publishedWord: copy.autoPostPublishedWord,
+    failedWord: copy.autoPostFailedWord,
+  });
 }
 
 function saveStopped(
   job: RssAutoPostJob,
   ok: number,
   fail: number,
-  stoppedLabel: string,
+  copy: AutoPostRunnerCopy,
   onRefresh: () => void,
 ): RssAutoPostJob {
   const finished: RssAutoPostJob = {
@@ -36,7 +61,7 @@ function saveStopped(
     fail,
     status: "done",
     cancelRequested: false,
-    message: stoppedMessage(stoppedLabel, ok, fail),
+    message: finishMessage(copy, copy.autoPostStopped, job, ok, fail),
   };
   saveRssAutoPostJob(finished);
   if (ok + fail > 0) onRefresh();
@@ -55,16 +80,17 @@ async function processQueue(
   let queue = [...job.queue];
   let ok = job.ok;
   let fail = job.fail;
+  let failBuckets = { ...(job.failBuckets ?? {}) };
   let done = ok + fail;
   const target = job.target;
 
   if (cancelRequested()) {
-    return saveStopped(job, ok, fail, copy.autoPostStopped, onRefresh);
+    return saveStopped({ ...job, failBuckets }, ok, fail, copy, onRefresh);
   }
 
   while (queue.length > 0 && done < target) {
     if (cancelRequested()) {
-      return saveStopped(job, ok, fail, copy.autoPostStopped, onRefresh);
+      return saveStopped({ ...job, failBuckets }, ok, fail, copy, onRefresh);
     }
 
     const chunkRes = await bulkAutoPostChunkAction({
@@ -73,7 +99,7 @@ async function processQueue(
     });
 
     if (cancelRequested()) {
-      return saveStopped(job, ok, fail, copy.autoPostStopped, onRefresh);
+      return saveStopped({ ...job, failBuckets }, ok, fail, copy, onRefresh);
     }
 
     if (!chunkRes.ok) {
@@ -82,6 +108,7 @@ async function processQueue(
         queue,
         ok,
         fail,
+        failBuckets,
         status: "done",
         cancelRequested: false,
         message: chunkRes.error,
@@ -89,6 +116,11 @@ async function processQueue(
       saveRssAutoPostJob(failed);
       return failed;
     }
+
+    failBuckets = mergeFailBuckets(
+      failBuckets,
+      chunkRes.results.filter((r) => !r.ok).map((r) => r.error),
+    );
     ok += chunkRes.results.filter((r) => r.ok).length;
     fail += chunkRes.results.filter((r) => !r.ok).length;
     done = ok + fail;
@@ -99,6 +131,7 @@ async function processQueue(
       queue,
       ok,
       fail,
+      failBuckets,
       status: "running",
       cancelRequested: false,
       message: autoPostProgressLabel(copy.autoPostRunning, {
@@ -108,21 +141,25 @@ async function processQueue(
       }),
     };
     saveRssAutoPostJob(running);
+
+    if (queue.length > 0 && done < target) {
+      await delay(CHUNK_DELAY_MS);
+    }
   }
 
-  const message = `${copy.autoPostDone}: ${ok} publikasi${fail ? `, ${fail} gagal` : ""}.`;
-  const finished: RssAutoPostJob = {
+  const finishedJob: RssAutoPostJob = {
     ...job,
     queue: [],
     ok,
     fail,
+    failBuckets,
     status: "done",
     cancelRequested: false,
-    message,
+    message: finishMessage(copy, copy.autoPostDone, { ...job, failBuckets }, ok, fail),
   };
-  saveRssAutoPostJob(finished);
+  saveRssAutoPostJob(finishedJob);
   onRefresh();
-  return finished;
+  return finishedJob;
 }
 
 /** Continue or start processing the persisted auto-post job (single flight). */
@@ -148,6 +185,17 @@ export function autoPostStoppedMessage(
   copy: AutoPostRunnerCopy,
   ok: number,
   fail: number,
+  failBuckets: Record<string, number> = {},
+  skippedGoogleNews?: number,
 ): string {
-  return stoppedMessage(copy.autoPostStopped, ok, fail);
+  return buildAutoPostFinishMessage({
+    doneLabel: copy.autoPostStopped,
+    ok,
+    fail,
+    failBuckets,
+    skippedGoogleNews,
+    skippedGoogleNewsNote: copy.autoPostSkippedGoogleNews,
+    publishedWord: copy.autoPostPublishedWord,
+    failedWord: copy.autoPostFailedWord,
+  });
 }
