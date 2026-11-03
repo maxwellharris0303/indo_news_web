@@ -11,6 +11,7 @@ import {
   updateArticleStatus,
 } from "@/lib/content/repository";
 import { prisma } from "@/lib/db";
+import { revalidatePublicArticle } from "@/lib/content/revalidate-article";
 
 export async function postCommentFormAction(formData: FormData) {
   const path = String(formData.get("path") ?? "/");
@@ -46,10 +47,10 @@ export async function postCommentFormAction(formData: FormData) {
 
   try {
     await addComment(user.id, articleId, body);
-    revalidatePath(path);
   } catch {
     redirect(`${path}?commentError=1#komentar`);
   }
+  revalidatePath(path);
   redirect(`${path}?commentOk=1#komentar`);
 }
 
@@ -116,9 +117,19 @@ export async function updateArticleStatusAction(formData: FormData) {
     return { ok: false as const, error: "Status tidak valid" };
   }
 
+  const article = await prisma.article.findUnique({
+    where: { id: articleId },
+    select: { category: true, slug: true },
+  });
+
   await updateArticleStatus(articleId, status);
+  if (article) {
+    revalidatePublicArticle(article.category, article.slug);
+  }
   revalidatePath("/admin");
   revalidatePath("/admin/artikel");
   revalidatePath("/");
+  revalidatePath("/indeks");
+  revalidatePath("/api/articles");
   return { ok: true as const };
 }

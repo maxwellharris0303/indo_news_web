@@ -15,6 +15,7 @@ import {
   pollSingleFeed,
 } from "@/lib/rss/poll-feeds";
 import { isCategorySlug } from "@/lib/site";
+import { revalidatePublicArticle } from "@/lib/content/revalidate-article";
 
 const feedSchema = z.object({
   name: z.string().min(2),
@@ -195,6 +196,7 @@ export async function rewriteRssItemAction(input: {
   publish?: boolean;
 }) {
   await requireStaff();
+  let activeJobId: string | undefined;
   try {
   const item = await prisma.rssItem.findUnique({
     where: { id: input.itemId },
@@ -228,10 +230,25 @@ export async function rewriteRssItemAction(input: {
           "Rewrite masih berjalan. Tunggu ~1 menit atau refresh jika macet.",
       };
     }
-    await prisma.rssItem.update({
-      where: { id: item.id },
-      data: { status: "NEW", lastError: null },
+    await prisma.rssItem.updateMany({
+      where: { id: item.id, articleId: null, status: "REWRITING" },
+      data: { status: "FAILED", lastError: "Rewrite timeout — coba lagi" },
     });
+  }
+
+  const claim = await prisma.rssItem.updateMany({
+    where: {
+      id: item.id,
+      articleId: null,
+      status: { in: ["NEW", "FAILED"] },
+    },
+    data: { status: "REWRITING", lastError: null },
+  });
+  if (claim.count === 0) {
+    return {
+      ok: false as const,
+      error: "Artikel sudah dibuat atau rewrite sedang berjalan",
+    };
   }
 
   const job = await prisma.rewriteJob.create({
@@ -243,11 +260,7 @@ export async function rewriteRssItemAction(input: {
       promptVersion: REWRITE_PROMPT_VERSION,
     },
   });
-
-  await prisma.rssItem.update({
-    where: { id: item.id },
-    data: { status: "REWRITING", lastError: null },
-  });
+  activeJobId = job.id;
 
   const extracted = await ensureItemExtracted(item.id, scrapeMode);
   if (!extracted.ok) {
@@ -325,8 +338,11 @@ export async function rewriteRssItemAction(input: {
     });
   }
 
+  revalidatePublicArticle(created.category, created.slug);
   revalidatePath("/");
   revalidatePath("/admin/artikel");
+  revalidatePath("/indeks");
+  revalidatePath("/api/articles");
   revalidateRss();
   revalidatePath(`/admin/rss/items/${item.id}`);
 
@@ -349,6 +365,14 @@ export async function rewriteRssItemAction(input: {
   } catch (e) {
     const message =
       e instanceof Error ? e.message : "Rewrite gagal (server error)";
+    if (activeJobId) {
+      await prisma.rewriteJob
+        .update({
+          where: { id: activeJobId },
+          data: { status: "FAILED", error: message, completedAt: new Date() },
+        })
+        .catch(() => undefined);
+    }
     await prisma.rssItem
       .update({
         where: { id: input.itemId },
@@ -445,13 +469,21 @@ export async function prepareBulkAutoPostAction(input: {
 export async function bulkAutoPostChunkAction(input: {
   itemIds: string[];
   publish?: boolean;
+  /** Cap items this chunk (auto-post target remaining). */
+  maxItems?: number;
 }) {
   await requireStaff();
   const { autoPostChunkSize, autoPostDelayBetweenItemsMs } = await import(
     "@/lib/rss/auto-post-config"
   );
   const chunkSize = autoPostChunkSize();
-  const ids = input.itemIds.slice(0, chunkSize);
+  const take = Math.min(
+    chunkSize,
+    input.maxItems != null && input.maxItems > 0
+      ? input.maxItems
+      : chunkSize,
+  );
+  const ids = input.itemIds.slice(0, take);
   if (ids.length === 0) {
     return {
       ok: true as const,

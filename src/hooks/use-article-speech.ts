@@ -62,6 +62,8 @@ export function useArticleSpeech(fullText: string) {
     }
   }, []);
 
+  const speakNextRef = useRef<() => void>(() => undefined);
+
   const speakNext = useCallback(() => {
     const synth = window.speechSynthesis;
     const queue = queueRef.current;
@@ -89,7 +91,7 @@ export function useArticleSpeech(fullText: string) {
 
     utterance.onend = () => {
       indexRef.current += 1;
-      speakNext();
+      speakNextRef.current();
     };
 
     utterance.onerror = (ev) => {
@@ -121,6 +123,10 @@ export function useArticleSpeech(fullText: string) {
       }
     }, 800);
   }, [clearStartTimer]);
+
+  useEffect(() => {
+    speakNextRef.current = speakNext;
+  }, [speakNext]);
 
   const stop = useCallback(() => {
     if (!isSpeechSupported()) return;

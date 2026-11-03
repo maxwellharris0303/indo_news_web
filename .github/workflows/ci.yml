@@ -24,3 +24,37 @@ jobs:
       - run: npm run typecheck
       - run: npx prisma db push
       - run: npm run test:rss
+
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./prisma/ci-e2e.db
+      AUTH_SECRET: ci-auth-secret-not-for-production
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3001
+      AUTH_URL: http://127.0.0.1:3001
+      PORT: "3001"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma db push
+      - run: npm run db:seed
+      - run: npm run build
+      - name: Start server
+        run: npx next start -p 3001 &
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 45); do
+            if curl -sf http://127.0.0.1:3001/api/health >/dev/null; then
+              echo "Server ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Server did not become ready"
+          exit 1
+      - run: BASE_URL=http://127.0.0.1:3001 npm run test:e2e

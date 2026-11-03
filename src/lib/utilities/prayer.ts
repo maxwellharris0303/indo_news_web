@@ -100,7 +100,8 @@ export async function fetchJakartaPrayerBrief(): Promise<PrayerBrief> {
 
   const schedule = scheduleFromTimings(loaded.timings);
   const nowMin = minutesNowJakarta();
-  let { next, needTomorrow } = findNextPrayer(schedule, nowMin);
+  const { next: initialNext, needTomorrow } = findNextPrayer(schedule, nowMin);
+  let next = initialNext;
 
   if (needTomorrow) {
     const tomorrow = ymdAddDays(today, 1);

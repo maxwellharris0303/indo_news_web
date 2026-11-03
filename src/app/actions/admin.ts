@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ArticleStatus } from "@prisma/client";
 import { requireStaff } from "@/lib/admin/require-staff";
+import { safeAdminReturnPath } from "@/lib/admin/safe-return-path";
+import { revalidatePublicArticle } from "@/lib/content/revalidate-article";
 import {
   applyArticleUrgency,
   BREAKING_HOUR_OPTIONS,
@@ -216,6 +218,11 @@ export async function bulkUpdateArticleStatusAction(
     return { ok: false as const, error: "Maksimal 100 artikel per aksi" };
   }
 
+  const articles = await prisma.article.findMany({
+    where: { id: { in: ids } },
+    select: { category: true, slug: true },
+  });
+
   const clearUrgency = !["PUBLISHED", "CORRECTED"].includes(status);
   const result = await prisma.article.updateMany({
     where: { id: { in: ids } },
@@ -231,6 +238,9 @@ export async function bulkUpdateArticleStatusAction(
     },
   });
 
+  for (const a of articles) {
+    revalidatePublicArticle(a.category, a.slug);
+  }
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/artikel");
@@ -273,6 +283,14 @@ export async function setArticleUrgencyAction(
   const result = await applyArticleUrgency(id, mode, breakingHours);
   if (!result.ok) return result;
 
+  const article = await prisma.article.findUnique({
+    where: { id },
+    select: { category: true, slug: true },
+  });
+  if (article) {
+    revalidatePublicArticle(article.category, article.slug);
+  }
+
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/artikel");
@@ -286,7 +304,9 @@ export async function setArticleUrgencyFormAction(formData: FormData) {
   const articleId = String(formData.get("articleId") ?? "").trim();
   const mode = parseUrgencyFromForm(formData);
   const hours = parseBreakingHours(formData);
-  const returnTo = String(formData.get("returnTo") ?? "/admin/artikel").trim();
+  const returnTo = safeAdminReturnPath(
+    String(formData.get("returnTo") ?? "/admin/artikel"),
+  );
 
   const result = await setArticleUrgencyAction(articleId, mode, hours);
   if (!result.ok) {
@@ -343,11 +363,13 @@ export async function setArticleFeaturedLevelAction(
     await demoteOtherHeroArticles(id, article.locale);
   }
 
-  await prisma.article.update({
+  const updated = await prisma.article.update({
     where: { id },
     data: { featuredLevel: level },
+    select: { category: true, slug: true },
   });
 
+  revalidatePublicArticle(updated.category, updated.slug);
   revalidateHomeAndArticles();
   return { ok: true as const };
 }
@@ -356,7 +378,9 @@ export async function setArticleFeaturedLevelFormAction(formData: FormData) {
   await requireStaff();
   const articleId = String(formData.get("articleId") ?? "").trim();
   const level = parseFeaturedLevel(formData.get("featuredLevel"));
-  const returnTo = String(formData.get("returnTo") ?? "/admin/artikel").trim();
+  const returnTo = safeAdminReturnPath(
+    String(formData.get("returnTo") ?? "/admin/artikel"),
+  );
 
   const result = await setArticleFeaturedLevelAction(articleId, level);
   if (!result.ok) {

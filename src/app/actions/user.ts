@@ -1,9 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
 import { cookies } from "next/headers";
+
+export async function signOutFormAction() {
+  await signOut({ redirectTo: "/" });
+}
 
 export async function toggleSavedArticle(
   articleId: string,

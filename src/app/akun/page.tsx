@@ -1,5 +1,6 @@
-import { signOut } from "@/auth";
 import { auth } from "@/auth";
+import { signOutFormAction } from "@/app/actions/user";
+import { redirect } from "next/navigation";
 import { NewsCard } from "@/components/news/news-card";
 import { Button } from "@/components/ui/button";
 import { AccountSettings } from "@/components/account/account-settings";
@@ -12,7 +13,7 @@ export const metadata = { title: "Akun Saya" };
 
 export default async function AkunPage() {
   const session = await auth();
-  if (!session?.user?.id) return null;
+  if (!session?.user?.id) redirect("/login");
 
   const [saved, history, user] = await Promise.all([
     getSavedArticles(session.user.id),
@@ -51,12 +52,7 @@ export default async function AkunPage() {
             )}
           </p>
         </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
+        <form action={signOutFormAction}>
           <Button type="submit" variant="outline">
             Keluar
           </Button>

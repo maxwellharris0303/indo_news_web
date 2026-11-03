@@ -9,7 +9,7 @@ import {
 } from "@/lib/topics/catalog";
 import { sortTopicsHomepageOrder } from "@/lib/topics/sort";
 
-async function useDb(): Promise<boolean> {
+async function hasDbArticles(): Promise<boolean> {
   try {
     const count = await prisma.article.count();
     return count > 0;
@@ -19,13 +19,13 @@ async function useDb(): Promise<boolean> {
 }
 
 export async function getTopics(): Promise<Topic[]> {
-  if (!(await useDb())) return sortTopicsHomepageOrder(seedTopics);
+  if (!(await hasDbArticles())) return sortTopicsHomepageOrder(seedTopics);
   const rows = await prisma.topic.findMany();
   return sortTopicsHomepageOrder(rows.map(mapTopic));
 }
 
 export async function getTopic(slug: string): Promise<Topic | undefined> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return seedTopics.find((t) => t.slug === slug) ?? getTopicFromCatalog(slug);
   }
   const row = await prisma.topic.findUnique({ where: { slug } });

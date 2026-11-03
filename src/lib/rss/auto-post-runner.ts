@@ -93,9 +93,11 @@ async function processQueue(
       return saveStopped({ ...job, failBuckets }, ok, fail, copy, onRefresh);
     }
 
+    const remaining = target - done;
     const chunkRes = await bulkAutoPostChunkAction({
       itemIds: queue,
       publish: job.publish,
+      maxItems: remaining,
     });
 
     if (cancelRequested()) {

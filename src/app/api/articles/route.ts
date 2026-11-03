@@ -4,8 +4,13 @@ import { isCategorySlug } from "@/lib/site";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const offset = Number(searchParams.get("offset") ?? "0");
-  const limit = Math.min(Number(searchParams.get("limit") ?? "8"), 24);
+  const offsetRaw = Number(searchParams.get("offset") ?? "0");
+  const limitRaw = Number(searchParams.get("limit") ?? "8");
+  const offset = Number.isFinite(offsetRaw) ? Math.max(0, offsetRaw) : 0;
+  const limit = Math.min(
+    Number.isFinite(limitRaw) ? Math.max(1, limitRaw) : 8,
+    24,
+  );
   const categoryParam = searchParams.get("category");
   const localeParam = searchParams.get("locale");
 
@@ -19,9 +24,8 @@ export async function GET(request: Request) {
     ? excludeParam.split(",").map((id) => id.trim()).filter(Boolean)
     : undefined;
 
-  const safeOffset = Number.isFinite(offset) ? offset : 0;
   const items = await getArticles({
-    offset: excludeIds?.length ? 0 : safeOffset,
+    offset: excludeIds?.length ? 0 : offset,
     limit,
     category,
     locale,
@@ -31,6 +35,6 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     items,
-    nextOffset: safeOffset + items.length,
+    nextOffset: offset + items.length,
   });
 }

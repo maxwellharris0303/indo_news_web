@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import ArticlePage, {
   generateMetadata as generateArticleMetadata,
 } from "@/app/[category]/[slug]/page";
+import { prisma } from "@/lib/db";
 import { isRegionHubSlug } from "@/lib/regions";
 
 export const dynamicParams = true;
@@ -22,7 +23,13 @@ export async function generateMetadata({ params }: Props) {
 export default async function DaerahArticlePage({ params }: Props) {
   const { slug } = await params;
   if (isRegionHubSlug(slug)) {
-    redirect(`/daerah/provinsi/${slug}`);
+    const article = await prisma.article.findUnique({
+      where: { category_slug: { category: "daerah", slug } },
+      select: { id: true },
+    });
+    if (!article) {
+      redirect(`/daerah/provinsi/${slug}`);
+    }
   }
   return ArticlePage({
     params: Promise.resolve({ category: "daerah", slug }),

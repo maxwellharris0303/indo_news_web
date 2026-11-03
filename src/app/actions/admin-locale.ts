@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { requireStaff } from "@/lib/admin/require-staff";
 import {
   ADMIN_LOCALE_COOKIE,
   parseAdminLocale,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/admin-locale";
 
 export async function setAdminLocaleAction(locale: AdminLocale) {
+  await requireStaff();
   const next = parseAdminLocale(locale);
   const store = await cookies();
   store.set(ADMIN_LOCALE_COOKIE, next, {

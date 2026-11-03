@@ -42,7 +42,7 @@ function isPublishedSeed(a: Article): boolean {
   return new Date(a.publishedAt).getTime() <= Date.now();
 }
 
-async function useDb(): Promise<boolean> {
+async function hasDbArticles(): Promise<boolean> {
   try {
     const count = await prisma.article.count();
     return count > 0;
@@ -59,6 +59,18 @@ function publishedWhere(includeUnpublished?: boolean) {
     publishedAt: { lte: now },
     OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
   };
+}
+
+function isRowPubliclyVisible(row: {
+  status: ArticleStatus;
+  publishedAt: Date;
+  scheduledAt: Date | null;
+}): boolean {
+  if (!PUBLISHED_STATUSES.includes(row.status)) return false;
+  const now = Date.now();
+  if (row.publishedAt.getTime() > now) return false;
+  if (row.scheduledAt && row.scheduledAt.getTime() > now) return false;
+  return true;
 }
 
 function sortSeed(items: Article[], sort: SortMode): Article[] {
@@ -110,7 +122,7 @@ export async function getArticles(
     ...filters
   } = query;
 
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return filterSeed({ ...filters, sort, excludeIds }).slice(
       offset,
       offset + limit,
@@ -154,7 +166,7 @@ export async function getArticles(
 export async function countArticles(
   query: Omit<ArticleQuery, "limit" | "offset" | "sort"> = {},
 ): Promise<number> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return filterSeed(query).length;
   }
 
@@ -182,7 +194,7 @@ export async function getArticleBySlug(
   category: CategorySlug,
   slug: string,
 ): Promise<Article | undefined> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     const a = seedArticles.find((a) => a.category === category && a.slug === slug);
     return a && isPublishedSeed(a) ? a : undefined;
   }
@@ -191,13 +203,7 @@ export async function getArticleBySlug(
     where: { category_slug: { category, slug } },
     include: { topics: true, author: true },
   });
-  if (!row) return undefined;
-  if (
-    row.status !== "PUBLISHED" &&
-    row.status !== "CORRECTED"
-  ) {
-    return undefined;
-  }
+  if (!row || !isRowPubliclyVisible(row)) return undefined;
   return mapArticle(row);
 }
 
@@ -206,7 +212,7 @@ export async function getArticleBySlugStaffPreview(
   category: CategorySlug,
   slug: string,
 ): Promise<Article | undefined> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return seedArticles.find((a) => a.category === category && a.slug === slug);
   }
 
@@ -220,12 +226,12 @@ export async function getArticleBySlugStaffPreview(
 export async function getArticleBySlugOnly(
   slug: string,
 ): Promise<Article | undefined> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return seedArticles.find((a) => a.slug === slug && isPublishedSeed(a));
   }
 
   const row = await prisma.article.findFirst({
-    where: { slug, status: { in: PUBLISHED_STATUSES } },
+    where: { slug, ...publishedWhere() },
     include: { topics: true, author: true },
   });
   return row ? mapArticle(row) : undefined;
@@ -273,7 +279,7 @@ function seedUrgentActive(a: Article): boolean {
 export async function getUrgentBanner(
   locale: "id" | "en" = "id",
 ): Promise<UrgentBanner | undefined> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     const candidates = seedArticles.filter(
       (a) =>
         seedUrgentActive(a) &&
@@ -336,7 +342,7 @@ export async function getPopularArticles(
 export async function getEditorPicks(
   locale: "id" | "en" = "id",
 ): Promise<Article[]> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return sortSeed(
       seedArticles.filter(
         (a) =>
@@ -395,31 +401,31 @@ export async function getRelatedArticles(
 }
 
 export async function getAuthor(id: string) {
-  if (!(await useDb())) return seedAuthors.find((a) => a.id === id);
+  if (!(await hasDbArticles())) return seedAuthors.find((a) => a.id === id);
   const row = await prisma.author.findUnique({ where: { id } });
   return row ? mapAuthor(row) : undefined;
 }
 
 export async function getAuthors() {
-  if (!(await useDb())) return seedAuthors;
+  if (!(await hasDbArticles())) return seedAuthors;
   const rows = await prisma.author.findMany({ orderBy: { name: "asc" } });
   return rows.map(mapAuthor);
 }
 
 export async function getRegions() {
-  if (!(await useDb())) return seedRegions;
+  if (!(await hasDbArticles())) return seedRegions;
   const rows = await prisma.region.findMany({ orderBy: { name: "asc" } });
   return rows.map(mapRegion);
 }
 
 export async function getRegion(slug: string) {
-  if (!(await useDb())) return seedRegions.find((r) => r.slug === slug);
+  if (!(await hasDbArticles())) return seedRegions.find((r) => r.slug === slug);
   const row = await prisma.region.findUnique({ where: { slug } });
   return row ? mapRegion(row) : undefined;
 }
 
 export async function getFactChecks(): Promise<FactCheck[]> {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return [...seedFactChecks].sort(
       (a, b) =>
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
@@ -433,7 +439,7 @@ export async function getFactChecks(): Promise<FactCheck[]> {
 }
 
 export async function getFactCheck(slug: string) {
-  if (!(await useDb())) return seedFactChecks.find((f) => f.slug === slug);
+  if (!(await hasDbArticles())) return seedFactChecks.find((f) => f.slug === slug);
   const row = await prisma.factCheck.findUnique({ where: { slug } });
   return row ? mapFactCheck(row) : undefined;
 }
@@ -458,7 +464,7 @@ export async function getPublishedArticlesForSitemap(): Promise<
     title: string;
   }[]
 > {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return seedArticles.filter(isPublishedSeed).map((a) => ({
       category: a.category,
       slug: a.slug,
@@ -502,7 +508,7 @@ export async function getRecentNewsSitemapArticles(): Promise<
 }
 
 export async function incrementArticleViews(articleId: string) {
-  if (!(await useDb())) return;
+  if (!(await hasDbArticles())) return;
   await prisma.article.update({
     where: { id: articleId },
     data: { viewCount: { increment: 1 } },
@@ -525,14 +531,16 @@ export async function getSavedArticles(userId: string): Promise<Article[]> {
     },
     orderBy: { createdAt: "desc" },
   });
-  return rows.map((r) => mapArticle(r.article));
+  return rows
+    .filter((r) => isRowPubliclyVisible(r.article))
+    .map((r) => mapArticle(r.article));
 }
 
 export async function getReadingHistory(
   userId: string,
   limit = 10,
 ): Promise<Article[]> {
-  if (!(await useDb())) return [];
+  if (!(await hasDbArticles())) return [];
   const rows = await prisma.readingHistory.findMany({
     where: { userId },
     include: {
@@ -541,7 +549,9 @@ export async function getReadingHistory(
     orderBy: { viewedAt: "desc" },
     take: limit,
   });
-  return rows.map((r) => mapArticle(r.article));
+  return rows
+    .filter((r) => isRowPubliclyVisible(r.article))
+    .map((r) => mapArticle(r.article));
 }
 
 export async function recordReadingHistory(userId: string, articleId: string) {
@@ -560,7 +570,7 @@ export interface CommentView {
 }
 
 export async function getComments(articleId: string): Promise<CommentView[]> {
-  if (!(await useDb())) return [];
+  if (!(await hasDbArticles())) return [];
   const rows = await prisma.comment.findMany({
     where: { articleId, approved: true },
     include: { user: { select: { name: true, email: true } } },
@@ -652,7 +662,7 @@ export async function getRecommendationsForUser(
 }
 
 export async function getAdminArticles(limit = 30) {
-  if (!(await useDb())) {
+  if (!(await hasDbArticles())) {
     return filterSeed({ includeUnpublished: true, sort: "latest" }).slice(
       0,
       limit,

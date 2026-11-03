@@ -29,7 +29,7 @@ try {
       ]),
       aiSummary: "Artikel uji otomatis KabarDesk.",
       publishedAt: new Date(),
-      authorId: "a1",
+      authorId,
       imageUrl: "https://picsum.photos/seed/kabardesk-e2e/1200/750",
       imageCaption: "E2E",
       imageCredit: "KabarDesk",
