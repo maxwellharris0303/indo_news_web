@@ -13,7 +13,7 @@ import {
   getPopularArticles,
   getRecommendationsForUser,
   getRegions,
-  getTopics,
+  getHomepageTopics,
 } from "@/lib/content/repository";
 import { articlePublicHref } from "@/lib/article-url";
 import { pickArticles } from "@/lib/home/pick-articles";
@@ -55,7 +55,7 @@ export async function HomeView() {
 
   const popular = await getPopularArticles(24, locale);
   const editorPicks = await getEditorPicks(locale);
-  const topics = await getTopics();
+  const topics = await getHomepageTopics();
   const factChecks = (await getFactChecks()).slice(0, 3);
   const regions = await getRegions();
 

@@ -160,8 +160,27 @@ async function ensureUsersForProduction() {
   await upsertSuperadminFromEnv();
 }
 
+async function ensureTopicsAndRegions() {
+  const { topicCatalog } = await import("../src/lib/topics/catalog");
+  for (const topic of topicCatalog) {
+    await prisma.topic.upsert({
+      where: { slug: topic.slug },
+      create: topic,
+      update: { name: topic.name, description: topic.description },
+    });
+  }
+  for (const region of regions) {
+    await prisma.region.upsert({
+      where: { slug: region.slug },
+      create: region,
+      update: { name: region.name, province: region.province },
+    });
+  }
+}
+
 async function seedProduction() {
   await ensureUsersForProduction();
+  await ensureTopicsAndRegions();
   const { seedDefaultRssFeeds } = await import("../src/lib/rss/default-feeds");
   await seedDefaultRssFeeds();
   let commentsAdded = 0;

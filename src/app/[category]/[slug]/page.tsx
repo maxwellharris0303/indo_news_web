@@ -25,6 +25,7 @@ import {
   incrementArticleViews,
 } from "@/lib/content/repository";
 import { isStaffRole } from "@/lib/admin/require-staff";
+import { TopicLinkList } from "@/lib/topics/topic-link";
 import { prisma } from "@/lib/db";
 import {
   formatShortWIB,
@@ -255,20 +256,13 @@ export default async function ArticlePage({ params, searchParams }: Props) {
             </div>
           )}
 
-          {topicEntries.length > 0 && (
-            <div className="mt-8 flex flex-wrap gap-2">
-              {topicEntries.map(({ slug, topic }) => {
-                if (!topic) return null;
-                return (
-                  <Link
-                    key={slug}
-                    href={`/topik/${slug}`}
-                    className="rounded-full bg-muted px-3 py-1 text-sm font-medium hover:text-primary"
-                  >
-                    #{topic.name}
-                  </Link>
-                );
-              })}
+          {topicEntries.some((e) => e.topic) && (
+            <div className="mt-8">
+              <TopicLinkList
+                topics={topicEntries
+                  .map((e) => e.topic)
+                  .filter((t): t is NonNullable<typeof t> => Boolean(t))}
+              />
             </div>
           )}
 

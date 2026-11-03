@@ -12,7 +12,19 @@ import {
 } from "@/lib/content/urgency";
 import { prisma } from "@/lib/db";
 import { isCategorySlug } from "@/lib/site";
+import { parseTopicSlugs } from "@/lib/topics/catalog";
+import { setArticleTopics } from "@/lib/topics/sync-article-topics";
 import { z } from "zod";
+
+function topicSlugsFromForm(formData: FormData): string[] {
+  return parseTopicSlugs(formData.getAll("topicSlugs").map(String));
+}
+
+function revalidateTopicPages(slugs: string[]) {
+  for (const slug of slugs) {
+    revalidatePath(`/topik/${slug}`);
+  }
+}
 
 const BULK_STATUS_ALLOWED: ArticleStatus[] = [
   "REVIEW",
@@ -125,6 +137,11 @@ export async function createArticleAction(formData: FormData) {
     return { ok: false as const, error: "Slug sudah dipakai atau gagal simpan" };
   }
 
+  const topicSlugs = topicSlugsFromForm(formData);
+  if (topicSlugs.length > 0) {
+    await setArticleTopics(id, topicSlugs);
+  }
+
   const urgency = parseUrgencyFromForm(formData);
   if (urgency !== "none") {
     const hours = parseBreakingHours(formData);
@@ -140,6 +157,7 @@ export async function createArticleAction(formData: FormData) {
   if (data.category === "daerah") {
     revalidatePath(`/daerah/${data.slug}`);
   }
+  revalidateTopicPages(topicSlugs);
 
   const featured = parseFeaturedLevel(data.featuredLevel);
   if (featured === 3) {

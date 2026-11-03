@@ -9,6 +9,10 @@ import {
   topics as seedTopics,
 } from "./seed";
 import {
+  getTopicFromCatalog,
+  homepageTopicSlugs,
+} from "@/lib/topics/catalog";
+import {
   mapArticle,
   mapAuthor,
   mapFactCheck,
@@ -415,16 +419,39 @@ export async function getRegion(slug: string) {
   return row ? mapRegion(row) : undefined;
 }
 
+function sortTopicsHomepageOrder<T extends { slug: string }>(items: T[]): T[] {
+  const order = new Map(homepageTopicSlugs.map((slug, i) => [slug, i]));
+  return [...items].sort((a, b) => {
+    const ai = order.get(a.slug as (typeof homepageTopicSlugs)[number]);
+    const bi = order.get(b.slug as (typeof homepageTopicSlugs)[number]);
+    if (ai !== undefined && bi !== undefined) return ai - bi;
+    if (ai !== undefined) return -1;
+    if (bi !== undefined) return 1;
+    return a.slug.localeCompare(b.slug);
+  });
+}
+
 export async function getTopics() {
-  if (!(await useDb())) return seedTopics;
-  const rows = await prisma.topic.findMany({ orderBy: { name: "asc" } });
-  return rows.map(mapTopic);
+  if (!(await useDb())) return sortTopicsHomepageOrder(seedTopics);
+  const rows = await prisma.topic.findMany();
+  const mapped = rows.map(mapTopic);
+  return sortTopicsHomepageOrder(mapped);
+}
+
+/** Curated chips for homepage (catalog order; omits missing DB rows). */
+export async function getHomepageTopics() {
+  const all = await getTopics();
+  const allowed = new Set<string>(homepageTopicSlugs);
+  return all.filter((t) => allowed.has(t.slug));
 }
 
 export async function getTopic(slug: string) {
-  if (!(await useDb())) return seedTopics.find((t) => t.slug === slug);
+  if (!(await useDb())) {
+    return seedTopics.find((t) => t.slug === slug) ?? getTopicFromCatalog(slug);
+  }
   const row = await prisma.topic.findUnique({ where: { slug } });
-  return row ? mapTopic(row) : undefined;
+  if (row) return mapTopic(row);
+  return getTopicFromCatalog(slug);
 }
 
 export async function getFactChecks(): Promise<FactCheck[]> {

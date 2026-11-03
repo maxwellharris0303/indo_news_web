@@ -1,7 +1,7 @@
 import { ArticleComposeForm } from "@/components/admin/article-compose-form";
 import { composeText } from "@/lib/admin/locale-ui";
 import { getAdminLocale } from "@/lib/admin-locale";
-import { getAuthors } from "@/lib/content/repository";
+import { getAuthors, getTopics } from "@/lib/content/repository";
 
 export const metadata = { title: "Tulis Artikel" };
 
@@ -12,7 +12,7 @@ type Props = {
 export default async function AdminNewArticlePage({ searchParams }: Props) {
   const locale = await getAdminLocale();
   const copy = composeText(locale);
-  const authors = await getAuthors();
+  const [authors, topics] = await Promise.all([getAuthors(), getTopics()]);
   const sp = await searchParams;
 
   return (
@@ -25,7 +25,12 @@ export default async function AdminNewArticlePage({ searchParams }: Props) {
       </div>
 
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <ArticleComposeForm authors={authors} error={sp.error} copy={copy} />
+        <ArticleComposeForm
+          authors={authors}
+          topics={topics}
+          error={sp.error}
+          copy={copy}
+        />
       </div>
     </div>
   );

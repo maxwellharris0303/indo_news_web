@@ -4,6 +4,7 @@ import { slugify, uniqueArticleSlug } from "@/lib/slugify";
 import { resolveStoredArticleImageUrl } from "@/lib/article-image";
 import { isCategorySlug } from "@/lib/site";
 import { inferRegionSlugFromText } from "@/lib/regions/infer-region";
+import { inferTopicSlugsFromText } from "@/lib/topics/infer-topics";
 
 export async function createReviewArticleFromRewrite(input: {
   rssItemId: string;
@@ -36,6 +37,12 @@ export async function createReviewArticleFromRewrite(input: {
     body: input.output.body,
     sourceName: input.sourceName,
   });
+  const topicSlugs = inferTopicSlugsFromText({
+    title: input.output.title,
+    dek: input.output.dek,
+    body: input.output.body,
+    category,
+  });
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -47,6 +54,9 @@ export async function createReviewArticleFromRewrite(input: {
           locale: input.locale,
           regionSlug,
           status: "REVIEW",
+          topics: {
+            create: topicSlugs.map((topicSlug) => ({ topicSlug })),
+          },
           editorialOrigin: "RSS_REWRITE",
           title: input.output.title,
           dek: input.output.dek,

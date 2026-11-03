@@ -54,6 +54,8 @@ export const homeCopy = {
     allFactCheck: "Semua cek fakta",
     loadMore: "Muat berita lagi",
     loading: "Memuat...",
+    topicEmpty:
+      "Belum ada artikel untuk topik ini. Cek lagi setelah redaksi menambah liputan.",
   },
   en: {
     forYou: "For you",
@@ -73,6 +75,8 @@ export const homeCopy = {
     allFactCheck: "All fact checks",
     loadMore: "Load more stories",
     loading: "Loading...",
+    topicEmpty:
+      "No stories for this topic yet. Check back as the desk adds coverage.",
   },
 } as const;
 

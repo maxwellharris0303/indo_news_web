@@ -13,14 +13,16 @@ import type { composeText } from "@/lib/admin/locale-ui";
 import { categoryLabels, categorySlugs } from "@/lib/site";
 
 type Author = { id: string; name: string };
+type TopicOption = { slug: string; name: string; description: string };
 
 type Props = {
   authors: Author[];
+  topics: TopicOption[];
   error?: string;
   copy: ReturnType<typeof composeText>;
 };
 
-export function ArticleComposeForm({ authors, error, copy }: Props) {
+export function ArticleComposeForm({ authors, topics, error, copy }: Props) {
   return (
     <form action={createArticleFormAction} className="space-y-6">
       <input type="hidden" name="editorialOrigin" value="ORIGINAL" />
@@ -109,6 +111,36 @@ export function ArticleComposeForm({ authors, error, copy }: Props) {
           </label>
         </div>
       </fieldset>
+
+      {topics.length > 0 ? (
+        <fieldset className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
+          <legend className="px-1 text-sm font-medium">Topik</legend>
+          <p className="text-xs text-muted-foreground">
+            Opsional. Muncul di halaman artikel dan indeks topik.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {topics.map((topic) => (
+              <label
+                key={topic.slug}
+                className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm has-[:checked]:border-primary"
+              >
+                <input
+                  type="checkbox"
+                  name="topicSlugs"
+                  value={topic.slug}
+                  className="mt-0.5 size-4 rounded border-border"
+                />
+                <span>
+                  <span className="font-medium">#{topic.name}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {topic.description}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
 
       <fieldset className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
         <legend className="px-1 text-sm font-medium">{copy.featuredTitle}</legend>

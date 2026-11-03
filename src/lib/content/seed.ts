@@ -50,23 +50,7 @@ export const regions: Region[] = [
   { slug: "sulawesi-selatan", name: "Sulawesi Selatan", province: "Sulawesi Selatan" },
 ];
 
-export const topics: Topic[] = [
-  {
-    slug: "ihsg",
-    name: "IHSG & Pasar Modal",
-    description: "Pergerakan indeks, emiten, dan kebijakan bursa.",
-  },
-  {
-    slug: "karhutla",
-    name: "Karhutla & Lingkungan",
-    description: "Kebakaran hutan, kabut asap, dan mitigasi bencana.",
-  },
-  {
-    slug: "demo-nasional",
-    name: "Aksi Demo Nasional",
-    description: "Liputan terkini aksi unjuk rasa dan respons pemerintah.",
-  },
-];
+export { topicCatalog as topics } from "@/lib/topics/catalog";
 
 const body = (paragraphs: string[]) => paragraphs.join("\n\n");
 
