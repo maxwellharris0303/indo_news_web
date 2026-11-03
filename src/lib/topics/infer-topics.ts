@@ -1,6 +1,6 @@
-import { isTopicSlug, type homepageTopicSlugs } from "@/lib/topics/catalog";
+import { isTopicSlug, topicCatalog } from "@/lib/topics/catalog";
 
-type TopicSlug = (typeof homepageTopicSlugs)[number];
+type TopicSlug = (typeof topicCatalog)[number]["slug"];
 
 type KeywordRule = { phrase: string; weight: number };
 
@@ -16,6 +16,8 @@ const TOPIC_RULES: { slug: TopicSlug; rules: KeywordRule[] }[] = [
       { phrase: "buruh", weight: 2 },
       { phrase: "demonstrasi", weight: 3 },
       { phrase: "demo", weight: 2 },
+      { phrase: "polisi bubarkan", weight: 3 },
+      { phrase: "kericuhan", weight: 2 },
     ],
   },
   {
@@ -31,6 +33,8 @@ const TOPIC_RULES: { slug: TopicSlug; rules: KeywordRule[] }[] = [
       { phrase: "ipo", weight: 3 },
       { phrase: "obligasi", weight: 2 },
       { phrase: "investor", weight: 2 },
+      { phrase: "bursa efek", weight: 4 },
+      { phrase: "bank indonesia", weight: 2 },
       { phrase: "rupiah", weight: 1 },
     ],
   },
@@ -109,5 +113,5 @@ export function inferTopicSlugsFromText(input: {
   }
 
   scored.sort((a, b) => b.score - a.score);
-  return scored.map((s) => s.slug).filter((slug) => isTopicSlug(slug));
+  return scored.map((s) => s.slug).filter((slug) => isTopicSlug(slug)) as TopicSlug[];
 }

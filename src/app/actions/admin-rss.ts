@@ -330,13 +330,14 @@ export async function rewriteRssItemAction(input: {
   revalidateRss();
   revalidatePath(`/admin/rss/items/${item.id}`);
 
+  const { revalidateTopicSlugs } = await import(
+    "@/lib/topics/revalidate-topics"
+  );
   const topicRows = await prisma.articleTopic.findMany({
     where: { articleId: created.articleId },
     select: { topicSlug: true },
   });
-  for (const { topicSlug } of topicRows) {
-    revalidatePath(`/topik/${topicSlug}`);
-  }
+  revalidateTopicSlugs(topicRows.map((r) => r.topicSlug));
 
   return {
     ok: true as const,

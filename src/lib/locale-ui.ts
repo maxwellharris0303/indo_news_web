@@ -56,6 +56,7 @@ export const homeCopy = {
     loading: "Memuat...",
     topicEmpty:
       "Belum ada artikel untuk topik ini. Cek lagi setelah redaksi menambah liputan.",
+    allTopics: "Semua topik",
   },
   en: {
     forYou: "For you",
@@ -77,8 +78,17 @@ export const homeCopy = {
     loading: "Loading...",
     topicEmpty:
       "No stories for this topic yet. Check back as the desk adds coverage.",
+    allTopics: "All topics",
   },
 } as const;
+
+export function topicStoryCountLabel(count: number, locale: SiteLocale): string {
+  const n = count.toLocaleString(locale === "en" ? "en-US" : "id-ID");
+  if (locale === "en") {
+    return count === 1 ? "1 story" : `${n} stories`;
+  }
+  return count === 1 ? "1 artikel" : `${n} artikel`;
+}
 
 export function navCopy(locale: SiteLocale) {
   return navLabels[locale];

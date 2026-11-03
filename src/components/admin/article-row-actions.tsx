@@ -6,7 +6,9 @@ import {
   setArticleUrgencyFormAction,
 } from "@/app/actions/admin";
 import { updateArticleStatusFormAction } from "@/app/actions/social";
+import { ArticleTopicsButton } from "@/components/admin/article-topics-button";
 import { DeleteArticleButton } from "@/components/admin/delete-article-button";
+import type { Topic } from "@/lib/content/types";
 import { Button } from "@/components/ui/button";
 import { ARTICLE_STATUSES } from "@/lib/admin/constants";
 import { articlePublicHref } from "@/lib/admin/article-url";
@@ -28,6 +30,8 @@ type Props = {
   isBreaking?: boolean;
   isDeveloping?: boolean;
   featuredLevel?: number;
+  topicSlugs?: string[];
+  catalogTopics?: Topic[];
 };
 
 export function ArticleRowActions({
@@ -43,6 +47,8 @@ export function ArticleRowActions({
   isBreaking,
   isDeveloping,
   featuredLevel = 0,
+  topicSlugs = [],
+  catalogTopics = [],
 }: Props) {
   const href = articlePublicHref(category, slug);
   const isPreviewOnly = !PUBLIC_STATUSES.has(status);
@@ -159,6 +165,23 @@ export function ArticleRowActions({
             </form>
           ) : null}
         </div>
+      ) : null}
+      {catalogTopics.length > 0 ? (
+        <ArticleTopicsButton
+          articleId={id}
+          articleTitle={title}
+          topicSlugs={topicSlugs}
+          topics={catalogTopics}
+          copy={{
+            button: copy.topicsButton,
+            title: copy.topicsEditorTitle,
+            hint: copy.topicsEditorHint,
+            save: copy.topicsSave,
+            cancel: copy.topicsCancel,
+            infer: copy.topicsInfer,
+            saving: copy.topicsSaving,
+          }}
+        />
       ) : null}
       <form
         action={updateArticleStatusFormAction}

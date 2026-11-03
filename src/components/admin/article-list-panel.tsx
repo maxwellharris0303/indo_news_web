@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
 import type { AdminLocale } from "@/lib/admin-locale";
 import type { actionsText, adminStatusLabels } from "@/lib/admin/locale-ui";
+import type { Topic } from "@/lib/content/types";
 
 export type ArticleListRow = {
   id: string;
@@ -25,6 +26,7 @@ export type ArticleListRow = {
   isDeveloping?: boolean;
   featuredLevel?: number;
   editorialOrigin?: EditorialOrigin;
+  topicSlugs?: string[];
 };
 
 type Copy = {
@@ -53,6 +55,7 @@ export function ArticleListPanel({
   statusLabels,
   locale,
   returnTo,
+  catalogTopics,
 }: {
   items: ArticleListRow[];
   copy: Copy;
@@ -60,6 +63,7 @@ export function ArticleListPanel({
   statusLabels: StatusLabels;
   locale: AdminLocale;
   returnTo: string;
+  catalogTopics: Topic[];
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -277,6 +281,8 @@ export function ArticleListPanel({
                     isBreaking={a.isBreaking}
                     isDeveloping={a.isDeveloping}
                     featuredLevel={a.featuredLevel}
+                    topicSlugs={a.topicSlugs ?? []}
+                    catalogTopics={catalogTopics}
                   />
                 </div>
               </li>

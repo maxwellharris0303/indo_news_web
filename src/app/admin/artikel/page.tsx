@@ -11,6 +11,7 @@ import {
   selectClassName,
 } from "@/lib/admin/constants";
 import { listAdminArticles } from "@/lib/admin/dashboard";
+import { getTopics } from "@/lib/topics/service";
 import {
   actionsText,
   adminCategoryLabel,
@@ -54,7 +55,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
       ? (sp.origin as EditorialOrigin)
       : undefined;
 
-  const [{ items, total, totalPages, pageSize }, urgentSummary] =
+  const [{ items, total, totalPages, pageSize }, urgentSummary, catalogTopics] =
     await Promise.all([
       listAdminArticles({
         q: sp.q,
@@ -64,6 +65,7 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
         page,
       }),
       getAdminUrgentSummary("id"),
+      getTopics(),
     ]);
 
   function pageHref(nextPage: number) {
@@ -209,12 +211,14 @@ export default async function AdminArticlesPage({ searchParams }: Props) {
           isDeveloping: a.isDeveloping,
           featuredLevel: a.featuredLevel,
           editorialOrigin: a.editorialOrigin,
+          topicSlugs: a.topics.map((t) => t.topicSlug),
         }))}
         copy={copy}
         actionCopy={actionCopy}
         statusLabels={statusLabels}
         locale={locale}
         returnTo={returnTo}
+        catalogTopics={catalogTopics}
       />
 
       {totalPages > 1 ? (

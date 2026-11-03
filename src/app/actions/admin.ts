@@ -13,17 +13,13 @@ import {
 import { prisma } from "@/lib/db";
 import { isCategorySlug } from "@/lib/site";
 import { parseTopicSlugs } from "@/lib/topics/catalog";
+import { inferTopicSlugsFromText } from "@/lib/topics/infer-topics";
+import { revalidateTopicSlugs } from "@/lib/topics/revalidate-topics";
 import { setArticleTopics } from "@/lib/topics/sync-article-topics";
 import { z } from "zod";
 
 function topicSlugsFromForm(formData: FormData): string[] {
   return parseTopicSlugs(formData.getAll("topicSlugs").map(String));
-}
-
-function revalidateTopicPages(slugs: string[]) {
-  for (const slug of slugs) {
-    revalidatePath(`/topik/${slug}`);
-  }
 }
 
 const BULK_STATUS_ALLOWED: ArticleStatus[] = [
@@ -157,7 +153,8 @@ export async function createArticleAction(formData: FormData) {
   if (data.category === "daerah") {
     revalidatePath(`/daerah/${data.slug}`);
   }
-  revalidateTopicPages(topicSlugs);
+  revalidateTopicSlugs(topicSlugs);
+  revalidatePath("/topik");
 
   const featured = parseFeaturedLevel(data.featuredLevel);
   if (featured === 3) {
@@ -415,4 +412,102 @@ export async function bulkSetArticleFeaturedLevelAction(
 
   revalidateHomeAndArticles();
   return { ok: true as const, count: result.count };
+}
+
+export async function updateArticleTopicsAction(
+  articleId: string,
+  topicSlugs: string[],
+) {
+  await requireStaff();
+  const id = articleId.trim();
+  if (!id) return { ok: false as const, error: "Artikel tidak ditemukan" };
+
+  const article = await prisma.article.findUnique({
+    where: { id },
+    select: {
+      category: true,
+      slug: true,
+      topics: { select: { topicSlug: true } },
+    },
+  });
+  if (!article) return { ok: false as const, error: "Artikel tidak ditemukan" };
+
+  const previous = article.topics.map((t) => t.topicSlug);
+  const next = parseTopicSlugs(topicSlugs);
+  await setArticleTopics(id, next);
+
+  revalidateTopicSlugs([...previous, ...next]);
+  revalidatePath(`/${article.category}/${article.slug}`);
+  revalidatePath("/admin/artikel");
+
+  return { ok: true as const, topicSlugs: next };
+}
+
+export async function inferArticleTopicsAction(articleId: string) {
+  await requireStaff();
+  const id = articleId.trim();
+  const article = await prisma.article.findUnique({
+    where: { id },
+    select: {
+      title: true,
+      dek: true,
+      body: true,
+      category: true,
+      topics: { select: { topicSlug: true } },
+    },
+  });
+  if (!article) return { ok: false as const, error: "Artikel tidak ditemukan" };
+
+  const inferred = inferTopicSlugsFromText({
+    title: article.title,
+    dek: article.dek,
+    body: article.body,
+    category: article.category,
+  });
+  const previous = article.topics.map((t) => t.topicSlug);
+  await setArticleTopics(id, inferred);
+
+  revalidateTopicSlugs([...previous, ...inferred]);
+  revalidatePath("/admin/artikel");
+
+  return { ok: true as const, topicSlugs: inferred };
+}
+
+const RETAG_BATCH_MAX = 300;
+
+/** Infer topics for published articles that have none. */
+export async function retagUntaggedArticlesAction() {
+  await requireStaff();
+  const rows = await prisma.article.findMany({
+    where: {
+      status: { in: ["PUBLISHED", "CORRECTED"] },
+      topics: { none: {} },
+    },
+    select: { id: true, title: true, dek: true, body: true, category: true },
+    take: RETAG_BATCH_MAX,
+    orderBy: { publishedAt: "desc" },
+  });
+
+  let tagged = 0;
+  const touchedTopics = new Set<string>();
+  for (const row of rows) {
+    const slugs = inferTopicSlugsFromText({
+      title: row.title,
+      dek: row.dek,
+      body: row.body,
+      category: row.category,
+    });
+    if (slugs.length === 0) continue;
+    await setArticleTopics(row.id, slugs);
+    tagged += 1;
+    for (const s of slugs) touchedTopics.add(s);
+  }
+
+  revalidateTopicSlugs([...touchedTopics]);
+  revalidatePath("/admin/topik");
+  return {
+    ok: true as const,
+    scanned: rows.length,
+    tagged,
+  };
 }

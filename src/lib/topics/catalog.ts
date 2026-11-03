@@ -28,7 +28,7 @@ export const homepageTopicSlugs = [
 
 const catalogBySlug = new Map(topicCatalog.map((t) => [t.slug, t]));
 
-export function isTopicSlug(value: string): value is (typeof homepageTopicSlugs)[number] {
+export function isTopicSlug(value: string): boolean {
   return catalogBySlug.has(value);
 }
 

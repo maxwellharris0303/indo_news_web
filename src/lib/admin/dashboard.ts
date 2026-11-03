@@ -145,6 +145,7 @@ export async function listAdminArticles(filters: ArticleListFilters) {
         breakingExpiresAt: true,
         featuredLevel: true,
         editorialOrigin: true,
+        topics: { select: { topicSlug: true } },
       },
     }),
     prisma.article.count({ where }),

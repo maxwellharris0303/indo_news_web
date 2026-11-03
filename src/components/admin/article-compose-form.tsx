@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin/constants";
 import { BREAKING_HOUR_OPTIONS } from "@/lib/content/urgency";
 import type { composeText } from "@/lib/admin/locale-ui";
+import { TopicCheckboxFieldset } from "@/components/admin/topic-checkbox-fieldset";
 import { categoryLabels, categorySlugs } from "@/lib/site";
 
 type Author = { id: string; name: string };
@@ -112,35 +113,11 @@ export function ArticleComposeForm({ authors, topics, error, copy }: Props) {
         </div>
       </fieldset>
 
-      {topics.length > 0 ? (
-        <fieldset className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
-          <legend className="px-1 text-sm font-medium">Topik</legend>
-          <p className="text-xs text-muted-foreground">
-            Opsional. Muncul di halaman artikel dan indeks topik.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {topics.map((topic) => (
-              <label
-                key={topic.slug}
-                className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm has-[:checked]:border-primary"
-              >
-                <input
-                  type="checkbox"
-                  name="topicSlugs"
-                  value={topic.slug}
-                  className="mt-0.5 size-4 rounded border-border"
-                />
-                <span>
-                  <span className="font-medium">#{topic.name}</span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {topic.description}
-                  </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      ) : null}
+      <TopicCheckboxFieldset
+        topics={topics}
+        legend="Topik"
+        hint="Opsional. Muncul di halaman artikel dan indeks topik."
+      />
 
       <fieldset className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
         <legend className="px-1 text-sm font-medium">{copy.featuredTitle}</legend>

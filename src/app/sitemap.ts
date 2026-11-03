@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getPublishedArticlesForSitemap } from "@/lib/content/repository";
 import { categorySlugs, site } from "@/lib/site";
+import { topicCatalog } from "@/lib/topics/catalog";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = site.url;
@@ -12,11 +13,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/opini",
     "/cek-fakta",
     "/indeks",
+    "/topik",
     "/search",
     "/redaksi",
     ...categorySlugs.map((c) => `/${c}`),
   ].map((path) => ({
     url: `${base}${path}`,
+    lastModified: staticLastMod,
+  }));
+
+  const topicRoutes = topicCatalog.map((t) => ({
+    url: `${base}/topik/${t.slug}`,
     lastModified: staticLastMod,
   }));
 
@@ -26,5 +33,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: publishedAt,
   }));
 
-  return [...staticRoutes, ...articles];
+  return [...staticRoutes, ...topicRoutes, ...articles];
 }

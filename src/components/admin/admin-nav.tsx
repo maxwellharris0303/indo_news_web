@@ -14,6 +14,7 @@ export function AdminNav() {
     { href: "/admin", label: copy.overview, exact: true },
     { href: "/admin/artikel", label: copy.articles, exact: false },
     { href: "/admin/artikel/baru", label: copy.compose, exact: false },
+    { href: "/admin/topik", label: copy.topics, exact: false },
     { href: "/admin/rss", label: copy.rss, exact: false },
   ] as const;
 
@@ -24,6 +25,12 @@ export function AdminNav() {
           if (item.exact) return activePath === item.href;
           if (item.href === "/admin/artikel") {
             return activePath === "/admin/artikel";
+          }
+          if (item.href === "/admin/topik") {
+            return (
+              activePath === "/admin/topik" ||
+              activePath.startsWith("/admin/topik/")
+            );
           }
           if (item.href === "/admin/rss") {
             return (

@@ -13,7 +13,6 @@ import {
   getPopularArticles,
   getRecommendationsForUser,
   getRegions,
-  getHomepageTopics,
 } from "@/lib/content/repository";
 import { articlePublicHref } from "@/lib/article-url";
 import { pickArticles } from "@/lib/home/pick-articles";
@@ -23,6 +22,7 @@ import { homeText } from "@/lib/locale-ui";
 import { categoryLabels } from "@/lib/site";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { getHomepageTopicsWithCounts } from "@/lib/topics/queries";
 
 export async function HomeView() {
   const session = await auth();
@@ -55,7 +55,7 @@ export async function HomeView() {
 
   const popular = await getPopularArticles(24, locale);
   const editorPicks = await getEditorPicks(locale);
-  const topics = await getHomepageTopics();
+  const topics = await getHomepageTopicsWithCounts();
   const factChecks = (await getFactChecks()).slice(0, 3);
   const regions = await getRegions();
 
@@ -104,17 +104,22 @@ export async function HomeView() {
         </section>
       ) : null}
 
-      <section className="mb-10">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="font-serif text-xl font-bold sm:text-2xl">
-              {copy.hotTopics}
-            </h2>
-            <p className="text-sm text-muted-foreground">{copy.hotTopicsSub}</p>
+      {topics.length > 0 ? (
+        <section className="mb-10">
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-serif text-xl font-bold sm:text-2xl">
+                {copy.hotTopics}
+              </h2>
+              <p className="text-sm text-muted-foreground">{copy.hotTopicsSub}</p>
+            </div>
+            <Button variant="link" asChild className="shrink-0">
+              <Link href="/topik">{copy.allTopics}</Link>
+            </Button>
           </div>
-        </div>
-        <TopicChips topics={topics} />
-      </section>
+          <TopicChips topics={topics} />
+        </section>
+      ) : null}
 
       {regionalArticles.length > 0 && (
         <section className="mb-10">

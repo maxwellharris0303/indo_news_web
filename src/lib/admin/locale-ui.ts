@@ -26,13 +26,58 @@ export const adminNavCopy = {
     overview: "Ringkasan",
     articles: "Artikel",
     compose: "Tulis baru",
+    topics: "Topik",
     rss: "RSS & AI",
   },
   en: {
     overview: "Overview",
     articles: "Articles",
     compose: "New article",
+    topics: "Topics",
     rss: "RSS & AI",
+  },
+} as const;
+
+export const adminTopicsCopy = {
+  id: {
+    title: "Topik liputan",
+    subtitle:
+      "Topik editorial untuk beranda, halaman /topik, dan tag artikel. Edit per artikel dari daftar Artikel.",
+    retagTitle: "Auto-tag artikel tanpa topik",
+    retagHint:
+      "Jalankan inferensi kata kunci pada hingga 300 artikel terbit terbaru yang belum punya topik.",
+    retagButton: "Jalankan auto-tag",
+    articleCount: "Artikel terbit",
+    viewPublic: "Lihat publik",
+    findArticles: "Cari artikel",
+    topicsButton: "Topik",
+    topicsEditorTitle: "Topik artikel",
+    topicsEditorHint:
+      "Pilih topik editorial. Simpan untuk memperbarui halaman artikel dan indeks topik.",
+    topicsSave: "Simpan topik",
+    topicsCancel: "Batal",
+    topicsInfer: "Deteksi otomatis",
+    topicsSaving: "Menyimpan…",
+  },
+  en: {
+    title: "Coverage topics",
+    subtitle:
+      "Editorial topics for the homepage, /topik pages, and article tags. Edit per article from the Articles list.",
+    retagTitle: "Auto-tag untagged articles",
+    retagHint:
+      "Run keyword inference on up to 300 recent published articles with no topics.",
+    retagButton: "Run auto-tag",
+    articleCount: "Published stories",
+    viewPublic: "View public page",
+    findArticles: "Find articles",
+    topicsButton: "Topics",
+    topicsEditorTitle: "Article topics",
+    topicsEditorHint:
+      "Choose editorial topics. Saving updates the article page and topic indexes.",
+    topicsSave: "Save topics",
+    topicsCancel: "Cancel",
+    topicsInfer: "Auto-detect",
+    topicsSaving: "Saving…",
   },
 } as const;
 
@@ -414,6 +459,14 @@ export const adminActionsCopy = {
     featuredEditorPickAria: "Tampilkan di sidebar Pilihan editor",
     featuredHeroAria: "Jadikan hero utama beranda",
     featuredClearAria: "Hapus dari Pilihan editor dan hero",
+    topicsButton: "Topik",
+    topicsEditorTitle: "Topik artikel",
+    topicsEditorHint:
+      "Pilih topik editorial. Simpan untuk memperbarui halaman artikel dan indeks topik.",
+    topicsSave: "Simpan topik",
+    topicsCancel: "Batal",
+    topicsInfer: "Deteksi otomatis",
+    topicsSaving: "Menyimpan…",
   },
   en: {
     view: "View",
@@ -439,6 +492,14 @@ export const adminActionsCopy = {
     featuredEditorPickAria: "Show in Editor's pick sidebar",
     featuredHeroAria: "Set as homepage hero lead",
     featuredClearAria: "Remove from editor picks and hero",
+    topicsButton: "Topics",
+    topicsEditorTitle: "Article topics",
+    topicsEditorHint:
+      "Choose editorial topics. Saving updates the article page and topic indexes.",
+    topicsSave: "Save topics",
+    topicsCancel: "Cancel",
+    topicsInfer: "Auto-detect",
+    topicsSaving: "Saving…",
   },
 } as const;
 
@@ -521,6 +582,10 @@ export function composeText(locale: AdminLocale) {
 
 export function rssText(locale: AdminLocale) {
   return adminRssCopy[locale];
+}
+
+export function topicsAdminText(locale: AdminLocale) {
+  return adminTopicsCopy[locale];
 }
 
 export function actionsText(locale: AdminLocale) {

@@ -6,18 +6,17 @@ import {
   authors as seedAuthors,
   factChecks as seedFactChecks,
   regions as seedRegions,
-  topics as seedTopics,
 } from "./seed";
-import {
-  getTopicFromCatalog,
-  homepageTopicSlugs,
-} from "@/lib/topics/catalog";
+export {
+  getHomepageTopics,
+  getTopic,
+  getTopics,
+} from "@/lib/topics/service";
 import {
   mapArticle,
   mapAuthor,
   mapFactCheck,
   mapRegion,
-  mapTopic,
 } from "./mappers";
 import type { Article, FactCheck, MarketSnapshot } from "./types";
 
@@ -417,41 +416,6 @@ export async function getRegion(slug: string) {
   if (!(await useDb())) return seedRegions.find((r) => r.slug === slug);
   const row = await prisma.region.findUnique({ where: { slug } });
   return row ? mapRegion(row) : undefined;
-}
-
-function sortTopicsHomepageOrder<T extends { slug: string }>(items: T[]): T[] {
-  const order = new Map(homepageTopicSlugs.map((slug, i) => [slug, i]));
-  return [...items].sort((a, b) => {
-    const ai = order.get(a.slug as (typeof homepageTopicSlugs)[number]);
-    const bi = order.get(b.slug as (typeof homepageTopicSlugs)[number]);
-    if (ai !== undefined && bi !== undefined) return ai - bi;
-    if (ai !== undefined) return -1;
-    if (bi !== undefined) return 1;
-    return a.slug.localeCompare(b.slug);
-  });
-}
-
-export async function getTopics() {
-  if (!(await useDb())) return sortTopicsHomepageOrder(seedTopics);
-  const rows = await prisma.topic.findMany();
-  const mapped = rows.map(mapTopic);
-  return sortTopicsHomepageOrder(mapped);
-}
-
-/** Curated chips for homepage (catalog order; omits missing DB rows). */
-export async function getHomepageTopics() {
-  const all = await getTopics();
-  const allowed = new Set<string>(homepageTopicSlugs);
-  return all.filter((t) => allowed.has(t.slug));
-}
-
-export async function getTopic(slug: string) {
-  if (!(await useDb())) {
-    return seedTopics.find((t) => t.slug === slug) ?? getTopicFromCatalog(slug);
-  }
-  const row = await prisma.topic.findUnique({ where: { slug } });
-  if (row) return mapTopic(row);
-  return getTopicFromCatalog(slug);
 }
 
 export async function getFactChecks(): Promise<FactCheck[]> {
