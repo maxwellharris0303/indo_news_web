@@ -24,13 +24,30 @@ EXCLUDE = {
     "node_modules",
     ".next",
     ".git",
-    "prisma/dev.db",
-    "prisma/dev.db-journal",
+    "dev.db",
+    "dev.db-journal",
+    "ci.db",
+    "ci.db-journal",
     "scripts/.deploy-secret",
     "scripts/.auth-secret",
     "scripts/.superadmin-credentials",
     "scripts/deploy_ed25519",
 }
+
+
+def should_skip_tar_path(path: Path) -> bool:
+    rel = path.relative_to(ROOT).as_posix()
+    if any(part in EXCLUDE for part in path.parts):
+        return True
+    if path.name in EXCLUDE:
+        return True
+    if path.suffix == ".db" or path.name.endswith(".db-journal"):
+        return True
+    if rel.startswith("prisma/") and path.suffix in {".db", ".db-journal"}:
+        return True
+    if path.name.startswith("tmp-") and path.suffix in {".html", ".xml", ".txt"}:
+        return True
+    return False
 
 
 def password() -> str:
@@ -67,18 +84,10 @@ def make_tarball() -> bytes:
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
         for path in ROOT.rglob("*"):
-            rel = path.relative_to(ROOT).as_posix()
-            if any(part in EXCLUDE for part in path.parts):
-                continue
-            if path.name in EXCLUDE:
-                continue
-            if path.name.startswith("tmp-") and path.suffix in {
-                ".html",
-                ".xml",
-                ".txt",
-            }:
+            if should_skip_tar_path(path):
                 continue
             if path.is_file():
+                rel = path.relative_to(ROOT).as_posix()
                 tar.add(path, arcname=rel)
     buf.seek(0)
     return buf.read()
@@ -316,8 +325,18 @@ def main() -> None:
     run(
         client,
         f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
+        f"test -f prisma/dev.db && cp prisma/dev.db /tmp/kabardesk-predeploy.db || true",
+        check=False,
+    )
+    run(
+        client,
+        f"mkdir -p {REMOTE_DIR} && cd {REMOTE_DIR} && "
         f"rm -rf src .next && rm -f tmp-*.html tmp-*.xml && "
-        f"tar xzf release.tgz && rm -f release.tgz",
+        f"tar xzf release.tgz && rm -f release.tgz && "
+        f"rm -f prisma/dev.db prisma/**/*.db 2>/dev/null; "
+        f"test -f /tmp/kabardesk-predeploy.db && "
+        f"mv /tmp/kabardesk-predeploy.db prisma/dev.db || true",
+        check=False,
     )
 
     sftp = client.open_sftp()
@@ -382,26 +401,37 @@ def main() -> None:
         f"cd {REMOTE_DIR} && npx tsx scripts/fix-article-image-urls.ts",
         check=False,
     )
-    run(
-        client,
-        f"cd {REMOTE_DIR} && node scripts/e2e-seed-article.mjs",
-        check=False,
-    )
+    if os.environ.get("KABARDESK_RUN_E2E", "").strip() == "1":
+        run(
+            client,
+            f"cd {REMOTE_DIR} && node scripts/e2e-seed-article.mjs",
+            check=False,
+        )
+    else:
+        print("Skipping E2E seed on VPS (set KABARDESK_RUN_E2E=1 to enable)")
     e2e_email = super_email or os.environ.get("E2E_EMAIL", "").strip()
     e2e_password = super_password or os.environ.get("E2E_PASSWORD", "").strip()
     if not e2e_email or not e2e_password:
         e2e_email = "admin@kabardesk.id"
         e2e_password = "admin123"
-    run(
-        client,
-        f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
-        f"E2E_EMAIL={e2e_email} E2E_PASSWORD={e2e_password} node scripts/e2e_full.mjs",
-        check=False,
-        echo=(
+    if os.environ.get("KABARDESK_RUN_E2E", "").strip() == "1":
+        run(
+            client,
             f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
-            f"E2E_EMAIL={e2e_email} E2E_PASSWORD=*** node scripts/e2e_full.mjs"
-        ),
-    )
+            f"E2E_EMAIL={e2e_email} E2E_PASSWORD={e2e_password} node scripts/e2e_full.mjs",
+            check=False,
+            echo=(
+                f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
+                f"E2E_EMAIL={e2e_email} E2E_PASSWORD=*** node scripts/e2e_full.mjs"
+            ),
+        )
+    else:
+        run(
+            client,
+            f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} "
+            f"node scripts/probe-health.mjs",
+            check=False,
+        )
     run(
         client,
         f"cd {REMOTE_DIR} && BASE_URL=http://127.0.0.1:{internal_port} node scripts/probe-health.mjs",
