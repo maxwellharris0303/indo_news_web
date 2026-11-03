@@ -6,12 +6,18 @@ import { prepareBulkAutoPostAction } from "@/app/actions/admin-rss";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  clearAutoPostPrepCancelFlag,
   clearRssAutoPostJob,
+  consumeAutoPostPrepCancelFlag,
   loadRssAutoPostJob,
+  requestCancelRssAutoPostJob,
   RSS_AUTO_POST_CHANGED,
   saveRssAutoPostJob,
 } from "@/lib/rss/batch-job-client";
-import { resumeRssAutoPostJob } from "@/lib/rss/auto-post-runner";
+import {
+  autoPostStoppedMessage,
+  resumeRssAutoPostJob,
+} from "@/lib/rss/auto-post-runner";
 import { loadAutoPostCardUi } from "@/lib/rss/auto-post-ui";
 
 type Copy = {
@@ -23,6 +29,8 @@ type Copy = {
   autoPostStart: string;
   autoPostRunning: string;
   autoPostDone: string;
+  autoPostStop: string;
+  autoPostStopped: string;
   autoPostFeedAll: string;
 };
 
@@ -65,17 +73,21 @@ export function RssBulkAutoPostCard({
     return () => window.removeEventListener(RSS_AUTO_POST_CHANGED, onChange);
   }, [applyStorageUi]);
 
+  const runnerCopy = {
+    autoPostRunning: copy.autoPostRunning,
+    autoPostDone: copy.autoPostDone,
+    autoPostStopped: copy.autoPostStopped,
+  };
+
   useEffect(() => {
     const job = loadRssAutoPostJob();
     if (!job || job.status !== "running") return;
-    void resumeRssAutoPostJob(
-      {
-        autoPostRunning: copy.autoPostRunning,
-        autoPostDone: copy.autoPostDone,
-      },
-      () => router.refresh(),
-    );
-  }, [copy.autoPostDone, copy.autoPostRunning, router]);
+    void resumeRssAutoPostJob(runnerCopy, () => router.refresh());
+  }, [copy.autoPostDone, copy.autoPostRunning, copy.autoPostStopped, router]);
+
+  function stopAutoPost() {
+    requestCancelRssAutoPostJob();
+  }
 
   async function runAutoPost() {
     const n = parseInt(count, 10);
@@ -89,6 +101,7 @@ export function RssBulkAutoPostCard({
       return;
     }
     clearRssAutoPostJob();
+    clearAutoPostPrepCancelFlag();
 
     setBusy(true);
     setMessage(null);
@@ -100,6 +113,11 @@ export function RssBulkAutoPostCard({
         pollFirst,
         feedId: feedId || undefined,
       });
+      if (consumeAutoPostPrepCancelFlag()) {
+        setMessage(autoPostStoppedMessage(runnerCopy, 0, 0));
+        setProgress(null);
+        return;
+      }
       if (!prep.ok) {
         setMessage("Gagal menyiapkan antrian.");
         setProgress(null);
@@ -124,13 +142,7 @@ export function RssBulkAutoPostCard({
         message: `${copy.autoPostRunning}: 0/${target}…`,
       });
 
-      await resumeRssAutoPostJob(
-        {
-          autoPostRunning: copy.autoPostRunning,
-          autoPostDone: copy.autoPostDone,
-        },
-        () => router.refresh(),
-      );
+      await resumeRssAutoPostJob(runnerCopy, () => router.refresh());
     } finally {
       applyStorageUi();
     }
@@ -190,8 +202,17 @@ export function RssBulkAutoPostCard({
           {copy.autoPostPublish}
         </label>
         <Button type="button" disabled={busy} onClick={() => void runAutoPost()}>
-          {busy ? copy.autoPostRunning : copy.autoPostStart}
+          {copy.autoPostStart}
         </Button>
+        {busy ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={stopAutoPost}
+          >
+            {copy.autoPostStop}
+          </Button>
+        ) : null}
       </div>
       {progress ? (
         <p className="mt-3 text-sm text-muted-foreground">{progress}</p>

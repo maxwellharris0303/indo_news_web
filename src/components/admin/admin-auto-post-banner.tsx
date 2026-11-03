@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   loadRssAutoPostJob,
+  requestCancelRssAutoPostJob,
   RSS_AUTO_POST_CHANGED,
   type RssAutoPostJob,
 } from "@/lib/rss/batch-job-client";
@@ -37,14 +39,11 @@ export function AdminAutoPostBanner() {
       {
         autoPostRunning: copy.autoPostRunning,
         autoPostDone: copy.autoPostDone,
+        autoPostStopped: copy.autoPostStopped,
       },
       onRefresh,
     );
-  }, [
-    copy.autoPostDone,
-    copy.autoPostRunning,
-    onRefresh,
-  ]);
+  }, [copy.autoPostDone, copy.autoPostRunning, copy.autoPostStopped, onRefresh]);
 
   if (!job) return null;
   if (job.status === "done" && !job.message) return null;
@@ -58,12 +57,24 @@ export function AdminAutoPostBanner() {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-medium">{job.message}</span>
-        <Link
-          href="/admin/rss"
-          className="shrink-0 text-primary underline-offset-2 hover:underline"
-        >
-          RSS &amp; AI
-        </Link>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {isRunning ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => requestCancelRssAutoPostJob()}
+            >
+              {copy.autoPostStop}
+            </Button>
+          ) : null}
+          <Link
+            href="/admin/rss"
+            className="text-primary underline-offset-2 hover:underline"
+          >
+            RSS &amp; AI
+          </Link>
+        </div>
       </div>
       {isRunning ? (
         <p className="mt-1 text-xs text-muted-foreground">

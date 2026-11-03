@@ -8,9 +8,48 @@ import {
 
 let activeRun: Promise<void> | null = null;
 
+export type AutoPostRunnerCopy = {
+  autoPostRunning: string;
+  autoPostDone: string;
+  autoPostStopped: string;
+};
+
+function stoppedMessage(
+  stoppedLabel: string,
+  ok: number,
+  fail: number,
+): string {
+  return `${stoppedLabel}: ${ok} publikasi${fail ? `, ${fail} gagal` : ""}.`;
+}
+
+function saveStopped(
+  job: RssAutoPostJob,
+  ok: number,
+  fail: number,
+  stoppedLabel: string,
+  onRefresh: () => void,
+): RssAutoPostJob {
+  const finished: RssAutoPostJob = {
+    ...job,
+    queue: [],
+    ok,
+    fail,
+    status: "done",
+    cancelRequested: false,
+    message: stoppedMessage(stoppedLabel, ok, fail),
+  };
+  saveRssAutoPostJob(finished);
+  if (ok + fail > 0) onRefresh();
+  return finished;
+}
+
+function cancelRequested(): boolean {
+  return loadRssAutoPostJob()?.cancelRequested === true;
+}
+
 async function processQueue(
   job: RssAutoPostJob,
-  copy: { autoPostRunning: string; autoPostDone: string },
+  copy: AutoPostRunnerCopy,
   onRefresh: () => void,
 ): Promise<RssAutoPostJob> {
   let queue = [...job.queue];
@@ -19,11 +58,24 @@ async function processQueue(
   let done = ok + fail;
   const target = job.target;
 
+  if (cancelRequested()) {
+    return saveStopped(job, ok, fail, copy.autoPostStopped, onRefresh);
+  }
+
   while (queue.length > 0 && done < target) {
+    if (cancelRequested()) {
+      return saveStopped(job, ok, fail, copy.autoPostStopped, onRefresh);
+    }
+
     const chunkRes = await bulkAutoPostChunkAction({
       itemIds: queue,
       publish: job.publish,
     });
+
+    if (cancelRequested()) {
+      return saveStopped(job, ok, fail, copy.autoPostStopped, onRefresh);
+    }
+
     if (!chunkRes.ok) {
       const failed: RssAutoPostJob = {
         ...job,
@@ -31,6 +83,7 @@ async function processQueue(
         ok,
         fail,
         status: "done",
+        cancelRequested: false,
         message: chunkRes.error,
       };
       saveRssAutoPostJob(failed);
@@ -47,6 +100,7 @@ async function processQueue(
       ok,
       fail,
       status: "running",
+      cancelRequested: false,
       message: autoPostProgressLabel(copy.autoPostRunning, {
         ...job,
         ok,
@@ -63,6 +117,7 @@ async function processQueue(
     ok,
     fail,
     status: "done",
+    cancelRequested: false,
     message,
   };
   saveRssAutoPostJob(finished);
@@ -72,7 +127,7 @@ async function processQueue(
 
 /** Continue or start processing the persisted auto-post job (single flight). */
 export function resumeRssAutoPostJob(
-  copy: { autoPostRunning: string; autoPostDone: string },
+  copy: AutoPostRunnerCopy,
   onRefresh: () => void,
 ): Promise<void> {
   const job = loadRssAutoPostJob();
@@ -87,4 +142,12 @@ export function resumeRssAutoPostJob(
       activeRun = null;
     });
   return activeRun;
+}
+
+export function autoPostStoppedMessage(
+  copy: AutoPostRunnerCopy,
+  ok: number,
+  fail: number,
+): string {
+  return stoppedMessage(copy.autoPostStopped, ok, fail);
 }

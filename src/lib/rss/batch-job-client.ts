@@ -46,9 +46,11 @@ export type RssAutoPostJob = {
   ok: number;
   fail: number;
   message: string;
+  cancelRequested?: boolean;
 };
 
 const AUTO_POST_KEY = "kabardesk-rss-auto-post";
+const AUTO_POST_PREP_CANCEL_KEY = "kabardesk-rss-auto-post-prep-cancel";
 export const RSS_AUTO_POST_CHANGED = "kabardesk-rss-auto-post-changed";
 
 export function loadRssAutoPostJob(): RssAutoPostJob | null {
@@ -83,4 +85,25 @@ export function autoPostProgressLabel(
 ): string {
   const done = job.ok + job.fail;
   return `${runningLabel}: ${done}/${job.target}…`;
+}
+
+/** Stop a running job after the current chunk, or abort before the queue is saved. */
+export function requestCancelRssAutoPostJob(): void {
+  const job = loadRssAutoPostJob();
+  if (job?.status === "running") {
+    saveRssAutoPostJob({ ...job, cancelRequested: true });
+    return;
+  }
+  sessionStorage.setItem(AUTO_POST_PREP_CANCEL_KEY, "1");
+  window.dispatchEvent(new Event(RSS_AUTO_POST_CHANGED));
+}
+
+export function clearAutoPostPrepCancelFlag() {
+  sessionStorage.removeItem(AUTO_POST_PREP_CANCEL_KEY);
+}
+
+export function consumeAutoPostPrepCancelFlag(): boolean {
+  if (sessionStorage.getItem(AUTO_POST_PREP_CANCEL_KEY) !== "1") return false;
+  sessionStorage.removeItem(AUTO_POST_PREP_CANCEL_KEY);
+  return true;
 }
