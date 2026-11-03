@@ -102,7 +102,7 @@ export function RssFeedSelect({
         onClick={() => !disabled && setOpen((o) => !o)}
         className={cn(
           selectClassName,
-          "flex h-9 items-center justify-between gap-2 px-2 text-left text-xs",
+          "flex h-9 items-center justify-between gap-2 bg-card px-2 text-left text-xs",
           disabled && "cursor-not-allowed opacity-60",
         )}
       >
@@ -136,7 +136,7 @@ export function RssFeedSelect({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-50 mt-1 max-h-64 w-full min-w-[240px] overflow-y-auto rounded-md border border-border bg-popover py-1 shadow-lg"
+          className="absolute z-[200] mt-1 max-h-64 w-full min-w-[240px] overflow-y-auto rounded-md border border-border bg-card py-1 text-foreground shadow-xl ring-1 ring-border/80"
         >
           <li role="presentation">
             <button
@@ -144,8 +144,8 @@ export function RssFeedSelect({
               role="option"
               aria-selected={value === ""}
               className={cn(
-                "flex w-full px-2 py-1.5 text-left text-xs hover:bg-muted",
-                value === "" && "bg-muted/70",
+                "flex w-full bg-card px-2 py-1.5 text-left text-xs hover:bg-muted",
+                value === "" && "bg-muted",
               )}
               onClick={() => pick("")}
             >
@@ -159,8 +159,8 @@ export function RssFeedSelect({
                 role="option"
                 aria-selected={value === feed.id}
                 className={cn(
-                  "flex w-full px-2 py-1.5 text-left text-xs hover:bg-muted",
-                  value === feed.id && "bg-muted/70",
+                  "flex w-full bg-card px-2 py-1.5 text-left text-xs hover:bg-muted",
+                  value === feed.id && "bg-muted",
                 )}
                 onClick={() => pick(feed.id)}
               >
