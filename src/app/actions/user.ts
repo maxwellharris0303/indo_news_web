@@ -73,5 +73,6 @@ export async function setRegionPreference(regionSlug: string) {
 
   revalidatePath("/");
   revalidatePath("/daerah");
-  return { ok: true as const };
+  revalidatePath("/akun");
+  return { ok: true as const, regionSlug };
 }

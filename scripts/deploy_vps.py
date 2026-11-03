@@ -401,6 +401,11 @@ def main() -> None:
         f"cd {REMOTE_DIR} && npx tsx scripts/fix-article-image-urls.ts",
         check=False,
     )
+    run(
+        client,
+        f"cd {REMOTE_DIR} && npx tsx scripts/backfill-article-regions.ts",
+        check=False,
+    )
     if os.environ.get("KABARDESK_RUN_E2E", "").strip() == "1":
         run(
             client,

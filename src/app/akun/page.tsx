@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AccountSettings } from "@/components/account/account-settings";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getReadingHistory, getSavedArticles } from "@/lib/content/repository";
 
 export const metadata = { title: "Akun Saya" };
@@ -25,6 +26,10 @@ export default async function AkunPage() {
   } catch {
     interests = [];
   }
+
+  const cookieStore = await cookies();
+  const regionFromCookie = cookieStore.get("kabardesk-region")?.value;
+  const regionSlug = user?.regionSlug ?? regionFromCookie ?? null;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -58,7 +63,7 @@ export default async function AkunPage() {
         </form>
       </div>
 
-      <AccountSettings initialInterests={interests} regionSlug={user?.regionSlug} />
+      <AccountSettings initialInterests={interests} regionSlug={regionSlug} />
 
       {history.length > 0 && (
         <section className="mt-12">

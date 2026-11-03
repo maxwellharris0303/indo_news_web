@@ -1,8 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { updateUserInterests, setRegionPreference } from "@/app/actions/user";
 import { Button } from "@/components/ui/button";
+import {
+  accountRegionOptions,
+  regionHubLabel,
+} from "@/lib/regions/labels";
 import { categoryLabels, categorySlugs, type CategorySlug } from "@/lib/site";
 
 const selectable = categorySlugs.filter(
@@ -11,12 +16,16 @@ const selectable = categorySlugs.filter(
 
 export function AccountSettings({
   initialInterests,
-  regionSlug,
+  regionSlug: initialRegionSlug,
 }: {
   initialInterests: string[];
   regionSlug?: string | null;
 }) {
+  const router = useRouter();
   const [interests, setInterests] = useState<string[]>(initialInterests);
+  const [regionSlug, setRegionSlug] = useState<string | null>(
+    initialRegionSlug ?? null,
+  );
   const [pending, startTransition] = useTransition();
 
   function toggleInterest(slug: CategorySlug) {
@@ -26,6 +35,14 @@ export function AccountSettings({
     setInterests(next);
     startTransition(() => {
       void updateUserInterests(next);
+    });
+  }
+
+  function selectRegion(slug: string) {
+    setRegionSlug(slug);
+    startTransition(async () => {
+      await setRegionPreference(slug);
+      router.refresh();
     });
   }
 
@@ -55,29 +72,25 @@ export function AccountSettings({
 
       <h3 className="mt-8 font-semibold">Wilayah utama</h3>
       <p className="text-sm text-muted-foreground">
-        Saat ini: {regionSlug ?? "belum dipilih"}
+        Saat ini: {regionHubLabel(regionSlug)}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {[
-          { slug: "dki-jakarta", label: "Jakarta" },
-          { slug: "jawa-barat", label: "Jawa Barat" },
-          { slug: "bali", label: "Bali" },
-        ].map((r) => (
-          <Button
-            key={r.slug}
-            type="button"
-            size="sm"
-            variant="secondary"
-            disabled={pending}
-            onClick={() =>
-              startTransition(() => {
-                void setRegionPreference(r.slug);
-              })
-            }
-          >
-            {r.label}
-          </Button>
-        ))}
+        {accountRegionOptions.map((r) => {
+          const active = regionSlug === r.slug;
+          return (
+            <Button
+              key={r.slug}
+              type="button"
+              size="sm"
+              variant={active ? "default" : "secondary"}
+              disabled={pending}
+              aria-pressed={active}
+              onClick={() => selectRegion(r.slug)}
+            >
+              {r.label}
+            </Button>
+          );
+        })}
       </div>
     </section>
   );

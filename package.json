@@ -19,6 +19,7 @@
     "rss:poll": "node scripts/rss-poll.mjs",
     "rss:bulk": "tsx scripts/bulk-rss-rewrite.ts",
     "db:remove-demo": "tsx scripts/remove-demo-articles.ts",
+    "regions:backfill": "tsx scripts/backfill-article-regions.ts",
     "test:rss": "tsx scripts/test-rss-system.ts",
     "test:rss:live": "tsx scripts/test-rss-rewrite-live.ts",
     "deploy:vps": "python scripts/deploy_vps.py"

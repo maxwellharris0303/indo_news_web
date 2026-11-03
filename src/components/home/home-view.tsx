@@ -22,13 +22,21 @@ import { getSiteLocale } from "@/lib/locale";
 import { homeText } from "@/lib/locale-ui";
 import { categoryLabels } from "@/lib/site";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 
 export async function HomeView() {
   const session = await auth();
   const locale = await getSiteLocale();
   const copy = homeText(locale);
   const cookieStore = await cookies();
-  const regionCookie = cookieStore.get("kabardesk-region")?.value;
+  let regionCookie = cookieStore.get("kabardesk-region")?.value;
+  if (!regionCookie && session?.user?.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { regionSlug: true },
+    });
+    regionCookie = user?.regionSlug ?? undefined;
+  }
 
   const pinned = new Set<string>();
 
