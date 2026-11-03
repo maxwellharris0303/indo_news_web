@@ -29,6 +29,8 @@ export interface ArticleQuery {
   offset?: number;
   q?: string;
   includeUnpublished?: boolean;
+  /** Omit these article ids (homepage dedup, etc.). */
+  excludeIds?: string[];
 }
 
 const PUBLISHED_STATUSES: ArticleStatus[] = ["PUBLISHED", "CORRECTED"];
@@ -69,6 +71,10 @@ function sortSeed(items: Article[], sort: SortMode): Article[] {
 
 function filterSeed(query: Omit<ArticleQuery, "limit" | "offset">): Article[] {
   let result = [...seedArticles];
+  if (query.excludeIds?.length) {
+    const skip = new Set(query.excludeIds);
+    result = result.filter((a) => !skip.has(a.id));
+  }
   if (!query.includeUnpublished) {
     result = result.filter(isPublishedSeed);
   }
@@ -93,15 +99,27 @@ function filterSeed(query: Omit<ArticleQuery, "limit" | "offset">): Article[] {
 export async function getArticles(
   query: ArticleQuery = {},
 ): Promise<Article[]> {
-  const { limit = 50, offset = 0, sort = "latest", ...filters } = query;
+  const {
+    limit = 50,
+    offset = 0,
+    sort = "latest",
+    excludeIds,
+    ...filters
+  } = query;
 
   if (!(await useDb())) {
-    return filterSeed({ ...filters, sort }).slice(offset, offset + limit);
+    return filterSeed({ ...filters, sort, excludeIds }).slice(
+      offset,
+      offset + limit,
+    );
   }
 
   const where: Record<string, unknown> = {
     ...publishedWhere(filters.includeUnpublished),
   };
+  if (excludeIds?.length) {
+    where.id = { notIn: excludeIds };
+  }
   if (filters.locale) where.locale = filters.locale;
   if (filters.category) where.category = filters.category;
   if (filters.regionSlug) where.regionSlug = filters.regionSlug;
@@ -214,11 +232,13 @@ const HERO_FEATURED_MAX_AGE_MS = 72 * 60 * 60 * 1000;
 
 export async function getHeroLead(
   locale: "id" | "en" = "id",
+  excludeIds: string[] = [],
 ): Promise<Article | undefined> {
   const items = await getArticles({
     sort: "latest",
     limit: 30,
     locale,
+    excludeIds,
   });
   const now = Date.now();
   const pinnedHero = items.find(

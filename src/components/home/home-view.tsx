@@ -16,6 +16,7 @@ import {
   getTopics,
 } from "@/lib/content/repository";
 import { articlePublicHref } from "@/lib/article-url";
+import { pickArticles } from "@/lib/home/pick-articles";
 import { formatRelativeId } from "@/lib/format";
 import { getSiteLocale } from "@/lib/locale";
 import { homeText } from "@/lib/locale-ui";
@@ -29,12 +30,21 @@ export async function HomeView() {
   const cookieStore = await cookies();
   const regionCookie = cookieStore.get("kabardesk-region")?.value;
 
-  const hero = await getHeroLead(locale);
-  const featured = (
-    await getArticles({ limit: 4, sort: "latest", locale })
-  ).filter((a) => a.id !== hero?.id);
-  const latest = await getArticles({ limit: 8, locale });
-  const moreLatest = await getArticles({ limit: 8, offset: 8, locale });
+  const pinned = new Set<string>();
+
+  const forYou = session?.user?.id
+    ? await getRecommendationsForUser(session.user.id, 4)
+    : [];
+  for (const article of forYou) pinned.add(article.id);
+
+  const hero = await getHeroLead(locale, [...pinned]);
+  if (hero) pinned.add(hero.id);
+
+  const latestPool = await getArticles({ limit: 64, sort: "latest", locale });
+  const featured = pickArticles(latestPool, 3, pinned);
+  const latest = pickArticles(latestPool, 8, pinned);
+  const moreLatest = pickArticles(latestPool, 8, pinned);
+
   const popular = await getPopularArticles(24, locale);
   const editorPicks = await getEditorPicks(locale);
   const topics = await getTopics();
@@ -42,12 +52,19 @@ export async function HomeView() {
   const regions = await getRegions();
 
   const regionalArticles = regionCookie
-    ? await getArticles({ regionSlug: regionCookie, limit: 4, locale })
+    ? pickArticles(
+        await getArticles({
+          regionSlug: regionCookie,
+          limit: 20,
+          locale,
+          excludeIds: [...pinned],
+        }),
+        4,
+        pinned,
+      )
     : [];
 
-  const forYou = session?.user?.id
-    ? await getRecommendationsForUser(session.user.id, 4)
-    : [];
+  const aboveFoldIds = new Set(pinned);
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8">
@@ -71,11 +88,13 @@ export async function HomeView() {
         </section>
       )}
 
-      <section className="mb-10 grid gap-6 md:grid-cols-3">
-        {featured.slice(0, 3).map((article) => (
-          <NewsCard key={article.id} article={article} />
-        ))}
-      </section>
+      {featured.length > 0 ? (
+        <section className="mb-10 grid gap-6 md:grid-cols-3">
+          {featured.map((article) => (
+            <NewsCard key={article.id} article={article} />
+          ))}
+        </section>
+      ) : null}
 
       <section className="mb-10">
         <div className="mb-4 flex items-end justify-between gap-4">
@@ -120,7 +139,7 @@ export async function HomeView() {
           <div className="mt-8">
             <InfiniteLatest
               initial={moreLatest}
-              startOffset={16}
+              excludeIds={[...aboveFoldIds]}
               locale={locale}
             />
           </div>
@@ -131,7 +150,9 @@ export async function HomeView() {
           <section className="rounded-xl border border-border bg-card p-5">
             <h2 className="font-serif text-xl font-bold">{copy.popular}</h2>
             <ol className="mt-4 space-y-4">
-              {popular.map((article, i) => (
+              {popular
+                .filter((article) => !aboveFoldIds.has(article.id))
+                .map((article, i) => (
                 <li key={article.id} className="flex gap-3">
                   <span className="text-2xl font-bold text-primary/40">
                     {i + 1}
@@ -159,7 +180,10 @@ export async function HomeView() {
           <section className="rounded-xl border border-border bg-card p-5">
             <h2 className="font-serif text-xl font-bold">{copy.editorPicks}</h2>
             <ul className="mt-4 space-y-3">
-              {editorPicks.slice(0, 5).map((article) => (
+              {editorPicks
+                .filter((article) => !aboveFoldIds.has(article.id))
+                .slice(0, 5)
+                .map((article) => (
                 <li key={article.id}>
                   <Link
                     href={articlePublicHref(article.category, article.slug)}

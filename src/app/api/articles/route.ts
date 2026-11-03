@@ -14,13 +14,23 @@ export async function GET(request: Request) {
   const locale =
     localeParam === "en" || localeParam === "id" ? localeParam : undefined;
 
+  const excludeParam = searchParams.get("excludeIds");
+  const excludeIds = excludeParam
+    ? excludeParam.split(",").map((id) => id.trim()).filter(Boolean)
+    : undefined;
+
+  const safeOffset = Number.isFinite(offset) ? offset : 0;
   const items = await getArticles({
-    offset: Number.isFinite(offset) ? offset : 0,
+    offset: excludeIds?.length ? 0 : safeOffset,
     limit,
     category,
     locale,
     sort: "latest",
+    excludeIds,
   });
 
-  return NextResponse.json({ items, nextOffset: offset + items.length });
+  return NextResponse.json({
+    items,
+    nextOffset: safeOffset + items.length,
+  });
 }
