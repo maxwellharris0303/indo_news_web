@@ -81,8 +81,10 @@ export function resumeRssAutoPostJob(
   }
   if (activeRun) return activeRun;
 
-  activeRun = processQueue(job, copy, onRefresh).finally(() => {
-    activeRun = null;
-  });
+  activeRun = processQueue(job, copy, onRefresh)
+    .then(() => undefined)
+    .finally(() => {
+      activeRun = null;
+    });
   return activeRun;
 }
