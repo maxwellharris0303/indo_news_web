@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { InfiniteLatest } from "@/components/home/infinite-latest";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { AdSlot } from "@/components/news/ad-slot";
 import { NewsCard } from "@/components/news/news-card";
 import { TopicChips } from "@/components/news/topic-chips";
-import { Button } from "@/components/ui/button";
 import {
   getArticles,
   getEditorPicks,
@@ -78,11 +78,8 @@ export async function HomeView() {
     <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8">
       {forYou.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-serif text-xl font-bold sm:text-2xl">
-            {copy.forYou}
-          </h2>
-          <p className="text-sm text-muted-foreground">{copy.forYouSub}</p>
-          <div className="mt-4 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <SectionHeading title={copy.forYou} />
+          <div className="mt-2 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {forYou.map((article) => (
               <NewsCard key={article.id} article={article} />
             ))}
@@ -97,7 +94,7 @@ export async function HomeView() {
       )}
 
       {featured.length > 0 ? (
-        <section className="mb-10 grid gap-6 md:grid-cols-3">
+        <section className="mb-10 grid gap-5 md:grid-cols-3">
           {featured.map((article) => (
             <NewsCard key={article.id} article={article} />
           ))}
@@ -106,27 +103,19 @@ export async function HomeView() {
 
       {topics.length > 0 ? (
         <section className="mb-10">
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="font-serif text-xl font-bold sm:text-2xl">
-                {copy.hotTopics}
-              </h2>
-              <p className="text-sm text-muted-foreground">{copy.hotTopicsSub}</p>
-            </div>
-            <Button variant="link" asChild className="shrink-0">
-              <Link href="/topik">{copy.allTopics}</Link>
-            </Button>
-          </div>
+          <SectionHeading
+            title={copy.hotTopics}
+            href="/topik"
+            linkLabel={copy.allTopics}
+          />
           <TopicChips topics={topics} />
         </section>
       ) : null}
 
       {regionalArticles.length > 0 && (
         <section className="mb-10">
-          <h2 className="font-serif text-xl font-bold sm:text-2xl">
-            {copy.yourRegion}
-          </h2>
-          <div className="mt-4 grid gap-6 md:grid-cols-2">
+          <SectionHeading title={copy.yourRegion} />
+          <div className="divide-y divide-border border-y border-border">
             {regionalArticles.map((article) => (
               <NewsCard key={article.id} article={article} variant="horizontal" />
             ))}
@@ -136,15 +125,8 @@ export async function HomeView() {
 
       <div className="grid gap-10 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-serif text-xl font-bold sm:text-2xl">
-              {copy.latest}
-            </h2>
-            <Button variant="link" asChild>
-              <Link href="/indeks">{copy.viewIndex}</Link>
-            </Button>
-          </div>
-          <div className="divide-y divide-border rounded-xl border border-border bg-card px-4">
+          <SectionHeading title={copy.latest} href="/indeks" linkLabel={copy.viewIndex} />
+          <div className="divide-y divide-border border-y border-border px-0 sm:px-1">
             {latest.map((article) => (
               <NewsCard key={article.id} article={article} variant="horizontal" />
             ))}
@@ -158,110 +140,97 @@ export async function HomeView() {
           </div>
         </section>
 
-        <aside className="space-y-8">
+        <aside className="space-y-10 border-t border-border pt-8 lg:border-t-0 lg:pt-0">
           <AdSlot compact />
-          <section className="rounded-xl border border-border bg-card p-5">
-            <h2 className="font-serif text-xl font-bold">{copy.popular}</h2>
-            <ol className="mt-4 space-y-4">
+          <section>
+            <SectionHeading title={copy.popular} />
+            <ol className="mt-1 space-y-4">
               {popular
                 .filter((article) => !aboveFoldIds.has(article.id))
                 .map((article, i) => (
-                <li key={article.id} className="flex gap-3">
-                  <span className="text-2xl font-bold text-primary/40">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <Link
-                      href={articlePublicHref(
-                        article.category,
-                        article.slug,
-                      )}
-                      className="font-medium leading-snug hover:text-primary"
-                    >
-                      {article.title}
-                    </Link>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {categoryLabels[article.category]} ·{" "}
-                      {formatRelativeId(article.publishedAt)}
-                    </p>
-                  </div>
-                </li>
-              ))}
+                  <li key={article.id} className="flex gap-3 border-b border-border pb-4 last:border-0">
+                    <span className="w-6 shrink-0 font-serif text-lg font-bold text-muted-foreground">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <Link
+                        href={articlePublicHref(
+                          article.category,
+                          article.slug,
+                        )}
+                        className="font-medium leading-snug hover:underline"
+                      >
+                        {article.title}
+                      </Link>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {categoryLabels[article.category]} ·{" "}
+                        {formatRelativeId(article.publishedAt)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
             </ol>
           </section>
 
-          <section className="rounded-xl border border-border bg-card p-5">
-            <h2 className="font-serif text-xl font-bold">{copy.editorPicks}</h2>
-            <ul className="mt-4 space-y-3">
+          <section>
+            <SectionHeading title={copy.editorPicks} />
+            <ul className="mt-1 space-y-3 border-t border-border pt-3">
               {editorPicks
                 .filter((article) => !aboveFoldIds.has(article.id))
                 .slice(0, 5)
                 .map((article) => (
-                <li key={article.id}>
-                  <Link
-                    href={articlePublicHref(article.category, article.slug)}
-                    className="text-sm font-medium leading-snug hover:text-primary"
-                  >
-                    {article.title}
-                  </Link>
-                </li>
-              ))}
+                  <li key={article.id} className="border-b border-border pb-3 last:border-0">
+                    <Link
+                      href={articlePublicHref(article.category, article.slug)}
+                      className="text-sm font-medium leading-snug hover:underline"
+                    >
+                      {article.title}
+                    </Link>
+                  </li>
+                ))}
             </ul>
           </section>
         </aside>
       </div>
 
       <section className="mt-12">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-xl font-bold sm:text-2xl">
-            {copy.regions}
-          </h2>
-          <Button variant="link" asChild>
-            <Link href="/daerah">{copy.allProvinces}</Link>
-          </Button>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+        <SectionHeading title={copy.regions} href="/daerah" linkLabel={copy.allProvinces} />
+        <ul className="mt-2 divide-y divide-border border-y border-border">
           {regions.slice(0, 6).map((region) => (
-            <Link
-              key={region.slug}
-              href={`/daerah/provinsi/${region.slug}`}
-              className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary"
-            >
-              <p className="font-semibold">{region.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {copy.localCoverage}
-              </p>
-            </Link>
+            <li key={region.slug}>
+              <Link
+                href={`/daerah/provinsi/${region.slug}`}
+                className="flex items-baseline justify-between gap-4 py-3 hover:bg-muted/40"
+              >
+                <span className="font-medium">{region.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {copy.localCoverage}
+                </span>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
-      <section className="mt-12 rounded-2xl border border-border bg-muted/20 p-6 md:p-8">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-serif text-xl font-bold sm:text-2xl">
-              {copy.factCheck}
-            </h2>
-            <p className="text-sm text-muted-foreground">{copy.factCheckSub}</p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/cek-fakta">{copy.allFactCheck}</Link>
-          </Button>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
+      <section className="mt-12 border border-border bg-card p-5 sm:p-6">
+        <SectionHeading
+          title={copy.factCheck}
+          href="/cek-fakta"
+          linkLabel={copy.allFactCheck}
+        />
+        <ul className="mt-2 divide-y divide-border">
           {factChecks.map((fc) => (
-            <Link
-              key={fc.slug}
-              href={`/cek-fakta/${fc.slug}`}
-              className="rounded-xl border border-border bg-background p-4 hover:border-primary"
-            >
-              <p className="text-xs font-semibold uppercase text-primary">
-                {fc.verdict.replaceAll("_", " ")}
-              </p>
-              <p className="mt-2 line-clamp-3 text-sm font-medium">{fc.claim}</p>
-            </Link>
+            <li key={fc.slug}>
+              <Link
+                href={`/cek-fakta/${fc.slug}`}
+                className="block py-3 hover:bg-muted/30"
+              >
+                <p className="kicker">{fc.verdict.replaceAll("_", " ")}</p>
+                <p className="mt-1 text-sm font-medium leading-snug">{fc.claim}</p>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
     </div>
   );

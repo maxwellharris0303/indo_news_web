@@ -5,7 +5,7 @@ export const site = {
     "Portal berita Indonesia dengan cek fakta, liputan daerah, dan ringkasan cepat untuk pembaca modern.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   locale: "id-ID",
-  primaryColor: "#1D4ED8",
+  primaryColor: "#A61C1C",
 } as const;
 
 export const navMain = [

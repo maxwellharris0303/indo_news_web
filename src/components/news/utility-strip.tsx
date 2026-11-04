@@ -10,9 +10,9 @@ export function UtilityStrip({ data }: { data: UtilitySnapshot | null }) {
     : prayer.next.name;
 
   return (
-    <div className="border-b border-border bg-background">
-      <div className="mx-auto max-w-7xl px-3 py-2.5 sm:px-6 sm:py-2">
-        <div className="flex flex-col gap-2 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2 sm:text-sm">
+    <div className="border-b border-border bg-muted/30 text-[11px] sm:text-xs">
+      <div className="mx-auto max-w-7xl px-3 py-2 sm:px-6">
+        <div className="flex flex-col gap-1.5 leading-relaxed text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5">
           <p className="min-w-0">
             <span className="font-medium text-foreground">
               Sholat {prayer.city}

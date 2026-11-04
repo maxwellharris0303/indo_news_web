@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
+import { Merriweather, Work_Sans } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteShell } from "@/components/layout/site-shell";
@@ -8,14 +8,15 @@ import { getSiteLocale } from "@/lib/locale";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+const workSans = Work_Sans({
+  variable: "--font-work",
   subsets: ["latin"],
 });
 
-const sourceSerif = Source_Serif_4({
-  variable: "--font-source-serif",
+const merriweather = Merriweather({
+  variable: "--font-merriweather",
   subsets: ["latin"],
+  weight: ["700", "900"],
 });
 
 export const metadata: Metadata = {
@@ -48,7 +49,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale === "en" ? "en" : "id"}
-      className={`${jakarta.variable} ${sourceSerif.variable} h-full`}
+      className={`${workSans.variable} ${merriweather.variable} h-full`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col antialiased">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { articlePublicHref } from "@/lib/article-url";
 import type { UrgentBannerKind } from "@/lib/content/repository";
 import { categoryLabels, type CategorySlug } from "@/lib/site";
@@ -26,24 +27,37 @@ export function BreakingBar({
     <div
       className={
         isBreaking
-          ? "border-b border-breaking/20 bg-breaking/10"
-          : "border-b border-amber-500/20 bg-amber-500/10"
+          ? "border-b border-breaking bg-breaking text-white"
+          : "border-b border-amber-700 bg-amber-100 text-amber-950 dark:bg-amber-950/40 dark:text-amber-50"
       }
     >
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6">
         <Badge
           variant={isBreaking ? "breaking" : "hoax"}
-          className="shrink-0 uppercase tracking-wide"
+          className={cn(
+            "shrink-0",
+            isBreaking && "bg-white/20 text-white",
+          )}
         >
           {LABELS[kind]}
         </Badge>
         <Link
           href={articlePublicHref(category, slug)}
-          className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground hover:text-primary sm:text-base"
+          className={cn(
+            "min-w-0 flex-1 truncate text-sm font-semibold sm:text-base",
+            isBreaking
+              ? "text-white hover:underline"
+              : "text-amber-950 hover:underline dark:text-amber-50",
+          )}
         >
           {title}
         </Link>
-        <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">
+        <span
+          className={cn(
+            "ml-auto hidden text-xs sm:inline",
+            isBreaking ? "text-white/80" : "text-amber-900/70 dark:text-amber-100/70",
+          )}
+        >
           {categoryLabels[category]}
         </span>
       </div>

@@ -3,7 +3,7 @@ import type { Topic } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
 
 const chipClass =
-  "rounded-full border border-border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary hover:text-primary";
+  "border border-border bg-card px-2.5 py-1 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary";
 
 export function TopicLink({
   topic,
@@ -13,11 +13,8 @@ export function TopicLink({
   className?: string;
 }) {
   return (
-    <Link
-      href={`/topik/${topic.slug}`}
-      className={cn(chipClass, className)}
-    >
-      #{topic.name}
+    <Link href={`/topik/${topic.slug}`} className={cn(chipClass, className)}>
+      {topic.name}
     </Link>
   );
 }

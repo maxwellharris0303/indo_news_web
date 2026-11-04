@@ -1,29 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --primary: #1d4ed8;
-  --primary-foreground: #ffffff;
-  --breaking: #dc2626;
-  --trust: #059669;
+  --background: #f6f3ed;
+  --foreground: #141414;
+  --card: #fffcf7;
+  --muted: #ebe6dc;
+  --muted-foreground: #5c564d;
+  --border: #d4cdc0;
+  --primary: #a61c1c;
+  --primary-foreground: #fffaf8;
+  --breaking: #b91c1c;
+  --trust: #166534;
+  --accent: #1c1917;
 }
 
 .dark {
-  --background: #0b1120;
-  --foreground: #f8fafc;
-  --card: #111827;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --border: #334155;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
+  --background: #121110;
+  --foreground: #f5f0e8;
+  --card: #1a1816;
+  --muted: #2a2724;
+  --muted-foreground: #a8a096;
+  --border: #3d3832;
+  --primary: #e85d5d;
+  --primary-foreground: #1a0808;
   --breaking: #ef4444;
-  --trust: #10b981;
+  --trust: #34d399;
+  --accent: #f5f0e8;
 }
 
 @theme inline {
@@ -37,37 +39,46 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-breaking: var(--breaking);
   --color-trust: var(--trust);
-  --font-sans: var(--font-jakarta);
-  --font-serif: var(--font-source-serif);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-work);
+  --font-serif: var(--font-merriweather);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-family: var(--font-work), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
 @media (min-width: 640px) {
   :root {
-    --site-header-height: 4rem;
+    --site-header-height: 4.25rem;
   }
 }
 
 @media (max-width: 639px) {
   :root {
-    --site-header-height: 3.5rem;
+    --site-header-height: 3.75rem;
   }
 }
 
 .font-serif {
-  font-family: var(--font-source-serif), Georgia, serif;
+  font-family: var(--font-merriweather), Georgia, "Times New Roman", serif;
+}
+
+.kicker {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
 }
 
 .prose-article p {
   margin-top: 1rem;
   margin-bottom: 1rem;
-  line-height: 1.75;
+  line-height: 1.8;
   font-size: 1.0625rem;
 }
 
