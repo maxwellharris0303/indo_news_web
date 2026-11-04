@@ -29,8 +29,22 @@ export function LoginForm() {
       setError("Email atau password salah.");
       return;
     }
-    const dest =
+    let dest =
       callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/akun";
+    try {
+      const sessionRes = await fetch("/api/auth/session");
+      const session = (await sessionRes.json()) as {
+        user?: { role?: string };
+      };
+      const role = session?.user?.role;
+      const staff =
+        role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR";
+      if (staff && (!callbackUrl || callbackUrl === "/akun")) {
+        dest = "/admin";
+      }
+    } catch {
+      /* keep dest */
+    }
     router.push(dest);
     router.refresh();
   }

@@ -25,7 +25,12 @@ export default auth((req) => {
     role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR";
 
   if (req.nextUrl.pathname.startsWith("/admin") && !isStaff) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const login = new URL("/login", req.url);
+    login.searchParams.set(
+      "callbackUrl",
+      `${req.nextUrl.pathname}${req.nextUrl.search}`,
+    );
+    return NextResponse.redirect(login);
   }
 
   if (req.nextUrl.pathname.startsWith("/akun") && !req.auth) {

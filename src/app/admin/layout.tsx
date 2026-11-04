@@ -1,7 +1,10 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminLocaleProvider } from "@/components/admin/admin-locale-provider";
 import { getAdminLocale } from "@/lib/admin-locale";
+import { isStaffRole } from "@/lib/admin/require-staff";
+import { prisma } from "@/lib/db";
 
 export const metadata = {
   title: "Admin Redaksi",
@@ -16,11 +19,27 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/admin");
+  }
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, name: true, email: true },
+  });
+  if (!dbUser || !isStaffRole(dbUser.role)) {
+    redirect("/login?callbackUrl=/admin");
+  }
+  const user = {
+    ...session.user,
+    role: dbUser.role,
+    name: dbUser.name ?? session.user.name,
+    email: dbUser.email ?? session.user.email,
+  };
   const locale = await getAdminLocale();
 
   return (
     <AdminLocaleProvider initialLocale={locale}>
-      <AdminShell user={session?.user}>{children}</AdminShell>
+      <AdminShell user={user}>{children}</AdminShell>
     </AdminLocaleProvider>
   );
 }
